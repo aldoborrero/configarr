@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "configarr"
+version = "2.0.0"
+description = "Configuration manager for Radarr, Sonarr, and Prowlarr"
+requires-python = ">=3.11"
+dependencies = [
+    "click>=8.0",
+    "pydantic>=2.0",
+    "pyyaml>=6.0",
+    "requests>=2.28",
+    "rich>=13.0",
+]
+
+[project.scripts]
+configarr = "configarr.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["configarr*"]

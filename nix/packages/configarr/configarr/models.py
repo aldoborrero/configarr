@@ -1,0 +1,115 @@
+"""Pydantic models for configarr configuration."""
+
+from enum import StrEnum
+from typing import Any
+
+from pydantic import BaseModel, field_validator
+
+
+class SyncStatus(StrEnum):
+    """Status returned by sync operations."""
+
+    CREATED = "created"
+    UPDATED = "updated"
+    UNCHANGED = "unchanged"
+    FAILED = "failed"
+
+
+class QualityProfileConfig(BaseModel):
+    """Quality profile configuration from YAML."""
+
+    name: str
+    upgrades_allowed: bool = True
+    upgrade_until_quality: str = "WEBDL-1080p"
+    upgrade_until_custom_format_score: int = 10000
+    minimum_custom_format_score: int = 0
+    qualities: list[str | dict[str, Any]] = []
+
+
+class ArrServiceConfig(BaseModel):
+    """Base config for Radarr/Sonarr - they share identical APIs."""
+
+    name: str
+    base_url: str
+    api_key: str
+    quality_profiles: list[dict[str, Any]] = []
+    naming_config: dict[str, Any] | None = None
+    delay_profiles: list[dict[str, Any]] | None = None
+    release_profiles: list[dict[str, Any]] | None = None
+    quality_definitions: dict[str, Any] | None = None
+    root_folders: list[dict[str, Any]] | None = None
+    download_clients: dict[str, dict[str, Any]] = {}
+
+    @field_validator("base_url")
+    @classmethod
+    def strip_trailing_slash(cls, v: str) -> str:
+        """Remove trailing slash from base_url."""
+        return v.rstrip("/")
+
+
+# Type aliases for clarity in code
+RadarrConfig = ArrServiceConfig
+SonarrConfig = ArrServiceConfig
+
+
+class ProwlarrConfig(BaseModel):
+    """Configuration for a Prowlarr instance."""
+
+    name: str
+    base_url: str
+    api_key: str
+    indexers: dict[str, dict[str, Any]] = {}
+    applications: dict[str, dict[str, Any]] = {}
+    download_clients: dict[str, dict[str, Any]] = {}
+
+    @field_validator("base_url")
+    @classmethod
+    def strip_trailing_slash(cls, v: str) -> str:
+        """Remove trailing slash from base_url."""
+        return v.rstrip("/")
+
+
+class BazarrConfig(BaseModel):
+    """Configuration for a Bazarr instance."""
+
+    name: str
+    base_url: str
+    api_key: str
+    general: dict[str, Any] | None = None
+    sonarr: dict[str, Any] | None = None
+    radarr: dict[str, Any] | None = None
+    providers: dict[str, dict[str, Any]] = {}
+    language_profiles: list[dict[str, Any]] = []
+
+    @field_validator("base_url")
+    @classmethod
+    def strip_trailing_slash(cls, v: str) -> str:
+        """Remove trailing slash from base_url."""
+        return v.rstrip("/")
+
+
+class SabnzbdConfig(BaseModel):
+    """Configuration for a SABnzbd instance."""
+
+    name: str
+    base_url: str
+    api_key: str
+    servers: dict[str, dict[str, Any]] = {}
+    categories: dict[str, dict[str, Any]] = {}
+    misc: dict[str, Any] | None = None
+
+    @field_validator("base_url")
+    @classmethod
+    def strip_trailing_slash(cls, v: str) -> str:
+        """Remove trailing slash from base_url."""
+        return v.rstrip("/")
+
+
+class ConfigarrConfig(BaseModel):
+    """Root configuration containing all service instances."""
+
+    radarr: list[ArrServiceConfig] = []
+    sonarr: list[ArrServiceConfig] = []
+    prowlarr: list[ProwlarrConfig] = []
+    bazarr: list[BazarrConfig] = []
+    sabnzbd: list[SabnzbdConfig] = []
