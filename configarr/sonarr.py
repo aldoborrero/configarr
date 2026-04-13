@@ -5,6 +5,7 @@ from typing import Any
 
 import sonarr
 from sonarr.api import (
+    CustomFormatApi,
     DelayProfileApi,
     DownloadClientApi,
     NamingConfigApi,
@@ -14,6 +15,9 @@ from sonarr.api import (
     RootFolderApi,
 )
 from sonarr.models import (
+    ContractField,
+    CustomFormatResource,
+    CustomFormatSpecificationSchema,
     DelayProfileResource,
     DownloadClientResource,
     NamingConfigResource,
@@ -57,6 +61,7 @@ class SonarrClient:
         self.api_client = sonarr.ApiClient(config)
 
         # API instances
+        self.custom_formats = CustomFormatApi(self.api_client)
         self.quality_profiles = QualityProfileApi(self.api_client)
         self.naming_config = NamingConfigApi(self.api_client)
         self.delay_profiles = DelayProfileApi(self.api_client)
@@ -68,6 +73,7 @@ class SonarrClient:
         # Caches
         self._quality_defs: list[QualityDefinitionResource] | None = None
         self._download_client_schemas: dict[str, DownloadClientResource] | None = None
+        self._custom_format_ids: dict[str, int] = {}
 
     def _find_by_name[T](self, resources: list[T], name: str) -> T | None:
         """Find resource by name in list."""
@@ -238,6 +244,51 @@ class SonarrClient:
         log.debug(f"Created release profile: {name}")
         return SyncStatus.CREATED
 
+    # Custom Formats
+    def get_custom_format_ids(self) -> dict[str, int]:
+        """Get mapping of custom format name → ID (cached)."""
+        if not self._custom_format_ids:
+            existing = self.custom_formats.list_custom_format()
+            self._custom_format_ids = {cf.name: cf.id for cf in existing if cf.name and cf.id}
+        return self._custom_format_ids
+
+    def sync_custom_format(self, name: str, config: dict[str, Any]) -> SyncStatus:
+        """Sync a custom format. Creates or updates."""
+        existing = self.custom_formats.list_custom_format()
+        found = self._find_by_name(existing, name)
+
+        specs = []
+        for spec_config in config.get("specifications", []):
+            fields = []
+            for field_name, field_value in spec_config.get("fields", {}).items():
+                fields.append(ContractField(name=field_name, value=field_value))
+
+            specs.append(CustomFormatSpecificationSchema(
+                name=spec_config["name"],
+                implementation=spec_config["implementation"],
+                negate=spec_config.get("negate", False),
+                required=spec_config.get("required", True),
+                fields=fields,
+            ))
+
+        resource = CustomFormatResource(
+            name=name,
+            include_custom_format_when_renaming=config.get("include_when_renaming", False),
+            specifications=specs,
+        )
+
+        if found:
+            resource.id = found.id
+            self.custom_formats.update_custom_format(str(found.id), custom_format_resource=resource)
+            self._custom_format_ids[name] = found.id
+            log.debug(f"Updated custom format: {name}")
+            return SyncStatus.UPDATED
+
+        result = self.custom_formats.create_custom_format(custom_format_resource=resource)
+        self._custom_format_ids[name] = result.id
+        log.debug(f"Created custom format: {name}")
+        return SyncStatus.CREATED
+
     # Quality Profiles
     def sync_quality_profile(self, name: str, config: dict[str, Any]) -> SyncStatus:
         """Sync a quality profile."""
@@ -294,15 +345,29 @@ class SonarrClient:
                     )
                 )
 
+        # Build format items from custom_format_scores
+        format_items = []
+        cf_scores = config.get("custom_format_scores", {})
+        if cf_scores:
+            cf_ids = self.get_custom_format_ids()
+            for cf_name, score in cf_scores.items():
+                cf_id = cf_ids.get(cf_name)
+                if cf_id is not None:
+                    format_items.append({"format": cf_id, "name": cf_name, "score": score})
+                else:
+                    log.warning(f"Custom format '{cf_name}' not found, skipping score assignment")
+
+        upgrade_config = config.get("upgrade", {})
+
         resource = QualityProfileResource(
             name=name,
-            upgrade_allowed=config.get("upgrade", {}).get("allowed", True),
+            upgrade_allowed=upgrade_config.get("allowed", True),
             cutoff=cutoff_id,
             items=items,
-            min_format_score=0,
-            cutoff_format_score=0,
+            min_format_score=config.get("min_format_score", 0),
+            cutoff_format_score=upgrade_config.get("until_score", 10000),
             min_upgrade_format_score=1,
-            format_items=[],
+            format_items=format_items,
         )
 
         self.quality_profiles.create_quality_profile(

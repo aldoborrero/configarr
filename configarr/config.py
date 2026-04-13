@@ -97,6 +97,7 @@ def parse_quality_profiles(config: dict[str, Any]) -> list[dict[str, Any]]:
                 ),
             },
             "min_format_score": profile_def.get("minimum_custom_format_score", 0),
+            "custom_format_scores": profile_def.get("custom_format_scores", {}),
             "quality_sort": "top",
             "qualities": qualities,
         })
@@ -110,6 +111,7 @@ def parse_arr_instance(name: str, config: dict[str, Any]) -> ArrServiceConfig:
         name=name,
         base_url=config["base_url"],
         api_key=config["api_key"],
+        custom_formats=config.get("custom_formats", {}).get("definitions", {}),
         quality_profiles=parse_quality_profiles(config),
         naming_config=config.get("settings", {}).get("media_management"),
         delay_profiles=config.get("profiles", {}).get("delay_profiles"),

@@ -138,6 +138,25 @@ def sync_arr(
             failure += 1
         console.print()
 
+    # Custom formats (must be synced before quality profiles)
+    if config.custom_formats:
+        _print_section("Custom Formats")
+        for name, cf_config in config.custom_formats.items():
+            try:
+                status = client.sync_custom_format(name, cf_config)
+                if status == SyncStatus.CREATED:
+                    console.print(f"  {ICON_CREATED} Created {name}")
+                    success += 1
+                elif status == SyncStatus.UPDATED:
+                    console.print(f"  {ICON_CREATED} Updated {name}")
+                    success += 1
+                elif status == SyncStatus.UNCHANGED:
+                    console.print(f"  {ICON_EXISTS} Already exists {name}")
+            except Exception as e:
+                console.print(f"  {ICON_FAILED} Failed {name}: {e}")
+                failure += 1
+        console.print()
+
     # Quality profiles
     if config.quality_profiles:
         _print_section("Quality Profiles")

@@ -32,6 +32,7 @@ class ArrServiceConfig(BaseModel):
     name: str
     base_url: str
     api_key: str
+    custom_formats: dict[str, dict[str, Any]] = {}
     quality_profiles: list[dict[str, Any]] = []
     naming_config: dict[str, Any] | None = None
     delay_profiles: list[dict[str, Any]] | None = None
