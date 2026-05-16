@@ -201,7 +201,7 @@ class ProwlarrClient:
         resp.raise_for_status()
         existing = None
         for client in resp.json():
-            if client.get("name") == name:
+            if client.get("name", "").lower() == name.lower():
                 existing = client
                 break
 
