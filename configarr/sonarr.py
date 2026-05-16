@@ -291,13 +291,9 @@ class SonarrClient:
 
     # Quality Profiles
     def sync_quality_profile(self, name: str, config: dict[str, Any]) -> SyncStatus:
-        """Sync a quality profile."""
+        """Sync a quality profile. Creates or updates."""
         existing = self.quality_profiles.list_quality_profile()
         found = self._find_by_name(existing, name)
-
-        if found:
-            log.debug(f"Quality profile exists: {name}")
-            return SyncStatus.UNCHANGED
 
         # Get quality definitions to build items
         quality_defs = self.get_quality_definitions()
@@ -369,6 +365,12 @@ class SonarrClient:
             min_upgrade_format_score=1,
             format_items=format_items,
         )
+
+        if found:
+            resource.id = found.id
+            self.quality_profiles.update_quality_profile(str(found.id), quality_profile_resource=resource)
+            log.debug(f"Updated quality profile: {name}")
+            return SyncStatus.UPDATED
 
         self.quality_profiles.create_quality_profile(
             quality_profile_resource=resource

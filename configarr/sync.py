@@ -167,6 +167,9 @@ def sync_arr(
                 if status == SyncStatus.CREATED:
                     console.print(f"  {ICON_CREATED} Created {name}")
                     success += 1
+                elif status == SyncStatus.UPDATED:
+                    console.print(f"  {ICON_CREATED} Updated {name}")
+                    success += 1
                 elif status == SyncStatus.UNCHANGED:
                     console.print(f"  {ICON_EXISTS} Already exists {name}")
             except Exception as e:
