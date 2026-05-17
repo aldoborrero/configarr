@@ -9,6 +9,7 @@ from sonarr.api import (
     DelayProfileApi,
     DownloadClientApi,
     NamingConfigApi,
+    NotificationApi,
     QualityDefinitionApi,
     QualityProfileApi,
     ReleaseProfileApi,
@@ -21,6 +22,7 @@ from sonarr.models import (
     DelayProfileResource,
     DownloadClientResource,
     NamingConfigResource,
+    NotificationResource,
     QualityDefinitionResource,
     QualityProfileQualityItemResource,
     QualityProfileResource,
@@ -69,10 +71,12 @@ class SonarrClient:
         self.root_folders = RootFolderApi(self.api_client)
         self.download_clients = DownloadClientApi(self.api_client)
         self.release_profiles = ReleaseProfileApi(self.api_client)
+        self.notifications = NotificationApi(self.api_client)
 
         # Caches
         self._quality_defs: list[QualityDefinitionResource] | None = None
         self._download_client_schemas: dict[str, DownloadClientResource] | None = None
+        self._notification_schemas: dict[str, NotificationResource] | None = None
         self._custom_format_ids: dict[str, int] = {}
 
     def _find_by_name[T](self, resources: list[T], name: str) -> T | None:
@@ -453,4 +457,67 @@ class SonarrClient:
             download_client_resource=resource
         )
         log.debug(f"Created download client: {name}")
+        return SyncStatus.CREATED
+
+    # Notifications (Connections)
+    def get_notification_schema(self, implementation: str) -> NotificationResource | None:
+        """Get schema for notification implementation (cached)."""
+        if self._notification_schemas is None:
+            schemas = self.notifications.list_notification_schema()
+            self._notification_schemas = {
+                s.implementation: s for s in schemas if s.implementation
+            }
+        return self._notification_schemas.get(implementation)
+
+    def sync_notification(self, name: str, config: dict[str, Any]) -> SyncStatus:
+        """Sync a notification/connection."""
+        implementation = config.get("implementation")
+        if not implementation:
+            raise ValueError(f"Missing 'implementation' for notification: {name}")
+
+        schema = self.get_notification_schema(implementation)
+        if not schema:
+            raise ValueError(f"Unknown notification implementation: {implementation}")
+
+        existing = self.notifications.list_notification()
+        found = self._find_by_name(existing, name)
+
+        settings = config.get("settings", {})
+        on_download = config.get("on_download", True)
+        on_upgrade = config.get("on_upgrade", True)
+        on_rename = config.get("on_rename", True)
+        on_import_complete = config.get("on_import_complete", True)
+
+        if found:
+            found.name = name
+            found.on_download = on_download
+            found.on_upgrade = on_upgrade
+            found.on_rename = on_rename
+            found.on_import_complete = on_import_complete
+            if found.fields:
+                for field in found.fields:
+                    if field.name in settings:
+                        field.value = settings[field.name]
+            self.notifications.update_notification(
+                str(found.id), notification_resource=found
+            )
+            log.debug(f"Updated notification: {name}")
+            return SyncStatus.UPDATED
+
+        resource = NotificationResource(
+            name=name,
+            implementation=implementation,
+            config_contract=schema.config_contract,
+            on_download=on_download,
+            on_upgrade=on_upgrade,
+            on_rename=on_rename,
+            on_import_complete=on_import_complete,
+            fields=self._build_fields(schema.fields, settings),
+            tags=config.get("tags", []),
+        )
+
+        self.notifications.create_notification(
+            notification_resource=resource
+        )
+        log.debug(f"Created notification: {name}")
         return SyncStatus.CREATED

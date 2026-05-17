@@ -119,6 +119,7 @@ def parse_arr_instance(name: str, config: dict[str, Any]) -> ArrServiceConfig:
         quality_definitions=config.get("profiles", {}).get("quality_definitions"),
         root_folders=config.get("settings", {}).get("root_folders"),
         download_clients=config.get("download_clients", {}).get("definitions", {}),
+        notifications=config.get("notifications", {}).get("definitions", {}),
     )
 
 

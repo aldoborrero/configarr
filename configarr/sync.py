@@ -194,6 +194,23 @@ def sync_arr(
                 failure += 1
         console.print()
 
+    # Notifications (Connections)
+    if config.notifications:
+        _print_section("Notifications")
+        for name, notif_config in config.notifications.items():
+            try:
+                status = client.sync_notification(name, notif_config)
+                if status == SyncStatus.CREATED:
+                    console.print(f"  {ICON_CREATED} Created {name}")
+                    success += 1
+                elif status == SyncStatus.UPDATED:
+                    console.print(f"  {ICON_CREATED} Updated {name}")
+                    success += 1
+            except Exception as e:
+                console.print(f"  {ICON_FAILED} Failed {name}: {e}")
+                failure += 1
+        console.print()
+
     return success, failure
 
 

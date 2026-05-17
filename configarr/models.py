@@ -40,6 +40,7 @@ class ArrServiceConfig(BaseModel):
     quality_definitions: dict[str, Any] | None = None
     root_folders: list[dict[str, Any]] | None = None
     download_clients: dict[str, dict[str, Any]] = {}
+    notifications: dict[str, dict[str, Any]] = {}
 
     @field_validator("base_url")
     @classmethod
