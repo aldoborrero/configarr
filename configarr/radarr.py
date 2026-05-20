@@ -431,20 +431,18 @@ class RadarrClient:
         on_download = config.get("on_download", True)
         on_upgrade = config.get("on_upgrade", True)
         on_rename = config.get("on_rename", True)
-        on_import_complete = config.get("on_import_complete", True)
 
         if found:
             found.name = name
             found.on_download = on_download
             found.on_upgrade = on_upgrade
             found.on_rename = on_rename
-            found.on_import_complete = on_import_complete
             if found.fields:
                 for field in found.fields:
                     if field.name in settings:
                         field.value = settings[field.name]
             self.notifications.update_notification(
-                str(found.id), notification_resource=found
+                int(found.id), notification_resource=found
             )
             log.debug(f"Updated notification: {name}")
             return SyncStatus.UPDATED
@@ -456,7 +454,6 @@ class RadarrClient:
             on_download=on_download,
             on_upgrade=on_upgrade,
             on_rename=on_rename,
-            on_import_complete=on_import_complete,
             fields=self._build_fields(schema.fields, settings),
             tags=config.get("tags", []),
         )

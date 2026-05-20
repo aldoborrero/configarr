@@ -499,7 +499,7 @@ class SonarrClient:
                     if field.name in settings:
                         field.value = settings[field.name]
             self.notifications.update_notification(
-                str(found.id), notification_resource=found
+                int(found.id), notification_resource=found
             )
             log.debug(f"Updated notification: {name}")
             return SyncStatus.UPDATED
