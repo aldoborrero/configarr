@@ -8,6 +8,7 @@ from radarr.api import (
     CustomFormatApi,
     DelayProfileApi,
     DownloadClientApi,
+    LanguageApi,
     NamingConfigApi,
     NotificationApi,
     QualityDefinitionApi,
@@ -20,6 +21,7 @@ from radarr.models import (
     CustomFormatSpecificationSchema,
     DelayProfileResource,
     DownloadClientResource,
+    Language,
     NamingConfigResource,
     NotificationResource,
     QualityDefinitionResource,
@@ -56,6 +58,7 @@ class RadarrClient:
         self.naming_config = NamingConfigApi(self.api_client)
         self.delay_profiles = DelayProfileApi(self.api_client)
         self.quality_definitions = QualityDefinitionApi(self.api_client)
+        self.languages = LanguageApi(self.api_client)
         self.root_folders = RootFolderApi(self.api_client)
         self.download_clients = DownloadClientApi(self.api_client)
         self.notifications = NotificationApi(self.api_client)
@@ -240,6 +243,20 @@ class RadarrClient:
         return SyncStatus.CREATED
 
     # Quality Profiles
+    def _resolve_language(self, name: str) -> Language | None:
+        """Resolve a language name (e.g. 'Original', 'Any', 'English') to a Language.
+
+        Returns None if the name cannot be matched, in which case the caller
+        leaves the profile's language untouched.
+        """
+        if not hasattr(self, "_language_cache"):
+            self._language_cache = self.languages.list_language()
+        for lang in self._language_cache:
+            if lang.name and lang.name.lower() == name.lower():
+                return Language(id=lang.id, name=lang.name)
+        log.warning(f"Language '{name}' not found, leaving quality profile language unset")
+        return None
+
     def sync_quality_profile(self, name: str, config: dict[str, Any]) -> SyncStatus:
         """Sync a quality profile. Creates or updates."""
         existing = self.quality_profiles.list_quality_profile()
@@ -314,6 +331,16 @@ class RadarrClient:
             min_upgrade_format_score=1,
             format_items=format_items,
         )
+
+        # Radarr quality profiles carry a language filter. When unset it is
+        # serialized as null, which makes Radarr reject every release with
+        # "<blank> is wanted, but found <lang>". Resolve the configured language
+        # (e.g. "Any" to never reject, "Original" for the release's own language).
+        language_name = config.get("language")
+        if language_name:
+            language = self._resolve_language(language_name)
+            if language:
+                resource.language = language
 
         if found:
             resource.id = found.id

@@ -100,6 +100,7 @@ def parse_quality_profiles(config: dict[str, Any]) -> list[dict[str, Any]]:
             "custom_format_scores": profile_def.get("custom_format_scores", {}),
             "quality_sort": "top",
             "qualities": qualities,
+            "language": profile_def.get("language"),
         })
 
     return quality_profiles
