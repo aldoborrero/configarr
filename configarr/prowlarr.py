@@ -33,14 +33,31 @@ class ProwlarrClient:
 
         # Schema caches
         self._indexer_schemas: dict[str, IndexerResource] | None = None
+        self._indexer_schemas_by_name: dict[str, IndexerResource] = {}
         self._app_schemas: dict[str, ApplicationResource] | None = None
         self._client_schemas: dict[str, DownloadClientResource] | None = None
 
-    def get_indexer_schema(self, implementation: str) -> IndexerResource | None:
-        """Get schema for indexer implementation (cached)."""
+    def get_indexer_schema(
+        self, implementation: str, definition: str | None = None
+    ) -> IndexerResource | None:
+        """Get schema for an indexer (cached).
+
+        Generic implementations (Newznab, Torznab) are unique and resolved by
+        implementation. Cardigann sites all share implementation="Cardigann",
+        so a specific site (e.g. "Nyaa.si") must be selected by its schema name
+        via the optional `definition`.
+        """
         if self._indexer_schemas is None:
             schemas = self.indexers.list_indexer_schema()
-            self._indexer_schemas = {s.implementation: s for s in schemas if s.implementation}
+            # First schema per implementation wins (matches generic indexers).
+            self._indexer_schemas = {}
+            for s in schemas:
+                if s.implementation and s.implementation not in self._indexer_schemas:
+                    self._indexer_schemas[s.implementation] = s
+                if getattr(s, "name", None):
+                    self._indexer_schemas_by_name[s.name] = s
+        if definition:
+            return self._indexer_schemas_by_name.get(definition)
         return self._indexer_schemas.get(implementation)
 
     def get_app_schema(self, implementation: str) -> ApplicationResource | None:
@@ -84,9 +101,11 @@ class ProwlarrClient:
         if not implementation:
             raise ValueError(f"Missing 'implementation' for indexer: {name}")
 
-        schema = self.get_indexer_schema(implementation)
+        definition = config.get("definition")
+        schema = self.get_indexer_schema(implementation, definition)
         if not schema:
-            raise ValueError(f"Unknown implementation: {implementation}")
+            target = definition or implementation
+            raise ValueError(f"Unknown indexer schema: {target}")
 
         resource = IndexerResource(
             name=name,
