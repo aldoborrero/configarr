@@ -69,7 +69,7 @@ Top-level sections (from `parse_arr_instance` + `ArrServiceConfig`):
 |---|---|---|
 | `base_url` | — | required |
 | `api_key` | — | required |
-| `settings.root_folders` | list | root folders |
+| `settings.root_folders` | list of `{path: ...}` | root folders (string entries are rejected by the model) |
 | `settings.media_management` | map | naming config |
 | `profiles.delay_profiles` | list | |
 | `profiles.release_profiles` | list | **Sonarr-only** (ignored by Radarr) |
@@ -81,14 +81,16 @@ Top-level sections (from `parse_arr_instance` + `ArrServiceConfig`):
 
 ### Root folders — `settings.root_folders`
 
-A list whose entries are **either a string path or a `{path: ...}` object**
-(`sync.py`: `folder.get("path", folder) if isinstance(folder, dict) else folder`).
+A list whose entries are **`{path: ...}` objects**. Even though `sync.py` would
+accept a bare string, the `ArrServiceConfig` Pydantic model types this field as
+`list[dict[str, Any]]`, so a bare string path **fails validation at parse time**
+(`Input should be a valid dictionary`). Always wrap each path in `path:`.
 Creates the folder if absent; existing folders report `UNCHANGED`.
 
 ```yaml
 settings:
   root_folders:
-    - /tv
+    - path: /tv
     - path: /tv2
 ```
 
@@ -553,7 +555,7 @@ sonarr:
       api_key: ${SONARR_API_KEY}
       settings:
         root_folders:
-          - /tv
+          - path: /tv
         media_management:
           rename_episodes: true
           multi_episode_style: range
