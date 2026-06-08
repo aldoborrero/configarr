@@ -1,0 +1,24 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "configarr",
+  "owner": {
+    "name": "Aldo Borrero",
+    "email": "aldo@aldoborrero.com"
+  },
+  "metadata": {
+    "description": "Skill for authoring and validating configarr.yml configuration",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "configarr",
+      "description": "Author, edit, validate, and extend configarr.yml — the declarative config for Radarr, Sonarr, Prowlarr, Bazarr, and SABnzbd.",
+      "version": "1.0.0",
+      "author": { "name": "Aldo Borrero", "email": "aldo@aldoborrero.com" },
+      "homepage": "https://github.com/aldoborrero/configarr",
+      "source": "./",
+      "strict": false,
+      "skills": ["./skills/configarr-config"]
+    }
+  ]
+}
