@@ -17,6 +17,9 @@ from configarr.models import SyncStatus
 
 log = logging.getLogger(__name__)
 
+# Timeout (seconds) for raw HTTP calls so a hung Prowlarr can't stall the whole sync.
+HTTP_TIMEOUT = 60
+
 
 class ProwlarrClient:
     """Prowlarr API client using prowlarr-py."""
@@ -216,6 +219,7 @@ class ProwlarrClient:
         resp = http_requests.get(
             f"{base_url}/api/v1/downloadclient",
             headers=headers,
+            timeout=HTTP_TIMEOUT,
         )
         resp.raise_for_status()
         existing = None
@@ -230,6 +234,7 @@ class ProwlarrClient:
                 f"{base_url}/api/v1/downloadclient/{existing['id']}?forceSave=true",
                 headers=headers,
                 json=payload,
+                timeout=HTTP_TIMEOUT,
             )
             resp.raise_for_status()
             log.debug(f"Updated download client: {name}")
@@ -239,6 +244,7 @@ class ProwlarrClient:
                 f"{base_url}/api/v1/downloadclient?forceSave=true",
                 headers=headers,
                 json=payload,
+                timeout=HTTP_TIMEOUT,
             )
             resp.raise_for_status()
             log.debug(f"Created download client: {name}")

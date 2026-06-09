@@ -494,6 +494,7 @@ class SonarrClient:
             found.on_upgrade = on_upgrade
             found.on_rename = on_rename
             found.on_import_complete = on_import_complete
+            found.tags = config.get("tags", [])
             if found.fields:
                 for field in found.fields:
                     if field.name in settings:

@@ -464,6 +464,7 @@ class RadarrClient:
             found.on_download = on_download
             found.on_upgrade = on_upgrade
             found.on_rename = on_rename
+            found.tags = config.get("tags", [])
             if found.fields:
                 for field in found.fields:
                     if field.name in settings:

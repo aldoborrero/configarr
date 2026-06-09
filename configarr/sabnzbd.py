@@ -98,11 +98,15 @@ class SabnzbdClient:
 
     def sync_server(self, name: str, config: dict[str, Any]) -> SyncStatus:
         """Sync a news server configuration."""
+        host = config.get("host")
+        if not host:
+            raise ValueError(f"SABnzbd server '{name}' is missing required 'host'")
+
         existing = self._find_server(name)
 
         # Build server params
         params = {
-            "host": config.get("host"),
+            "host": host,
             "port": config.get("port", 563),
             "ssl": 1 if config.get("ssl", True) else 0,
             "ssl_verify": config.get("ssl_verify", 2),
