@@ -7,11 +7,11 @@ from rich.console import Console
 from configarr.models import ArrServiceConfig, ProwlarrConfig, BazarrConfig, SabnzbdConfig, SyncStatus
 from configarr.radarr import RadarrClient
 from configarr.sonarr import SonarrClient
-
-ArrClient = Union[RadarrClient, SonarrClient]
 from configarr.prowlarr import ProwlarrClient
 from configarr.bazarr import BazarrClient
 from configarr.sabnzbd import SabnzbdClient
+
+ArrClient = Union[RadarrClient, SonarrClient]
 
 console = Console()
 
