@@ -1,20 +1,13 @@
 """Bazarr managers for configarr."""
 
-import json
 import logging
 from typing import Any
 
 import bazarr
 import requests
 from bazarr.api import SystemLanguagesApi, SystemLanguagesProfilesApi, SystemSettingsApi
-from bazarr.models import (
-    GeneralSettings,
-    RadarrSettings,
-    SonarrSettings,
-    SystemSettingsUpdate,
-)
+from bazarr.models import SystemSettingsUpdate
 
-from configarr.bazarr.settings import SettingsManager
 from configarr.bazarr.languages import LanguageProfileManager
 
 log = logging.getLogger(__name__)
@@ -161,7 +154,10 @@ class BazarrClient:
             }
             for field, value in config.items():
                 key = f"settings-{bazarr_name}-{field}"
-                files[key] = (None, str(value))
+                if isinstance(value, bool):
+                    files[key] = (None, str(value).lower())
+                else:
+                    files[key] = (None, str(value))
 
             resp = requests.post(url, params=params, files=files, timeout=60)
             resp.raise_for_status()
@@ -185,17 +181,16 @@ class BazarrClient:
 
     def sync_language_profiles(
         self, profiles_config: list[dict[str, Any]]
-    ) -> tuple[int, int, list[str]]:
+    ) -> tuple[list[str], list[str], bool]:
         """Sync language profiles.
 
         Returns:
-            Tuple of (success_count, failure_count, skipped_names)
+            Tuple of (created_names, updated_names, saved_ok).
         """
         return self._language_manager.sync_profiles(profiles_config)
 
 
 __all__ = [
     "BazarrClient",
-    "SettingsManager",
     "LanguageProfileManager",
 ]

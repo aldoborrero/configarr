@@ -7,11 +7,11 @@ from rich.console import Console
 from configarr.models import ArrServiceConfig, ProwlarrConfig, BazarrConfig, SabnzbdConfig, SyncStatus
 from configarr.radarr import RadarrClient
 from configarr.sonarr import SonarrClient
-
-ArrClient = Union[RadarrClient, SonarrClient]
 from configarr.prowlarr import ProwlarrClient
 from configarr.bazarr import BazarrClient
 from configarr.sabnzbd import SabnzbdClient
+
+ArrClient = Union[RadarrClient, SonarrClient]
 
 console = Console()
 
@@ -335,23 +335,24 @@ def sync_bazarr(
                 failure += 1
         console.print()
 
-    # Language profiles
+    # Language profiles. The save is a single batch POST, so it succeeds or fails
+    # as a whole; existing profiles named in config are overwritten (not skipped).
     if config.language_profiles:
         _print_section("Language Profiles")
-        s, f, skipped = client.sync_language_profiles(config.language_profiles)
-        # Report created profiles
-        for profile in config.language_profiles:
-            name = profile.get("name", "Unknown")
-            if name not in skipped:
-                if f == 0:
-                    console.print(f"  {_status_update(dry_run)} {name}")
-                else:
-                    console.print(f"  {ICON_FAILED} Failed to create {name}")
-        # Report existing profiles
-        for name in skipped:
-            console.print(f"  {ICON_EXISTS} Already exists {name}")
-        success += s
-        failure += f
+        created, updated, ok = client.sync_language_profiles(config.language_profiles)
+        if ok:
+            for name in created:
+                verb = "Would create" if dry_run else "Created"
+                icon = ICON_WOULD if dry_run else ICON_CREATED
+                console.print(f"  {icon} {verb} {name}")
+                success += 1
+            for name in updated:
+                console.print(f"  {_status_update(dry_run)} {name}")
+                success += 1
+        else:
+            for name in created + updated:
+                console.print(f"  {ICON_FAILED} Failed {name}")
+                failure += 1
         console.print()
 
     return success, failure

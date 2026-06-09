@@ -67,7 +67,7 @@ class RadarrClient:
         self._quality_defs: list[QualityDefinitionResource] | None = None
         self._download_client_schemas: dict[str, DownloadClientResource] | None = None
         self._notification_schemas: dict[str, NotificationResource] | None = None
-        self._custom_format_ids: dict[str, int] = {}
+        self._custom_format_ids: dict[str, int] | None = None
 
     def _find_by_name[T](self, resources: list[T], name: str) -> T | None:
         """Find resource by name in list."""
@@ -200,7 +200,7 @@ class RadarrClient:
     # Custom Formats
     def get_custom_format_ids(self) -> dict[str, int]:
         """Get mapping of custom format name → ID (cached)."""
-        if not self._custom_format_ids:
+        if self._custom_format_ids is None:
             existing = self.custom_formats.list_custom_format()
             self._custom_format_ids = {cf.name: cf.id for cf in existing if cf.name and cf.id}
         return self._custom_format_ids
@@ -233,12 +233,12 @@ class RadarrClient:
         if found:
             resource.id = found.id
             self.custom_formats.update_custom_format(str(found.id), custom_format_resource=resource)
-            self._custom_format_ids[name] = found.id
+            self.get_custom_format_ids()[name] = found.id
             log.debug(f"Updated custom format: {name}")
             return SyncStatus.UPDATED
 
         result = self.custom_formats.create_custom_format(custom_format_resource=resource)
-        self._custom_format_ids[name] = result.id
+        self.get_custom_format_ids()[name] = result.id
         log.debug(f"Created custom format: {name}")
         return SyncStatus.CREATED
 
@@ -464,6 +464,7 @@ class RadarrClient:
             found.on_download = on_download
             found.on_upgrade = on_upgrade
             found.on_rename = on_rename
+            found.tags = config.get("tags", [])
             if found.fields:
                 for field in found.fields:
                     if field.name in settings:

@@ -80,7 +80,10 @@ def main(
     console.print()
 
     if dry_run:
-        console.print("[yellow]DRY RUN MODE - No changes will be made[/yellow]\n")
+        console.print(
+            "[yellow]DRY RUN MODE - only Bazarr is simulated. Radarr, Sonarr, Prowlarr, and "
+            "SABnzbd do not support dry-run and are skipped (no changes are made to them).[/yellow]\n"
+        )
 
     console.print(f"[dim]Configuration file:[/dim] {config_path}\n")
 
@@ -96,11 +99,34 @@ def main(
         console.print(f"[bold red]Configuration error:[/bold red] {e}")
         sys.exit(1)
 
+    # Validate --service / --instance against what's actually configured, so a typo
+    # doesn't silently no-op and still exit 0. This is independent of --dry-run.
+    available = {
+        "radarr": [c.name for c in config.radarr],
+        "sonarr": [c.name for c in config.sonarr],
+        "prowlarr": [c.name for c in config.prowlarr],
+        "bazarr": [c.name for c in config.bazarr],
+        "sabnzbd": [c.name for c in config.sabnzbd],
+    }
+    if service and not available[service.lower()]:
+        console.print(f"[bold red]No '{service}' instances are configured.[/bold red]")
+        sys.exit(2)
+    if instance:
+        selected = [service.lower()] if service else list(available)
+        candidate_names = [n for svc in selected for n in available[svc]]
+        if instance not in candidate_names:
+            scope = f"service '{service}'" if service else "any configured service"
+            console.print(
+                f"[bold red]No instance named '{instance}' found in {scope}.[/bold red]"
+            )
+            sys.exit(2)
+
     total_success = 0
     total_failure = 0
 
-    # Process SABnzbd instances FIRST (categories must exist before *arr apps reference them)
-    if service is None or service.lower() == "sabnzbd":
+    # Process SABnzbd instances FIRST (categories must exist before *arr apps reference them).
+    # Skipped under --dry-run: these sync paths are not dry-run-aware and would write to the live API.
+    if (service is None or service.lower() == "sabnzbd") and not dry_run:
         for sabnzbd_config in config.sabnzbd:
             if instance and sabnzbd_config.name != instance:
                 continue
@@ -108,8 +134,8 @@ def main(
             total_success += s
             total_failure += f
 
-    # Process Radarr instances
-    if service is None or service.lower() == "radarr":
+    # Process Radarr instances (skipped under --dry-run: not dry-run-aware, would write live)
+    if (service is None or service.lower() == "radarr") and not dry_run:
         for radarr_config in config.radarr:
             if instance and radarr_config.name != instance:
                 continue
@@ -117,8 +143,8 @@ def main(
             total_success += s
             total_failure += f
 
-    # Process Sonarr instances
-    if service is None or service.lower() == "sonarr":
+    # Process Sonarr instances (skipped under --dry-run: not dry-run-aware, would write live)
+    if (service is None or service.lower() == "sonarr") and not dry_run:
         for sonarr_config in config.sonarr:
             if instance and sonarr_config.name != instance:
                 continue
@@ -126,8 +152,8 @@ def main(
             total_success += s
             total_failure += f
 
-    # Process Prowlarr instances
-    if service is None or service.lower() == "prowlarr":
+    # Process Prowlarr instances (skipped under --dry-run: not dry-run-aware, would write live)
+    if (service is None or service.lower() == "prowlarr") and not dry_run:
         for prowlarr_config in config.prowlarr:
             if instance and prowlarr_config.name != instance:
                 continue
