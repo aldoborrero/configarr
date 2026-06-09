@@ -180,19 +180,24 @@ class LanguageProfileManager:
 
     def sync_profiles(
         self, profiles_config: list[dict[str, Any]]
-    ) -> tuple[int, int, list[str]]:
+    ) -> tuple[list[str], list[str], bool]:
         """Sync language profiles.
 
+        Listed profiles are written from config: ones already on the server are
+        overwritten, new ones are created, and profiles absent from config are
+        preserved. All profiles are written in a single batch POST, so the save
+        either succeeds or fails as a whole.
+
         Returns:
-            Tuple of (success_count, failure_count, skipped_names)
+            Tuple of (created_names, updated_names, saved_ok).
         """
-        success = 0
-        failure = 0
-        skipped: list[str] = []
+        created: list[str] = []
+        updated: list[str] = []
 
         # Get existing profiles
         existing_profiles = self.get_profiles()
         existing_by_name = {p.get("name"): p for p in existing_profiles}
+        config_names = {p.get("name", "Unknown") for p in profiles_config}
 
         # Build the complete list of profiles to save
         all_profiles = []
@@ -203,27 +208,25 @@ class LanguageProfileManager:
             existing = existing_by_name.get(name)
 
             if existing:
-                # Update existing profile
+                # Overwrite the existing profile with config-derived values
                 profile_id = existing.get("profileId", next_id)
-                payload = self._build_profile_payload(int(profile_id), profile_config)
-                all_profiles.append(payload)
-                skipped.append(name)
+                all_profiles.append(
+                    self._build_profile_payload(int(profile_id), profile_config)
+                )
+                updated.append(name)
             else:
-                # Create new profile
-                payload = self._build_profile_payload(next_id, profile_config)
-                all_profiles.append(payload)
+                all_profiles.append(self._build_profile_payload(next_id, profile_config))
                 next_id += 1
-                success += 1
+                created.append(name)
 
         # Include existing profiles not in config (preserve them)
         for name, existing in existing_by_name.items():
-            if name not in [p.get("name") for p in profiles_config]:
+            if name not in config_names:
                 all_profiles.append(existing)
 
-        # Save all profiles
-        if all_profiles:
-            if not self._save_profiles(all_profiles):
-                failure = len(profiles_config)
-                success = 0
+        # Single batch save — all-or-nothing.
+        saved_ok = True
+        if profiles_config:
+            saved_ok = self._save_profiles(all_profiles)
 
-        return success, failure, skipped
+        return created, updated, saved_ok

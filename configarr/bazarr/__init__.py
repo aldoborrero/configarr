@@ -181,11 +181,11 @@ class BazarrClient:
 
     def sync_language_profiles(
         self, profiles_config: list[dict[str, Any]]
-    ) -> tuple[int, int, list[str]]:
+    ) -> tuple[list[str], list[str], bool]:
         """Sync language profiles.
 
         Returns:
-            Tuple of (success_count, failure_count, skipped_names)
+            Tuple of (created_names, updated_names, saved_ok).
         """
         return self._language_manager.sync_profiles(profiles_config)
 
