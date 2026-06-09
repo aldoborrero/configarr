@@ -99,6 +99,28 @@ def main(
         console.print(f"[bold red]Configuration error:[/bold red] {e}")
         sys.exit(1)
 
+    # Validate --service / --instance against what's actually configured, so a typo
+    # doesn't silently no-op and still exit 0. This is independent of --dry-run.
+    available = {
+        "radarr": [c.name for c in config.radarr],
+        "sonarr": [c.name for c in config.sonarr],
+        "prowlarr": [c.name for c in config.prowlarr],
+        "bazarr": [c.name for c in config.bazarr],
+        "sabnzbd": [c.name for c in config.sabnzbd],
+    }
+    if service and not available[service.lower()]:
+        console.print(f"[bold red]No '{service}' instances are configured.[/bold red]")
+        sys.exit(2)
+    if instance:
+        selected = [service.lower()] if service else list(available)
+        candidate_names = [n for svc in selected for n in available[svc]]
+        if instance not in candidate_names:
+            scope = f"service '{service}'" if service else "any configured service"
+            console.print(
+                f"[bold red]No instance named '{instance}' found in {scope}.[/bold red]"
+            )
+            sys.exit(2)
+
     total_success = 0
     total_failure = 0
 
