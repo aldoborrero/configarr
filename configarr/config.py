@@ -79,11 +79,15 @@ def expand_env_vars(value: Any) -> Any:
 def parse_quality_profiles(config: dict[str, Any]) -> list[dict[str, Any]]:
     """Parse quality profiles from nested YAML structure to flat list."""
     quality_profiles = []
-    profiles = config.get("profiles", {})
-    quality_profiles_section = profiles.get("quality_profiles", {})
-    profiles_config = quality_profiles_section.get("definitions", {})
+    profiles = config.get("profiles") or {}
+    quality_profiles_section = profiles.get("quality_profiles") or {}
+    profiles_config = quality_profiles_section.get("definitions") or {}
 
     for profile_name, profile_def in profiles_config.items():
+        if not isinstance(profile_def, dict):
+            raise ValueError(
+                f"Quality profile '{profile_name}' must be a mapping of settings"
+            )
         qualities_raw = profile_def.get("qualities", [])
         qualities = [{"name": q} if isinstance(q, str) else q for q in qualities_raw]
 
@@ -112,15 +116,15 @@ def parse_arr_instance(name: str, config: dict[str, Any]) -> ArrServiceConfig:
         name=name,
         base_url=config["base_url"],
         api_key=config["api_key"],
-        custom_formats=config.get("custom_formats", {}).get("definitions", {}),
+        custom_formats=(config.get("custom_formats") or {}).get("definitions", {}),
         quality_profiles=parse_quality_profiles(config),
-        naming_config=config.get("settings", {}).get("media_management"),
-        delay_profiles=config.get("profiles", {}).get("delay_profiles"),
-        release_profiles=config.get("profiles", {}).get("release_profiles"),
-        quality_definitions=config.get("profiles", {}).get("quality_definitions"),
-        root_folders=config.get("settings", {}).get("root_folders"),
-        download_clients=config.get("download_clients", {}).get("definitions", {}),
-        notifications=config.get("notifications", {}).get("definitions", {}),
+        naming_config=(config.get("settings") or {}).get("media_management"),
+        delay_profiles=(config.get("profiles") or {}).get("delay_profiles"),
+        release_profiles=(config.get("profiles") or {}).get("release_profiles"),
+        quality_definitions=(config.get("profiles") or {}).get("quality_definitions"),
+        root_folders=(config.get("settings") or {}).get("root_folders"),
+        download_clients=(config.get("download_clients") or {}).get("definitions", {}),
+        notifications=(config.get("notifications") or {}).get("definitions", {}),
     )
 
 
@@ -130,9 +134,9 @@ def parse_prowlarr_instance(name: str, config: dict[str, Any]) -> ProwlarrConfig
         name=name,
         base_url=config["base_url"],
         api_key=config["api_key"],
-        indexers=config.get("indexers", {}).get("definitions", {}),
-        applications=config.get("applications", {}).get("definitions", {}),
-        download_clients=config.get("download_clients", {}).get("definitions", {}),
+        indexers=(config.get("indexers") or {}).get("definitions", {}),
+        applications=(config.get("applications") or {}).get("definitions", {}),
+        download_clients=(config.get("download_clients") or {}).get("definitions", {}),
     )
 
 
@@ -145,8 +149,8 @@ def parse_bazarr_instance(name: str, config: dict[str, Any]) -> BazarrConfig:
         general=config.get("general"),
         sonarr=config.get("sonarr"),
         radarr=config.get("radarr"),
-        providers=config.get("providers", {}),
-        language_profiles=config.get("language_profiles", []),
+        providers=config.get("providers") or {},
+        language_profiles=config.get("language_profiles") or [],
     )
 
 
@@ -156,8 +160,8 @@ def parse_sabnzbd_instance(name: str, config: dict[str, Any]) -> SabnzbdConfig:
         name=name,
         base_url=config["base_url"],
         api_key=config["api_key"],
-        servers=config.get("servers", {}),
-        categories=config.get("categories", {}),
+        servers=config.get("servers") or {},
+        categories=config.get("categories") or {},
         misc=config.get("misc"),
     )
 
@@ -180,6 +184,15 @@ def parse_config(config_path: Path) -> ConfigarrConfig:
     with open(config_path, "r") as f:
         raw_config = yaml.safe_load(f)
 
+    # An empty or comment-only file parses to None; treat it as an empty config.
+    if raw_config is None:
+        raw_config = {}
+    if not isinstance(raw_config, dict):
+        raise ValueError(
+            "Configuration file must contain a YAML mapping at the top level, "
+            f"got {type(raw_config).__name__}"
+        )
+
     # Expand environment variables in all config values
     raw_config = expand_env_vars(raw_config)
 
@@ -190,25 +203,21 @@ def parse_config(config_path: Path) -> ConfigarrConfig:
     bazarr_instances = []
     sabnzbd_instances = []
 
-    if "radarr" in raw_config:
-        for name, instance_config in raw_config["radarr"].get("instances", {}).items():
-            radarr_instances.append(parse_arr_instance(name, instance_config))
-
-    if "sonarr" in raw_config:
-        for name, instance_config in raw_config["sonarr"].get("instances", {}).items():
-            sonarr_instances.append(parse_arr_instance(name, instance_config))
-
-    if "prowlarr" in raw_config:
-        for name, instance_config in raw_config["prowlarr"].get("instances", {}).items():
-            prowlarr_instances.append(parse_prowlarr_instance(name, instance_config))
-
-    if "bazarr" in raw_config:
-        for name, instance_config in raw_config["bazarr"].get("instances", {}).items():
-            bazarr_instances.append(parse_bazarr_instance(name, instance_config))
-
-    if "sabnzbd" in raw_config:
-        for name, instance_config in raw_config["sabnzbd"].get("instances", {}).items():
-            sabnzbd_instances.append(parse_sabnzbd_instance(name, instance_config))
+    # Each service section maps to its target list and per-instance parser. The
+    # `or {}` at each level keeps a present-but-null section (e.g. `radarr:` with no
+    # body, or `instances:` left blank) from crashing instead of being read as
+    # "no instances".
+    service_parsers = (
+        ("radarr", radarr_instances, parse_arr_instance),
+        ("sonarr", sonarr_instances, parse_arr_instance),
+        ("prowlarr", prowlarr_instances, parse_prowlarr_instance),
+        ("bazarr", bazarr_instances, parse_bazarr_instance),
+        ("sabnzbd", sabnzbd_instances, parse_sabnzbd_instance),
+    )
+    for section, target, parser in service_parsers:
+        instances = (raw_config.get(section) or {}).get("instances") or {}
+        for name, instance_config in instances.items():
+            target.append(parser(name, instance_config or {}))
 
     return ConfigarrConfig(
         radarr=radarr_instances,
