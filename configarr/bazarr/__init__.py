@@ -57,7 +57,7 @@ class BazarrClient:
             settings = self.settings_api.get_system_settings()
             return settings.to_dict() if settings else None
         except Exception as e:
-            log.error(f"Failed to get settings: {e}")
+            log.error(f"Failed to get settings: {e}", exc_info=True)
             return None
 
     def update_settings(self, settings: dict[str, Any]) -> bool:
@@ -71,7 +71,7 @@ class BazarrClient:
             self.settings_api.post_system_settings(update)
             return True
         except Exception as e:
-            log.error(f"Failed to update settings: {e}")
+            log.error(f"Failed to update settings: {e}", exc_info=True)
             return False
 
     def _sync_settings_section(self, section: str, config: dict[str, Any]) -> bool:
@@ -98,7 +98,7 @@ class BazarrClient:
             resp.raise_for_status()
             return True
         except Exception as e:
-            log.error(f"Failed to update {section} settings: {e}")
+            log.error(f"Failed to update {section} settings: {e}", exc_info=True)
             return False
 
     def sync_general(self, config: dict[str, Any]) -> bool:
@@ -163,7 +163,7 @@ class BazarrClient:
             resp.raise_for_status()
             return True
         except Exception as e:
-            log.error(f"Failed to sync provider {provider_name}: {e}")
+            log.error(f"Failed to sync provider {provider_name}: {e}", exc_info=True)
             return False
 
     # Language profile methods (delegated to LanguageProfileManager)

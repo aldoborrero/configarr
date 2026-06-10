@@ -69,7 +69,7 @@ class LanguageProfileManager:
             resp.raise_for_status()
             return resp.json() or []
         except Exception as e:
-            log.error(f"Failed to get language profiles: {e}")
+            log.error(f"Failed to get language profiles: {e}", exc_info=True)
             return []
 
     def get_languages(self) -> list[dict[str, Any]]:
@@ -81,7 +81,7 @@ class LanguageProfileManager:
             resp.raise_for_status()
             return resp.json() or []
         except Exception as e:
-            log.error(f"Failed to get languages: {e}")
+            log.error(f"Failed to get languages: {e}", exc_info=True)
             return []
 
     def find_profile_by_name(self, name: str) -> dict[str, Any] | None:
@@ -175,7 +175,7 @@ class LanguageProfileManager:
             resp.raise_for_status()
             return True
         except Exception as e:
-            log.error(f"Failed to save profiles: {e}")
+            log.error(f"Failed to save profiles: {e}", exc_info=True)
             return False
 
     def sync_profiles(
