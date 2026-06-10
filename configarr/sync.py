@@ -1,5 +1,6 @@
 """Sync orchestration for configarr."""
 
+import logging
 from typing import Literal, Union
 
 from rich.console import Console
@@ -14,6 +15,7 @@ from configarr.sabnzbd import SabnzbdClient
 ArrClient = Union[RadarrClient, SonarrClient]
 
 console = Console()
+log = logging.getLogger(__name__)
 
 ServiceType = Literal["radarr", "sonarr"]
 
@@ -43,6 +45,52 @@ def _print_section(title: str):
     console.print(f"[bold]{title}[/bold]")
 
 
+def _sync_items(section: str, items, sync_fn) -> tuple[int, int]:
+    """Sync an iterable of (label, value) pairs through ``sync_fn(label, value)``,
+    printing per-item status. Returns (success, failure).
+
+    A failure is reported and counted, but its traceback is logged at debug level
+    instead of being swallowed, so ``--debug`` surfaces the underlying error.
+    """
+    _print_section(section)
+    success = 0
+    failure = 0
+    for label, value in items:
+        try:
+            status = sync_fn(label, value)
+            if status in (SyncStatus.CREATED, SyncStatus.UPDATED):
+                verb = "Created" if status == SyncStatus.CREATED else "Updated"
+                console.print(f"  {ICON_CREATED} {verb} {label}")
+                success += 1
+            elif status == SyncStatus.UNCHANGED:
+                console.print(f"  {ICON_EXISTS} Already exists {label}")
+        except Exception as e:
+            console.print(f"  {ICON_FAILED} Failed {label}: {e}")
+            log.debug("Failed to sync '%s' in %s", label, section, exc_info=True)
+            failure += 1
+    console.print()
+    return success, failure
+
+
+def _sync_single(section: str, label: str, fn) -> tuple[int, int]:
+    """Run a single sync call that returns UPDATED on success. Returns (success,
+    failure); a failure logs its traceback at debug level."""
+    _print_section(section)
+    try:
+        status = fn()
+        if status == SyncStatus.UPDATED:
+            console.print(f"  {ICON_CREATED} Updated {label}")
+            console.print()
+            return 1, 0
+    except Exception as e:
+        console.print(f"  {ICON_FAILED} Failed to update {label}: {e}")
+        log.debug("Failed to update %s", label, exc_info=True)
+        console.print()
+        return 0, 1
+    console.print()
+    return 0, 0
+
+
 def sync_arr(
     service_type: ServiceType,
     config: ArrServiceConfig,
@@ -61,155 +109,78 @@ def sync_arr(
     else:
         client = SonarrClient(config.base_url, config.api_key)
 
-    # Root folders
+    def tally(result: tuple[int, int]) -> None:
+        nonlocal success, failure
+        success += result[0]
+        failure += result[1]
+
+    # Root folders (path is either a bare string or a {"path": ...} mapping)
     if config.root_folders:
-        _print_section("Root Folders")
-        for folder in config.root_folders:
-            path = folder.get("path", folder) if isinstance(folder, dict) else folder
-            try:
-                status = client.sync_root_folder(path)
-                if status == SyncStatus.CREATED:
-                    console.print(f"  {ICON_CREATED} Created {path}")
-                    success += 1
-                elif status == SyncStatus.UNCHANGED:
-                    console.print(f"  {ICON_EXISTS} Already exists {path}")
-            except Exception as e:
-                console.print(f"  {ICON_FAILED} Failed {path}: {e}")
-                failure += 1
-        console.print()
+        paths = [
+            folder.get("path", folder) if isinstance(folder, dict) else folder
+            for folder in config.root_folders
+        ]
+        tally(_sync_items(
+            "Root Folders",
+            [(path, path) for path in paths],
+            lambda path, _value: client.sync_root_folder(path),
+        ))
 
     # Naming configuration
     if config.naming_config:
-        _print_section("Naming")
-        try:
-            status = client.sync_naming_config(config.naming_config)
-            if status == SyncStatus.UPDATED:
-                console.print(f"  {ICON_CREATED} Updated naming configuration")
-                success += 1
-        except Exception as e:
-            console.print(f"  {ICON_FAILED} Failed to update naming configuration: {e}")
-            failure += 1
-        console.print()
+        tally(_sync_single(
+            "Naming", "naming configuration",
+            lambda: client.sync_naming_config(config.naming_config),
+        ))
 
     # Delay profiles
     if config.delay_profiles:
-        _print_section("Delay Profiles")
-        for profile_config in config.delay_profiles:
-            name = profile_config.get("name", "Unknown")
-            try:
-                status = client.sync_delay_profile(name, profile_config)
-                if status == SyncStatus.CREATED:
-                    console.print(f"  {ICON_CREATED} Created {name}")
-                    success += 1
-                elif status == SyncStatus.UNCHANGED:
-                    console.print(f"  {ICON_EXISTS} Already exists {name}")
-            except Exception as e:
-                console.print(f"  {ICON_FAILED} Failed {name}: {e}")
-                failure += 1
-        console.print()
+        tally(_sync_items(
+            "Delay Profiles",
+            [(p.get("name", "Unknown"), p) for p in config.delay_profiles],
+            client.sync_delay_profile,
+        ))
 
     # Release profiles (Sonarr only)
     if config.release_profiles and isinstance(client, SonarrClient):
-        _print_section("Release Profiles")
-        for profile_config in config.release_profiles:
-            name = profile_config.get("name", "Unknown")
-            try:
-                status = client.sync_release_profile(name, profile_config)
-                if status == SyncStatus.CREATED:
-                    console.print(f"  {ICON_CREATED} Created {name}")
-                    success += 1
-                elif status == SyncStatus.UNCHANGED:
-                    console.print(f"  {ICON_EXISTS} Already exists {name}")
-            except Exception as e:
-                console.print(f"  {ICON_FAILED} Failed {name}: {e}")
-                failure += 1
-        console.print()
+        tally(_sync_items(
+            "Release Profiles",
+            [(p.get("name", "Unknown"), p) for p in config.release_profiles],
+            client.sync_release_profile,
+        ))
 
     # Quality definitions
     if config.quality_definitions:
-        _print_section("Quality Definitions")
-        try:
-            status = client.sync_quality_definitions(config.quality_definitions)
-            if status == SyncStatus.UPDATED:
-                console.print(f"  {ICON_CREATED} Updated quality definitions")
-                success += 1
-        except Exception as e:
-            console.print(f"  {ICON_FAILED} Failed to update quality definitions: {e}")
-            failure += 1
-        console.print()
+        tally(_sync_single(
+            "Quality Definitions", "quality definitions",
+            lambda: client.sync_quality_definitions(config.quality_definitions),
+        ))
 
     # Custom formats (must be synced before quality profiles)
     if config.custom_formats:
-        _print_section("Custom Formats")
-        for name, cf_config in config.custom_formats.items():
-            try:
-                status = client.sync_custom_format(name, cf_config)
-                if status == SyncStatus.CREATED:
-                    console.print(f"  {ICON_CREATED} Created {name}")
-                    success += 1
-                elif status == SyncStatus.UPDATED:
-                    console.print(f"  {ICON_CREATED} Updated {name}")
-                    success += 1
-                elif status == SyncStatus.UNCHANGED:
-                    console.print(f"  {ICON_EXISTS} Already exists {name}")
-            except Exception as e:
-                console.print(f"  {ICON_FAILED} Failed {name}: {e}")
-                failure += 1
-        console.print()
+        tally(_sync_items(
+            "Custom Formats", config.custom_formats.items(), client.sync_custom_format
+        ))
 
     # Quality profiles
     if config.quality_profiles:
-        _print_section("Quality Profiles")
-        for profile_config in config.quality_profiles:
-            name = profile_config.get("name", "Unknown")
-            try:
-                status = client.sync_quality_profile(name, profile_config)
-                if status == SyncStatus.CREATED:
-                    console.print(f"  {ICON_CREATED} Created {name}")
-                    success += 1
-                elif status == SyncStatus.UPDATED:
-                    console.print(f"  {ICON_CREATED} Updated {name}")
-                    success += 1
-                elif status == SyncStatus.UNCHANGED:
-                    console.print(f"  {ICON_EXISTS} Already exists {name}")
-            except Exception as e:
-                console.print(f"  {ICON_FAILED} Failed {name}: {e}")
-                failure += 1
-        console.print()
+        tally(_sync_items(
+            "Quality Profiles",
+            [(p.get("name", "Unknown"), p) for p in config.quality_profiles],
+            client.sync_quality_profile,
+        ))
 
     # Download clients
     if config.download_clients:
-        _print_section("Download Clients")
-        for name, client_config in config.download_clients.items():
-            try:
-                status = client.sync_download_client(name, client_config)
-                if status == SyncStatus.CREATED:
-                    console.print(f"  {ICON_CREATED} Created {name}")
-                    success += 1
-                elif status == SyncStatus.UPDATED:
-                    console.print(f"  {ICON_CREATED} Updated {name}")
-                    success += 1
-            except Exception as e:
-                console.print(f"  {ICON_FAILED} Failed {name}: {e}")
-                failure += 1
-        console.print()
+        tally(_sync_items(
+            "Download Clients", config.download_clients.items(), client.sync_download_client
+        ))
 
     # Notifications (Connections)
     if config.notifications:
-        _print_section("Notifications")
-        for name, notif_config in config.notifications.items():
-            try:
-                status = client.sync_notification(name, notif_config)
-                if status == SyncStatus.CREATED:
-                    console.print(f"  {ICON_CREATED} Created {name}")
-                    success += 1
-                elif status == SyncStatus.UPDATED:
-                    console.print(f"  {ICON_CREATED} Updated {name}")
-                    success += 1
-            except Exception as e:
-                console.print(f"  {ICON_FAILED} Failed {name}: {e}")
-                failure += 1
-        console.print()
+        tally(_sync_items(
+            "Notifications", config.notifications.items(), client.sync_notification
+        ))
 
     return success, failure
 
@@ -223,56 +194,23 @@ def sync_prowlarr(config: ProwlarrConfig) -> tuple[int, int]:
 
     client = ProwlarrClient(config.base_url, config.api_key)
 
-    # Indexers
+    def tally(result: tuple[int, int]) -> None:
+        nonlocal success, failure
+        success += result[0]
+        failure += result[1]
+
     if config.indexers:
-        _print_section("Indexers")
-        for name, indexer_config in config.indexers.items():
-            try:
-                status = client.sync_indexer(name, indexer_config)
-                if status == SyncStatus.CREATED:
-                    console.print(f"  {ICON_CREATED} Created {name}")
-                    success += 1
-                elif status == SyncStatus.UPDATED:
-                    console.print(f"  {ICON_CREATED} Updated {name}")
-                    success += 1
-            except Exception as e:
-                console.print(f"  {ICON_FAILED} Failed {name}: {e}")
-                failure += 1
-        console.print()
+        tally(_sync_items("Indexers", config.indexers.items(), client.sync_indexer))
 
-    # Applications
     if config.applications:
-        _print_section("Applications")
-        for name, app_config in config.applications.items():
-            try:
-                status = client.sync_application(name, app_config)
-                if status == SyncStatus.CREATED:
-                    console.print(f"  {ICON_CREATED} Created {name}")
-                    success += 1
-                elif status == SyncStatus.UPDATED:
-                    console.print(f"  {ICON_CREATED} Updated {name}")
-                    success += 1
-            except Exception as e:
-                console.print(f"  {ICON_FAILED} Failed {name}: {e}")
-                failure += 1
-        console.print()
+        tally(_sync_items(
+            "Applications", config.applications.items(), client.sync_application
+        ))
 
-    # Download clients
     if config.download_clients:
-        _print_section("Download Clients")
-        for name, client_config in config.download_clients.items():
-            try:
-                status = client.sync_download_client(name, client_config)
-                if status == SyncStatus.CREATED:
-                    console.print(f"  {ICON_CREATED} Created {name}")
-                    success += 1
-                elif status == SyncStatus.UPDATED:
-                    console.print(f"  {ICON_CREATED} Updated {name}")
-                    success += 1
-            except Exception as e:
-                console.print(f"  {ICON_FAILED} Failed {name}: {e}")
-                failure += 1
-        console.print()
+        tally(_sync_items(
+            "Download Clients", config.download_clients.items(), client.sync_download_client
+        ))
 
     return success, failure
 
@@ -367,51 +305,20 @@ def sync_sabnzbd(config: SabnzbdConfig) -> tuple[int, int]:
 
     client = SabnzbdClient(config.base_url, config.api_key)
 
-    # Servers
+    def tally(result: tuple[int, int]) -> None:
+        nonlocal success, failure
+        success += result[0]
+        failure += result[1]
+
     if config.servers:
-        _print_section("Servers")
-        for name, server_config in config.servers.items():
-            try:
-                status = client.sync_server(name, server_config)
-                if status == SyncStatus.CREATED:
-                    console.print(f"  {ICON_CREATED} Created {name}")
-                    success += 1
-                elif status == SyncStatus.UPDATED:
-                    console.print(f"  {ICON_CREATED} Updated {name}")
-                    success += 1
-            except Exception as e:
-                console.print(f"  {ICON_FAILED} Failed {name}: {e}")
-                failure += 1
-        console.print()
+        tally(_sync_items("Servers", config.servers.items(), client.sync_server))
 
-    # Categories
     if config.categories:
-        _print_section("Categories")
-        for name, category_config in config.categories.items():
-            try:
-                status = client.sync_category(name, category_config)
-                if status == SyncStatus.CREATED:
-                    console.print(f"  {ICON_CREATED} Created {name}")
-                    success += 1
-                elif status == SyncStatus.UPDATED:
-                    console.print(f"  {ICON_CREATED} Updated {name}")
-                    success += 1
-            except Exception as e:
-                console.print(f"  {ICON_FAILED} Failed {name}: {e}")
-                failure += 1
-        console.print()
+        tally(_sync_items("Categories", config.categories.items(), client.sync_category))
 
-    # Misc settings
     if config.misc:
-        _print_section("Settings")
-        try:
-            status = client.sync_misc_settings(config.misc)
-            if status == SyncStatus.UPDATED:
-                console.print(f"  {ICON_CREATED} Updated misc settings")
-                success += 1
-        except Exception as e:
-            console.print(f"  {ICON_FAILED} Failed misc settings: {e}")
-            failure += 1
-        console.print()
+        tally(_sync_single(
+            "Settings", "misc settings", lambda: client.sync_misc_settings(config.misc)
+        ))
 
     return success, failure
