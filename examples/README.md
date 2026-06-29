@@ -15,6 +15,7 @@ for the exhaustive, source-verified reference.
 | [`trash.yml`](trash.yml) | Radarr: import custom formats + quality definitions from a TRaSH-Guides checkout by `trash_id`. |
 | [`full.yml`](full.yml) | Every service in one file, including a multi-instance setup. |
 | [`.env.example`](.env.example) | Secrets referenced by the examples via `${VAR}`. |
+| [`trash-guides/`](trash-guides/) | Ready-to-run quality profiles adapting [TRaSH-Guides](https://trash-guides.info) custom formats and scores for Radarr and Sonarr. |
 
 ## Usage
 
