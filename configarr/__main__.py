@@ -115,6 +115,11 @@ def main(
     if plan_only:
         from configarr.diff.runner import run_plan
 
+        if service or instance:
+            console.print(
+                "[yellow]Warning: --plan only supports Radarr custom formats; "
+                "--service and --instance are not honored and will be ignored.[/yellow]"
+            )
         click.echo(run_plan(config))
         return
 

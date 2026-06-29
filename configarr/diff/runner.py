@@ -5,9 +5,12 @@ from __future__ import annotations
 from configarr.diff.engine import diff
 from configarr.diff.providers.radarr_custom_formats import RadarrCustomFormatProvider
 from configarr.diff.render import render_plan
+from configarr.models import ConfigarrConfig
 
 
-def run_plan(config) -> str:
+def run_plan(config: ConfigarrConfig) -> str:
+    if not config.radarr:
+        return "No supported resources configured for --plan."
     sections: list[str] = []
     for inst in config.radarr:
         provider = RadarrCustomFormatProvider(

@@ -31,6 +31,13 @@ radarr:
 """
 
 
+def test_run_plan_no_radarr(tmp_path):
+    cfg = tmp_path / "configarr.yml"
+    cfg.write_text("sonarr:\n  instances: {}\n")
+    config = parse_config(cfg)
+    assert run_plan(config) == "No supported resources configured for --plan."
+
+
 @responses.activate
 def test_run_plan_reports_create_and_writes_nothing(tmp_path):
     cfg = tmp_path / "configarr.yml"
