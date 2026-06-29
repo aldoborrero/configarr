@@ -1,0 +1,73 @@
+# TRaSH-Guides quality definitions (sizes): Sonarr "Series (default)".
+#
+# Generated from the TRaSH-Guides data (https://github.com/TRaSH-Guides/Guides,
+# MIT-licensed JSON). Sets the min / max / preferred size (MB per minute) for
+# each quality. Quality definitions are instance-level, so use the scheme that
+# matches your primary profile — this one pairs with the WEB-1080p / WEB-2160p profiles.
+#
+# Merge the `sonarr:` block into your configarr.yml, or run standalone:
+#   configarr --config examples/trash-guides/sonarr/quality-definitions-series.yml --service sonarr
+
+sonarr:
+  instances:
+    main:
+      base_url: http://localhost:8989
+      api_key: ${SONARR_API_KEY}
+      profiles:
+        quality_definitions:
+          HDTV-720p:
+            min: 10
+            max: 1000
+            preferred: 995
+          HDTV-1080p:
+            min: 15
+            max: 1000
+            preferred: 995
+          WEBRip-720p:
+            min: 10
+            max: 1000
+            preferred: 995
+          WEBDL-720p:
+            min: 10
+            max: 1000
+            preferred: 995
+          Bluray-720p:
+            min: 17.1
+            max: 1000
+            preferred: 995
+          WEBRip-1080p:
+            min: 15
+            max: 1000
+            preferred: 995
+          WEBDL-1080p:
+            min: 15
+            max: 1000
+            preferred: 995
+          Bluray-1080p:
+            min: 50.4
+            max: 1000
+            preferred: 995
+          Bluray-1080p Remux:
+            min: 69.1
+            max: 1000
+            preferred: 995
+          HDTV-2160p:
+            min: 25
+            max: 1000
+            preferred: 995
+          WEBRip-2160p:
+            min: 25
+            max: 1000
+            preferred: 995
+          WEBDL-2160p:
+            min: 25
+            max: 1000
+            preferred: 995
+          Bluray-2160p:
+            min: 94.6
+            max: 1000
+            preferred: 995
+          Bluray-2160p Remux:
+            min: 187.4
+            max: 1000
+            preferred: 995

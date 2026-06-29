@@ -1,0 +1,53 @@
+# TRaSH-Guides quality definitions (sizes): Radarr "SQP Streaming".
+#
+# Generated from the TRaSH-Guides data (https://github.com/TRaSH-Guides/Guides,
+# MIT-licensed JSON). Sets the min / max / preferred size (MB per minute) for
+# each quality. Quality definitions are instance-level, so use the scheme that
+# matches your primary profile — this one pairs with the SQP WEB profiles (SQP-1 WEB, SQP-3/4/5).
+#
+# Merge the `radarr:` block into your configarr.yml, or run standalone:
+#   configarr --config examples/trash-guides/radarr/quality-definitions-sqp-streaming.yml --service radarr
+
+radarr:
+  instances:
+    main:
+      base_url: http://localhost:7878
+      api_key: ${RADARR_API_KEY}
+      profiles:
+        quality_definitions:
+          WEBDL-720p:
+            min: 12.5
+            max: 85.7
+            preferred: 84.7
+          WEBRip-720p:
+            min: 12.5
+            max: 85.7
+            preferred: 84.7
+          WEBDL-1080p:
+            min: 12.5
+            max: 102
+            preferred: 101
+          WEBRip-1080p:
+            min: 12.5
+            max: 102
+            preferred: 101
+          Bluray-720p:
+            min: 25.2
+            max: 102
+            preferred: 101
+          Bluray-1080p:
+            min: 33.8
+            max: 154
+            preferred: 153
+          WEBDL-2160p:
+            min: 34.5
+            max: 222.2
+            preferred: 221.2
+          WEBRip-2160p:
+            min: 34.5
+            max: 222.2
+            preferred: 221.2
+          Bluray-2160p:
+            min: 102
+            max: 204.4
+            preferred: 203.4
