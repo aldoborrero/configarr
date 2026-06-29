@@ -18,7 +18,7 @@ def coerce_scalar(value: Any) -> Any:
         except ValueError:
             pass
         # Guard so free-text fields don't coerce to inf/nan via float().
-        if low in {"inf", "+inf", "-inf", "infinity", "nan"}:
+        if low in {"inf", "+inf", "-inf", "infinity", "+infinity", "-infinity", "nan"}:
             return value
         try:
             return float(value)
