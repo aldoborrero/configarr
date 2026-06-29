@@ -1,20 +1,17 @@
-# TRaSH-Guides adaptation: Sonarr "WEB-1080p" quality profile.
+# TRaSH-Guides adaptation: Sonarr "WEB-2160p (Combined)" quality profile.
 #
-# Generated from the TRaSH-Guides data (https://trash-guides.info,
-# https://github.com/TRaSH-Guides/Guides, MIT-licensed JSON) and translated into
-# the configarr schema. Custom-format specifications are copied verbatim; scores
-# are each format's TRaSH `default` score.
+# Generated from the TRaSH-Guides data (https://github.com/TRaSH-Guides/Guides,
+# MIT-licensed JSON) and translated into the configarr schema. Custom-format
+# specifications are copied verbatim; scores are each format's TRaSH `default`
+# score. The standard Unwanted Formats set is added at negative scores.
 #
-# Covers WEBDL/WEBRip 1080p, prefers higher-quality WEB release-group tiers, and
-# rejects unwanted sources (BR-DISK, LQ, x265 HD transcodes, ...) with large
-# negative scores.
+# Reference: https://trash-guides.info/Sonarr/sonarr-setup-quality-profiles/#web-2160p
 #
-# Note: TRaSH's cutoff for this profile is the "WEB 1080p" quality *group*.
-# configarr resolves cutoffs against individual quality names, so it is mapped to
-# WEBDL-1080p here.
+# TRaSH's cutoff for this profile is a quality *group*; configarr resolves
+# cutoffs by individual quality name, so it is mapped to WEBDL-2160p here.
 #
 # Set SONARR_API_KEY in a .env beside your configarr.yml, adjust base_url, then:
-#   configarr --config examples/trash-guides/sonarr-web-1080p.yml --service sonarr
+#   configarr --config examples/trash-guides/sonarr/web-2160p-combined.yml --service sonarr
 
 sonarr:
   instances:
@@ -1027,12 +1024,17 @@ sonarr:
       profiles:
         quality_profiles:
           definitions:
-            WEB-1080p:
+            WEB-2160p (Combined):
               upgrades_allowed: true
-              upgrade_until_quality: WEBDL-1080p
+              upgrade_until_quality: WEBDL-2160p
               upgrade_until_custom_format_score: 10000
               minimum_custom_format_score: 0
               qualities:
+                - name: WEB 2160p
+                  qualities:
+                    - WEBRip-2160p
+                    - WEBDL-2160p
+                  enabled: true
                 - name: WEB 1080p
                   qualities:
                     - WEBRip-1080p
