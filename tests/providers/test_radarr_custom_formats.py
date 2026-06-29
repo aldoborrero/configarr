@@ -47,7 +47,32 @@ def test_create_when_absent():
         }
     }
     plan = _plan(_provider(config))
+    assert len(plan.resources) == 1
     assert plan.resources[0].op is Op.CREATE
+
+
+@responses.activate
+def test_schema_is_cached():
+    responses.get(f"{BASE}/api/v3/customformat", json=[])
+    responses.get(f"{BASE}/api/v3/customformat/schema", json=SCHEMA)
+    config = {
+        "x265": {
+            "specifications": [
+                {
+                    "name": "x265",
+                    "implementation": "ReleaseTitleSpecification",
+                    "fields": {"value": "(x|h)265"},
+                }
+            ]
+        }
+    }
+    p = _provider(config)
+    p.build_desired()
+    p.build_desired()
+    schema_calls = sum(
+        1 for c in responses.calls if "/customformat/schema" in c.request.url
+    )
+    assert schema_calls == 1
 
 
 @responses.activate

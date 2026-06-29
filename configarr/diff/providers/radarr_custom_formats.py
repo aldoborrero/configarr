@@ -94,6 +94,9 @@ class RadarrCustomFormatProvider:
     def to_action(
         self, plan: ResourcePlan, current: dict | None, desired: dict | None
     ) -> Action:
+        assert plan.op in (Op.CREATE, Op.UPDATE), (
+            f"to_action: unexpected op {plan.op!r}"
+        )
         if plan.op is Op.CREATE:
             return Action(op=plan.op, key=plan.key, payload=dict(desired or {}))
         payload = {**(desired or {}), "id": (current or {})["id"]}
@@ -104,9 +107,11 @@ class RadarrCustomFormatProvider:
             resp = self._session.post(
                 self._url("/api/v3/customformat"), json=action.payload
             )
-        else:
+        elif action.op is Op.UPDATE:
             cf_id = action.payload["id"]
             resp = self._session.put(
                 self._url(f"/api/v3/customformat/{cf_id}"), json=action.payload
             )
+        else:
+            raise NotImplementedError(f"apply: unsupported op {action.op!r}")
         resp.raise_for_status()
