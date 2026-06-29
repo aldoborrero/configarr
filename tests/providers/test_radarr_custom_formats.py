@@ -1,6 +1,5 @@
 import responses
 
-from configarr.diff.engine import diff
 from configarr.diff.model import Op
 from configarr.diff.providers.radarr_custom_formats import RadarrCustomFormatProvider
 
@@ -21,18 +20,8 @@ def _provider(config):
     return RadarrCustomFormatProvider(base_url=BASE, api_key="k", config=config)
 
 
-def _plan(p):
-    return diff(
-        p.kind,
-        p.fetch_current(),
-        p.build_desired(),
-        match_key=p.match_key,
-        normalize=p.normalize,
-    )
-
-
 @responses.activate
-def test_create_when_absent():
+def test_create_when_absent(plan_provider):
     responses.get(f"{BASE}/api/v3/customformat", json=[])
     responses.get(f"{BASE}/api/v3/customformat/schema", json=SCHEMA)
     config = {
@@ -46,7 +35,7 @@ def test_create_when_absent():
             ]
         }
     }
-    plan = _plan(_provider(config))
+    plan = plan_provider(_provider(config))
     assert len(plan.resources) == 1
     assert plan.resources[0].op is Op.CREATE
 
@@ -76,7 +65,7 @@ def test_schema_is_cached():
 
 
 @responses.activate
-def test_idempotent_when_current_equals_desired():
+def test_idempotent_when_current_equals_desired(plan_provider):
     existing = [
         {
             "id": 7,
@@ -106,12 +95,12 @@ def test_idempotent_when_current_equals_desired():
             ]
         }
     }
-    plan = _plan(_provider(config))
+    plan = plan_provider(_provider(config))
     assert not plan.has_changes, plan.resources
 
 
 @responses.activate
-def test_apply_then_replan_is_noop():
+def test_apply_then_replan_is_noop(plan_provider, apply_changes):
     created = {
         "id": 7,
         "name": "x265",
@@ -141,11 +130,7 @@ def test_apply_then_replan_is_noop():
         }
     }
     p = _provider(config)
-    plan = _plan(p)
-    desired_by_key = {d["name"]: d for d in p.build_desired()}
-    for rp in plan.resources:
-        if rp.changed:
-            p.apply(p.to_action(rp, None, desired_by_key[rp.key]))
+    apply_changes(p, plan_provider(p))
 
     # Second run: instance now returns the created CF.
     # Do NOT re-register /customformat/schema — _schema() is cached from the first
@@ -153,5 +138,5 @@ def test_apply_then_replan_is_noop():
     # (responses asserts all registered mocks fire by default).
     responses.reset()
     responses.get(f"{BASE}/api/v3/customformat", json=[created])
-    plan2 = _plan(p)
+    plan2 = plan_provider(p)
     assert not plan2.has_changes, plan2.resources
