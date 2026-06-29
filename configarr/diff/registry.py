@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Iterator
 
 from configarr.diff.providers.base import ResourceProvider
+from configarr.diff.providers.naming import NamingProvider
 from configarr.diff.providers.quality_definitions import QualityDefinitionProvider
 from configarr.diff.providers.quality_profiles import QualityProfileProvider
 from configarr.diff.providers.radarr_custom_formats import RadarrCustomFormatProvider
@@ -82,6 +83,22 @@ REGISTRY: list[Registration] = [
             inst.api_key,
             inst.quality_definitions,
             "sonarr.quality_definition",
+        ),
+    ),
+    Registration(
+        kind="radarr.naming",
+        service="radarr",
+        label="naming",
+        factory=lambda inst: NamingProvider(
+            inst.base_url, inst.api_key, inst.naming_config, "radarr.naming"
+        ),
+    ),
+    Registration(
+        kind="sonarr.naming",
+        service="sonarr",
+        label="naming",
+        factory=lambda inst: NamingProvider(
+            inst.base_url, inst.api_key, inst.naming_config, "sonarr.naming"
         ),
     ),
 ]
