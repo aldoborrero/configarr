@@ -11,6 +11,7 @@ from configarr.diff.providers.base import ResourceProvider
 from configarr.diff.providers.delay_profiles import DelayProfileProvider
 from configarr.diff.providers.download_clients import DownloadClientProvider
 from configarr.diff.providers.naming import NamingProvider
+from configarr.diff.providers.notifications import NotificationProvider
 from configarr.diff.providers.quality_definitions import QualityDefinitionProvider
 from configarr.diff.providers.quality_profiles import QualityProfileProvider
 from configarr.diff.providers.radarr_custom_formats import RadarrCustomFormatProvider
@@ -160,6 +161,22 @@ REGISTRY: list[Registration] = [
         label="download clients",
         factory=lambda inst: DownloadClientProvider(
             inst.base_url, inst.api_key, inst.download_clients, "sonarr.download_client"
+        ),
+    ),
+    Registration(
+        kind="radarr.notification",
+        service="radarr",
+        label="notifications",
+        factory=lambda inst: NotificationProvider(
+            inst.base_url, inst.api_key, inst.notifications, "radarr.notification"
+        ),
+    ),
+    Registration(
+        kind="sonarr.notification",
+        service="sonarr",
+        label="notifications",
+        factory=lambda inst: NotificationProvider(
+            inst.base_url, inst.api_key, inst.notifications, "sonarr.notification"
         ),
     ),
 ]
