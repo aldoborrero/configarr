@@ -17,6 +17,27 @@ Configuration manager for *arr applications and SABnzbd. Declaratively manage yo
 nix run github:aldoborrero/configarr -- --config configarr.yml
 ```
 
+### Docker
+
+A multi-purpose image is published to the GitHub Container Registry. The
+container's working directory is `/config` and configarr defaults to
+`./configarr.yml`, so mounting your config there needs no extra arguments:
+
+```bash
+docker run --rm \
+  -v "$PWD/configarr.yml:/config/configarr.yml" \
+  ghcr.io/aldoborrero/configarr:latest
+```
+
+If you keep secrets in a `.env` next to the config, mount the whole directory
+instead and configarr will load it automatically:
+
+```bash
+docker run --rm \
+  -v "$PWD:/config" \
+  ghcr.io/aldoborrero/configarr:latest --debug
+```
+
 ### Options
 
 ```
