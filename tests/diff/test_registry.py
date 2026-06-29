@@ -1,5 +1,10 @@
 from configarr.diff.registry import providers_for
-from configarr.models import ArrServiceConfig, ConfigarrConfig, ProwlarrConfig
+from configarr.models import (
+    ArrServiceConfig,
+    ConfigarrConfig,
+    ProwlarrConfig,
+    SabnzbdConfig,
+)
 
 
 def _radarr(name: str) -> ArrServiceConfig:
@@ -81,6 +86,23 @@ def test_prowlarr_download_client_is_prowlarr_only():
 
     assert _instances_for_kind(planned, "prowlarr.download_client") == ["dl"]
     assert _instances_for_kind(planned, "radarr.download_client") == ["hd"]
+
+
+def _sabnzbd(name: str) -> SabnzbdConfig:
+    return SabnzbdConfig(
+        name=name,
+        base_url=f"http://{name}.test",
+        api_key="k",
+    )
+
+
+def test_sabnzbd_server_is_sabnzbd_only():
+    config = ConfigarrConfig(radarr=[_radarr("hd")], sabnzbd=[_sabnzbd("sab")])
+
+    planned = list(providers_for(config))
+
+    assert _instances_for_kind(planned, "sabnzbd.server") == ["sab"]
+    assert _instances_for_kind(planned, "radarr.server") == []
 
 
 def test_service_filter_narrows_to_matching_service():

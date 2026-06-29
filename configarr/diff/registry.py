@@ -22,6 +22,7 @@ from configarr.diff.providers.quality_profiles import QualityProfileProvider
 from configarr.diff.providers.radarr_custom_formats import RadarrCustomFormatProvider
 from configarr.diff.providers.release_profiles import ReleaseProfileProvider
 from configarr.diff.providers.root_folders import RootFolderProvider
+from configarr.diff.providers.sabnzbd_servers import SabnzbdServerProvider
 from configarr.models import ConfigarrConfig
 
 
@@ -213,6 +214,16 @@ REGISTRY: list[Registration] = [
             inst.api_key,
             inst.download_clients,
             "prowlarr.download_client",
+        ),
+    ),
+    # SABnzbd news servers: the first SABnzbd resource. Set-only config API, so
+    # the engine GETs the full config and diffs client-side (work-list #12).
+    Registration(
+        kind="sabnzbd.server",
+        service="sabnzbd",
+        label="servers",
+        factory=lambda inst: SabnzbdServerProvider(
+            inst.base_url, inst.api_key, inst.servers, "sabnzbd.server"
         ),
     ),
 ]
