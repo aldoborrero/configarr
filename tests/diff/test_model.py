@@ -1,4 +1,4 @@
-from configarr.diff.model import Op, FieldDiff, ResourcePlan, Plan
+from configarr.diff.model import FieldDiff, Op, Plan, ResourcePlan
 
 
 def test_resourceplan_is_changed():
