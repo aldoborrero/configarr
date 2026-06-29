@@ -51,6 +51,12 @@ log = logging.getLogger("configarr")
     is_flag=True,
     help="Enable debug logging",
 )
+@click.option(
+    "--plan",
+    "plan_only",
+    is_flag=True,
+    help="Show what would change for supported resources, then exit (no writes).",
+)
 def main(
     config_path: Path,
     service: str | None,
@@ -58,6 +64,7 @@ def main(
     dry_run: bool,
     verbose: bool,
     debug: bool,
+    plan_only: bool,
 ):
     """
     Configarr - Configuration manager for *arr applications and SABnzbd.
@@ -104,6 +111,12 @@ def main(
     except Exception as e:
         console.print(f"[bold red]Configuration error:[/bold red] {e}")
         sys.exit(1)
+
+    if plan_only:
+        from configarr.diff.runner import run_plan
+
+        click.echo(run_plan(config))
+        return
 
     # Validate --service / --instance against what's actually configured, so a typo
     # doesn't silently no-op and still exit 0. This is independent of --dry-run.
