@@ -88,6 +88,7 @@ def test_run_plan_instance_filter_selects_only_that_instance(tmp_path):
     responses.get("http://main.test/api/v3/customformat", json=[])
     responses.get("http://main.test/api/v3/customformat/schema", json=SCHEMA)
     responses.get("http://main.test/api/v3/qualityprofile", json=[])
+    responses.get("http://main.test/api/v3/qualitydefinition", json=[])
 
     out = run_plan(config, instance="main")
 
@@ -103,6 +104,7 @@ def test_run_plan_reports_create_and_writes_nothing(tmp_path):
     responses.get(f"{BASE}/api/v3/customformat", json=[])
     responses.get(f"{BASE}/api/v3/customformat/schema", json=SCHEMA)
     responses.get(f"{BASE}/api/v3/qualityprofile", json=[])
+    responses.get(f"{BASE}/api/v3/qualitydefinition", json=[])
 
     out = run_plan(config)
 

@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Iterator
 
 from configarr.diff.providers.base import ResourceProvider
+from configarr.diff.providers.quality_definitions import QualityDefinitionProvider
 from configarr.diff.providers.quality_profiles import QualityProfileProvider
 from configarr.diff.providers.radarr_custom_formats import RadarrCustomFormatProvider
 from configarr.models import ConfigarrConfig
@@ -59,6 +60,28 @@ REGISTRY: list[Registration] = [
         label="quality profiles",
         factory=lambda inst: QualityProfileProvider(
             inst.base_url, inst.api_key, inst.quality_profiles, "sonarr.quality_profile"
+        ),
+    ),
+    Registration(
+        kind="radarr.quality_definition",
+        service="radarr",
+        label="quality definitions",
+        factory=lambda inst: QualityDefinitionProvider(
+            inst.base_url,
+            inst.api_key,
+            inst.quality_definitions,
+            "radarr.quality_definition",
+        ),
+    ),
+    Registration(
+        kind="sonarr.quality_definition",
+        service="sonarr",
+        label="quality definitions",
+        factory=lambda inst: QualityDefinitionProvider(
+            inst.base_url,
+            inst.api_key,
+            inst.quality_definitions,
+            "sonarr.quality_definition",
         ),
     ),
 ]
