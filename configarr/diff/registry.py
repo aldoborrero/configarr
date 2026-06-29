@@ -13,6 +13,7 @@ from configarr.diff.providers.naming import NamingProvider
 from configarr.diff.providers.quality_definitions import QualityDefinitionProvider
 from configarr.diff.providers.quality_profiles import QualityProfileProvider
 from configarr.diff.providers.radarr_custom_formats import RadarrCustomFormatProvider
+from configarr.diff.providers.release_profiles import ReleaseProfileProvider
 from configarr.diff.providers.root_folders import RootFolderProvider
 from configarr.models import ConfigarrConfig
 
@@ -133,6 +134,15 @@ REGISTRY: list[Registration] = [
         label="delay profiles",
         factory=lambda inst: DelayProfileProvider(
             inst.base_url, inst.api_key, inst.delay_profiles, "sonarr.delay_profile"
+        ),
+    ),
+    # Sonarr-only: Radarr ignores release_profiles entirely.
+    Registration(
+        kind="sonarr.release_profile",
+        service="sonarr",
+        label="release profiles",
+        factory=lambda inst: ReleaseProfileProvider(
+            inst.base_url, inst.api_key, inst.release_profiles, "sonarr.release_profile"
         ),
     ),
 ]

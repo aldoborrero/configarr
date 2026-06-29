@@ -29,6 +29,23 @@ def test_yields_a_provider_per_radarr_instance():
     assert all(p.service == "radarr" for p in planned)
 
 
+def _sonarr(name: str) -> ArrServiceConfig:
+    return ArrServiceConfig(
+        name=name,
+        base_url=f"http://{name}.test",
+        api_key="k",
+    )
+
+
+def test_release_profile_is_sonarr_only():
+    config = ConfigarrConfig(radarr=[_radarr("hd")], sonarr=[_sonarr("tv")])
+
+    planned = list(providers_for(config))
+
+    assert _instances_for_kind(planned, "sonarr.release_profile") == ["tv"]
+    assert _instances_for_kind(planned, "radarr.release_profile") == []
+
+
 def test_service_filter_narrows_to_matching_service():
     config = ConfigarrConfig(radarr=[_radarr("hd")])
 
