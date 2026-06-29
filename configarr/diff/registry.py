@@ -14,6 +14,9 @@ from configarr.diff.providers.download_clients import DownloadClientProvider
 from configarr.diff.providers.indexers import IndexerProvider
 from configarr.diff.providers.naming import NamingProvider
 from configarr.diff.providers.notifications import NotificationProvider
+from configarr.diff.providers.prowlarr_download_clients import (
+    ProwlarrDownloadClientProvider,
+)
 from configarr.diff.providers.quality_definitions import QualityDefinitionProvider
 from configarr.diff.providers.quality_profiles import QualityProfileProvider
 from configarr.diff.providers.radarr_custom_formats import RadarrCustomFormatProvider
@@ -197,6 +200,19 @@ REGISTRY: list[Registration] = [
         label="applications",
         factory=lambda inst: ApplicationProvider(
             inst.base_url, inst.api_key, inst.applications, "prowlarr.application"
+        ),
+    ),
+    # Prowlarr download clients: after applications, Prowlarr-only. Uses the
+    # generic /api/v1 download-client resource with case-insensitive matching.
+    Registration(
+        kind="prowlarr.download_client",
+        service="prowlarr",
+        label="download clients",
+        factory=lambda inst: ProwlarrDownloadClientProvider(
+            inst.base_url,
+            inst.api_key,
+            inst.download_clients,
+            "prowlarr.download_client",
         ),
     ),
 ]

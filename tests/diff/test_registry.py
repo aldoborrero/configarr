@@ -74,6 +74,15 @@ def test_application_is_prowlarr_only():
     assert _instances_for_kind(planned, "radarr.application") == []
 
 
+def test_prowlarr_download_client_is_prowlarr_only():
+    config = ConfigarrConfig(radarr=[_radarr("hd")], prowlarr=[_prowlarr("dl")])
+
+    planned = list(providers_for(config))
+
+    assert _instances_for_kind(planned, "prowlarr.download_client") == ["dl"]
+    assert _instances_for_kind(planned, "radarr.download_client") == ["hd"]
+
+
 def test_service_filter_narrows_to_matching_service():
     config = ConfigarrConfig(radarr=[_radarr("hd")])
 
