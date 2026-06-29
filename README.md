@@ -2,6 +2,8 @@
 
 Configuration manager for *arr applications and SABnzbd. Declaratively manage your Radarr, Sonarr, Prowlarr, Bazarr, and SABnzbd instances from a single YAML file.
 
+📖 **[Read the documentation](https://aldoborrero.github.io/configarr/)** — installation, core concepts, per-service guides, the full configuration schema, recipes, and troubleshooting.
+
 ## Features
 
 - **Radarr/Sonarr**: Root folders, naming, quality profiles, download clients
