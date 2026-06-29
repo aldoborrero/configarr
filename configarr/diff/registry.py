@@ -9,6 +9,7 @@ from typing import Any, Callable, Iterator
 
 from configarr.diff.providers.applications import ApplicationProvider
 from configarr.diff.providers.base import ResourceProvider
+from configarr.diff.providers.bazarr_providers import BazarrProviderProvider
 from configarr.diff.providers.bazarr_settings import BazarrSettingsProvider
 from configarr.diff.providers.delay_profiles import DelayProfileProvider
 from configarr.diff.providers.download_clients import DownloadClientProvider
@@ -272,6 +273,17 @@ REGISTRY: list[Registration] = [
         label="radarr settings",
         factory=lambda inst: BazarrSettingsProvider(
             inst.base_url, inst.api_key, inst.radarr, "bazarr.radarr"
+        ),
+    ),
+    # Bazarr subtitle providers: each configured provider owns one section of the
+    # same /system/settings document, with enabled_providers force-managed
+    # additively (work-list #16).
+    Registration(
+        kind="bazarr.provider",
+        service="bazarr",
+        label="subtitle providers",
+        factory=lambda inst: BazarrProviderProvider(
+            inst.base_url, inst.api_key, inst.providers, "bazarr.provider"
         ),
     ),
 ]
