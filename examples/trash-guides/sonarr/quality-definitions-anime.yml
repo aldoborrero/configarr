@@ -1,0 +1,97 @@
+# TRaSH-Guides quality definitions (sizes): Sonarr "Anime".
+#
+# Generated from the TRaSH-Guides data (https://github.com/TRaSH-Guides/Guides,
+# MIT-licensed JSON). Sets the min / max / preferred size (MB per minute) for
+# each quality. Quality definitions are instance-level, so use the scheme that
+# matches your primary profile — this one pairs with the [Anime] Remux-1080p profile.
+#
+# Merge the `sonarr:` block into your configarr.yml, or run standalone:
+#   configarr --config examples/trash-guides/sonarr/quality-definitions-anime.yml --service sonarr
+
+sonarr:
+  instances:
+    main:
+      base_url: http://localhost:8989
+      api_key: ${SONARR_API_KEY}
+      profiles:
+        quality_definitions:
+          SDTV:
+            min: 5
+            max: 1000
+            preferred: 995
+          WEBRip-480p:
+            min: 5
+            max: 1000
+            preferred: 995
+          WEBDL-480p:
+            min: 5
+            max: 1000
+            preferred: 995
+          DVD:
+            min: 5
+            max: 1000
+            preferred: 995
+          Bluray-480p:
+            min: 5
+            max: 1000
+            preferred: 995
+          Bluray-576p:
+            min: 5
+            max: 1000
+            preferred: 995
+          HDTV-720p:
+            min: 5
+            max: 1000
+            preferred: 995
+          HDTV-1080p:
+            min: 5
+            max: 1000
+            preferred: 995
+          WEBRip-720p:
+            min: 5
+            max: 1000
+            preferred: 995
+          WEBDL-720p:
+            min: 5
+            max: 1000
+            preferred: 995
+          Bluray-720p:
+            min: 5
+            max: 1000
+            preferred: 995
+          WEBRip-1080p:
+            min: 5
+            max: 1000
+            preferred: 995
+          WEBDL-1080p:
+            min: 5
+            max: 1000
+            preferred: 995
+          Bluray-1080p:
+            min: 5
+            max: 1000
+            preferred: 995
+          Bluray-1080p Remux:
+            min: 5
+            max: 1000
+            preferred: 995
+          HDTV-2160p:
+            min: 5
+            max: 1000
+            preferred: 995
+          WEBRip-2160p:
+            min: 5
+            max: 1000
+            preferred: 995
+          WEBDL-2160p:
+            min: 5
+            max: 1000
+            preferred: 995
+          Bluray-2160p:
+            min: 5
+            max: 1000
+            preferred: 995
+          Bluray-2160p Remux:
+            min: 5
+            max: 1000
+            preferred: 995

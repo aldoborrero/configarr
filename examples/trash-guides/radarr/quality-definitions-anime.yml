@@ -1,0 +1,101 @@
+# TRaSH-Guides quality definitions (sizes): Radarr "Anime".
+#
+# Generated from the TRaSH-Guides data (https://github.com/TRaSH-Guides/Guides,
+# MIT-licensed JSON). Sets the min / max / preferred size (MB per minute) for
+# each quality. Quality definitions are instance-level, so use the scheme that
+# matches your primary profile — this one pairs with the [Anime] Remux-1080p profile.
+#
+# Merge the `radarr:` block into your configarr.yml, or run standalone:
+#   configarr --config examples/trash-guides/radarr/quality-definitions-anime.yml --service radarr
+
+radarr:
+  instances:
+    main:
+      base_url: http://localhost:7878
+      api_key: ${RADARR_API_KEY}
+      profiles:
+        quality_definitions:
+          SDTV:
+            min: 5
+            max: 2000
+            preferred: 1999
+          DVD:
+            min: 5
+            max: 2000
+            preferred: 1999
+          DVD-R:
+            min: 5
+            max: 2000
+            preferred: 1999
+          WEBDL-480p:
+            min: 5
+            max: 2000
+            preferred: 1999
+          WEBRip-480p:
+            min: 5
+            max: 2000
+            preferred: 1999
+          Bluray-480p:
+            min: 5
+            max: 2000
+            preferred: 1999
+          Bluray-576p:
+            min: 5
+            max: 2000
+            preferred: 1999
+          HDTV-720p:
+            min: 5
+            max: 2000
+            preferred: 1999
+          WEBDL-720p:
+            min: 5
+            max: 2000
+            preferred: 1999
+          WEBRip-720p:
+            min: 5
+            max: 2000
+            preferred: 1999
+          Bluray-720p:
+            min: 5
+            max: 2000
+            preferred: 1999
+          HDTV-1080p:
+            min: 5
+            max: 2000
+            preferred: 1999
+          WEBDL-1080p:
+            min: 5
+            max: 2000
+            preferred: 1999
+          WEBRip-1080p:
+            min: 5
+            max: 2000
+            preferred: 1999
+          Bluray-1080p:
+            min: 5
+            max: 2000
+            preferred: 1999
+          Remux-1080p:
+            min: 5
+            max: 2000
+            preferred: 1999
+          HDTV-2160p:
+            min: 5
+            max: 2000
+            preferred: 1999
+          WEBDL-2160p:
+            min: 5
+            max: 2000
+            preferred: 1999
+          WEBRip-2160p:
+            min: 5
+            max: 2000
+            preferred: 1999
+          Bluray-2160p:
+            min: 5
+            max: 2000
+            preferred: 1999
+          Remux-2160p:
+            min: 5
+            max: 2000
+            preferred: 1999

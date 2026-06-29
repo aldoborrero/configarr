@@ -41,12 +41,37 @@ Files are grouped by service. Pick the profile that matches the quality you want
 | [`web-2160p-combined.yml`](sonarr/web-2160p-combined.yml) | WEB-2160p (Combined) | WEB 2160p, combined scoring |
 | [`anime-remux-1080p.yml`](sonarr/anime-remux-1080p.yml) | [Anime] Remux-1080p | Anime Remux/Bluray 1080p |
 
+## Quality definitions (sizes)
+
+TRaSH also recommends per-quality **size limits** (min / max / preferred MB per
+minute). These are configured separately from the profiles, via
+`profiles.quality_definitions`, and they are **instance-level** — pick the one
+scheme that matches your primary profile.
+
+| File | Scheme | Pairs with |
+|---|---|---|
+| [`radarr/quality-definitions-movie.yml`](radarr/quality-definitions-movie.yml) | Movie (default) | HD/UHD Bluray + WEB, Remux + WEB |
+| [`radarr/quality-definitions-anime.yml`](radarr/quality-definitions-anime.yml) | Anime | [Anime] Remux-1080p |
+| [`radarr/quality-definitions-sqp-streaming.yml`](radarr/quality-definitions-sqp-streaming.yml) | SQP Streaming | SQP WEB profiles |
+| [`radarr/quality-definitions-sqp-uhd.yml`](radarr/quality-definitions-sqp-uhd.yml) | SQP UHD | SQP UHD/Bluray profiles |
+| [`sonarr/quality-definitions-series.yml`](sonarr/quality-definitions-series.yml) | Series (default) | WEB-1080p / WEB-2160p |
+| [`sonarr/quality-definitions-anime.yml`](sonarr/quality-definitions-anime.yml) | Anime | [Anime] Remux-1080p |
+
+Merge the chosen scheme's `profiles.quality_definitions` into the same instance
+as your profile (configarr applies quality definitions before quality profiles),
+or run the file standalone.
+
 ## Usage
 
 ```bash
 cp ../.env.example .env   # then set RADARR_API_KEY / SONARR_API_KEY
-configarr --config radarr/hd-bluray-web.yml --service radarr
+
+# A profile, then its matching quality definitions, against the same instance:
+configarr --config radarr/sqp-1-web-1080p.yml --service radarr
+configarr --config radarr/quality-definitions-sqp-streaming.yml --service radarr
+
 configarr --config sonarr/web-1080p.yml --service sonarr
+configarr --config sonarr/quality-definitions-series.yml --service sonarr
 ```
 
 Adjust `base_url` to point at your instance, and merge the `sonarr:`/`radarr:`
@@ -74,9 +99,10 @@ model is simpler — worth knowing so the result matches your expectation:
 
 > [!NOTE]
 > The **SQP** profiles are advanced. These files reproduce each SQP profile's
-> formats and scores, but the full SQP experience in TRaSH also relies on specific
-> quality definitions (sizes) and additional optional formats. Add those from the
-> TRaSH SQP guide if you want the complete setup.
+> formats and scores; pair them with the matching SQP quality definitions
+> (`quality-definitions-sqp-streaming.yml` or `quality-definitions-sqp-uhd.yml`,
+> see below). For the complete setup, also add any additional optional formats
+> from the TRaSH SQP guide.
 
 ## Regenerating / staying current
 
