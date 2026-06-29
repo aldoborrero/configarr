@@ -1,0 +1,26 @@
+[book]
+title = "configarr"
+description = "Declaratively manage Radarr, Sonarr, Prowlarr, Bazarr, and SABnzbd from a single YAML file."
+authors = ["Aldo Borrero"]
+language = "en"
+src = "src"
+
+[output.html]
+default-theme = "navy"
+preferred-dark-theme = "navy"
+git-repository-url = "https://github.com/aldoborrero/configarr"
+edit-url-template = "https://github.com/aldoborrero/configarr/edit/main/docs/{path}"
+site-url = "/configarr/"
+additional-js = ["mermaid.min.js", "mermaid-init.js"]
+
+[output.html.fold]
+enable = true
+level = 1
+
+[output.linkcheck]
+command = "mdbook-linkcheck2"
+follow-web-links = false
+warning-policy = "error"
+
+[preprocessor.mermaid]
+command = "mdbook-mermaid"

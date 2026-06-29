@@ -11,3 +11,6 @@ result-*
 
 # Local config / secrets
 .env
+
+# mdbook build output
+docs/book/

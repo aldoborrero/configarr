@@ -1,3 +1,4 @@
+<!-- ANCHOR: reference -->
 # configarr.yml schema reference
 
 Exhaustive, source-verified reference for every YAML key configarr reads, plus
@@ -690,6 +691,8 @@ sabnzbd:
           dir: sonarr
           priority: -100
 ```
+
+<!-- ANCHOR_END: reference -->
 
 ---
 
