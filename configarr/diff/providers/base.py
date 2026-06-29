@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Hashable, Protocol
+from typing import Any, Hashable, Protocol, runtime_checkable
 
 from configarr.diff.model import Op, ResourcePlan
 
@@ -15,6 +15,7 @@ class Action:
     payload: dict[str, Any]  # full object to POST/PUT
 
 
+@runtime_checkable
 class ResourceProvider(Protocol):
     kind: str
 
