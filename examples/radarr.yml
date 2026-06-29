@@ -1,0 +1,74 @@
+# Radarr example — root folders, naming, quality, custom formats, download
+# clients and notifications. Radarr and Sonarr share the same config shape;
+# the Radarr-only bits are media-management naming keys and `language` on a
+# quality profile.
+
+radarr:
+  instances:
+    main:
+      base_url: http://localhost:7878
+      api_key: ${RADARR_API_KEY}
+
+      settings:
+        root_folders:
+          - path: /movies
+        media_management:
+          rename_movies: true
+          colon_replacement: smart
+          standard_movie_format: "{Movie CleanTitle} ({Release Year}) {Quality Full}"
+          movie_folder_format: "{Movie CleanTitle} ({Release Year})"
+
+      profiles:
+        delay_profiles:
+          - preferred_protocol: usenet
+            usenet_delay: 0
+            torrent_delay: 30
+        quality_definitions:
+          WEBDL-1080p:
+            min: 5
+            max: 200
+            preferred: 95
+        quality_profiles:
+          definitions:
+            HD:
+              upgrades_allowed: true
+              upgrade_until_quality: WEBDL-1080p
+              upgrade_until_custom_format_score: 10000
+              minimum_custom_format_score: 0
+              language: Any
+              qualities:
+                - WEBDL-1080p
+                - Bluray-1080p
+              custom_format_scores:
+                x265: 100
+
+      custom_formats:
+        definitions:
+          x265:
+            specifications:
+              - name: x265
+                implementation: ReleaseTitleSpecification
+                fields:
+                  value: "(x|h)265"
+
+      download_clients:
+        definitions:
+          qbittorrent:
+            implementation: QBittorrent
+            enable: true
+            priority: 1
+            settings:
+              host: localhost
+              port: 8080
+              username: admin
+              password: ${QBIT_PASSWORD}
+              category: radarr
+
+      notifications:
+        definitions:
+          discord:
+            implementation: Discord
+            on_download: true
+            on_upgrade: true
+            settings:
+              webHookUrl: ${DISCORD_WEBHOOK}

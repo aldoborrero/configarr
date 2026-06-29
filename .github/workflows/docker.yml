@@ -1,0 +1,68 @@
+name: Docker
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  publish:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Resolve pinned nixpkgs
+        id: nixpkgs
+        run: echo "url=https://github.com/NixOS/nixpkgs/archive/$(jq -r '.nodes.nixpkgs.locked.rev' flake.lock).tar.gz" >> "$GITHUB_OUTPUT"
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31.10.6
+        with:
+          nix_path: nixpkgs=${{ steps.nixpkgs.outputs.url }}
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Build image
+        run: nix build .#docker
+
+      - name: Log in to ${{ env.REGISTRY }}
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute tags
+        id: meta
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6.1.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,format=long
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+
+      - name: Load, tag, and push
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          loaded="$(docker load < result | sed -n 's/^Loaded image: //p')"
+          echo "Loaded image: $loaded"
+          echo "$TAGS" | while read -r tag; do
+            [ -z "$tag" ] && continue
+            echo "Pushing $tag"
+            docker tag "$loaded" "$tag"
+            docker push "$tag"
+          done

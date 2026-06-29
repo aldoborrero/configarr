@@ -1,0 +1,63 @@
+# Sonarr example. Same shape as Radarr, with Sonarr-only naming keys
+# (episode formats, multi_episode_style) and the Sonarr-only
+# `profiles.release_profiles` section. `language` on a quality profile is
+# Radarr-only and is ignored here.
+
+sonarr:
+  instances:
+    main:
+      base_url: http://localhost:8989
+      api_key: ${SONARR_API_KEY}
+
+      settings:
+        root_folders:
+          - path: /tv
+        media_management:
+          rename_episodes: true
+          multi_episode_style: range
+          colon_replacement: smart
+          series_folder_format: "{Series TitleYear}"
+          season_folder_format: "Season {season:00}"
+          standard_episode_format: "{Series Title} - S{season:00}E{episode:00} - {Episode Title} {Quality Full}"
+
+      profiles:
+        release_profiles:
+          - enabled: true
+            required:
+              - x265
+            ignored:
+              - CAM
+        quality_definitions:
+          WEBDL-1080p:
+            min: 5
+            max: 200
+            preferred: 95
+        quality_profiles:
+          definitions:
+            HD:
+              upgrades_allowed: true
+              upgrade_until_quality: WEBDL-1080p
+              qualities:
+                - WEBDL-1080p
+                - Bluray-1080p
+
+      download_clients:
+        definitions:
+          sabnzbd:
+            implementation: Sabnzbd
+            enable: true
+            settings:
+              host: localhost
+              port: 8080
+              apiKey: ${SABNZBD_API_KEY}
+              tvCategory: sonarr
+
+      notifications:
+        definitions:
+          discord:
+            implementation: Discord
+            on_download: true
+            on_upgrade: true
+            on_import_complete: true
+            settings:
+              webHookUrl: ${DISCORD_WEBHOOK}

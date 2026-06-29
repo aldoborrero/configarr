@@ -68,11 +68,13 @@ class SabnzbdClient:
 
     def del_config(self, section: str, keyword: str) -> dict[str, Any]:
         """Delete a configuration item."""
-        result = self._call({
-            "mode": "del_config",
-            "section": section,
-            "keyword": keyword,
-        })
+        result = self._call(
+            {
+                "mode": "del_config",
+                "section": section,
+                "keyword": keyword,
+            }
+        )
         self._config_cache = None
         return result
 

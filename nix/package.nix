@@ -38,7 +38,7 @@ python313.pkgs.buildPythonApplication rec {
     description = "Configuration manager for Radarr, Sonarr, Prowlarr, and Bazarr";
     homepage = "https://github.com/aldoborrero/configarr";
     license = licenses.asl20;
-    maintainers = [];
+    maintainers = [ ];
     mainProgram = "configarr";
     platforms = platforms.linux ++ platforms.darwin;
   };

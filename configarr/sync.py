@@ -5,12 +5,18 @@ from typing import Literal, Union
 
 from rich.console import Console
 
-from configarr.models import ArrServiceConfig, ProwlarrConfig, BazarrConfig, SabnzbdConfig, SyncStatus
-from configarr.radarr import RadarrClient
-from configarr.sonarr import SonarrClient
-from configarr.prowlarr import ProwlarrClient
 from configarr.bazarr import BazarrClient
+from configarr.models import (
+    ArrServiceConfig,
+    BazarrConfig,
+    ProwlarrConfig,
+    SabnzbdConfig,
+    SyncStatus,
+)
+from configarr.prowlarr import ProwlarrClient
+from configarr.radarr import RadarrClient
 from configarr.sabnzbd import SabnzbdClient
+from configarr.sonarr import SonarrClient
 
 ArrClient = Union[RadarrClient, SonarrClient]
 
@@ -120,67 +126,91 @@ def sync_arr(
             folder.get("path", folder) if isinstance(folder, dict) else folder
             for folder in config.root_folders
         ]
-        tally(_sync_items(
-            "Root Folders",
-            [(path, path) for path in paths],
-            lambda path, _value: client.sync_root_folder(path),
-        ))
+        tally(
+            _sync_items(
+                "Root Folders",
+                [(path, path) for path in paths],
+                lambda path, _value: client.sync_root_folder(path),
+            )
+        )
 
     # Naming configuration
     if config.naming_config:
-        tally(_sync_single(
-            "Naming", "naming configuration",
-            lambda: client.sync_naming_config(config.naming_config),
-        ))
+        tally(
+            _sync_single(
+                "Naming",
+                "naming configuration",
+                lambda: client.sync_naming_config(config.naming_config),
+            )
+        )
 
     # Delay profiles
     if config.delay_profiles:
-        tally(_sync_items(
-            "Delay Profiles",
-            [(p.get("name", "Unknown"), p) for p in config.delay_profiles],
-            client.sync_delay_profile,
-        ))
+        tally(
+            _sync_items(
+                "Delay Profiles",
+                [(p.get("name", "Unknown"), p) for p in config.delay_profiles],
+                client.sync_delay_profile,
+            )
+        )
 
     # Release profiles (Sonarr only)
     if config.release_profiles and isinstance(client, SonarrClient):
-        tally(_sync_items(
-            "Release Profiles",
-            [(p.get("name", "Unknown"), p) for p in config.release_profiles],
-            client.sync_release_profile,
-        ))
+        tally(
+            _sync_items(
+                "Release Profiles",
+                [(p.get("name", "Unknown"), p) for p in config.release_profiles],
+                client.sync_release_profile,
+            )
+        )
 
     # Quality definitions
     if config.quality_definitions:
-        tally(_sync_single(
-            "Quality Definitions", "quality definitions",
-            lambda: client.sync_quality_definitions(config.quality_definitions),
-        ))
+        tally(
+            _sync_single(
+                "Quality Definitions",
+                "quality definitions",
+                lambda: client.sync_quality_definitions(config.quality_definitions),
+            )
+        )
 
     # Custom formats (must be synced before quality profiles)
     if config.custom_formats:
-        tally(_sync_items(
-            "Custom Formats", config.custom_formats.items(), client.sync_custom_format
-        ))
+        tally(
+            _sync_items(
+                "Custom Formats",
+                config.custom_formats.items(),
+                client.sync_custom_format,
+            )
+        )
 
     # Quality profiles
     if config.quality_profiles:
-        tally(_sync_items(
-            "Quality Profiles",
-            [(p.get("name", "Unknown"), p) for p in config.quality_profiles],
-            client.sync_quality_profile,
-        ))
+        tally(
+            _sync_items(
+                "Quality Profiles",
+                [(p.get("name", "Unknown"), p) for p in config.quality_profiles],
+                client.sync_quality_profile,
+            )
+        )
 
     # Download clients
     if config.download_clients:
-        tally(_sync_items(
-            "Download Clients", config.download_clients.items(), client.sync_download_client
-        ))
+        tally(
+            _sync_items(
+                "Download Clients",
+                config.download_clients.items(),
+                client.sync_download_client,
+            )
+        )
 
     # Notifications (Connections)
     if config.notifications:
-        tally(_sync_items(
-            "Notifications", config.notifications.items(), client.sync_notification
-        ))
+        tally(
+            _sync_items(
+                "Notifications", config.notifications.items(), client.sync_notification
+            )
+        )
 
     return success, failure
 
@@ -203,14 +233,20 @@ def sync_prowlarr(config: ProwlarrConfig) -> tuple[int, int]:
         tally(_sync_items("Indexers", config.indexers.items(), client.sync_indexer))
 
     if config.applications:
-        tally(_sync_items(
-            "Applications", config.applications.items(), client.sync_application
-        ))
+        tally(
+            _sync_items(
+                "Applications", config.applications.items(), client.sync_application
+            )
+        )
 
     if config.download_clients:
-        tally(_sync_items(
-            "Download Clients", config.download_clients.items(), client.sync_download_client
-        ))
+        tally(
+            _sync_items(
+                "Download Clients",
+                config.download_clients.items(),
+                client.sync_download_client,
+            )
+        )
 
     return success, failure
 
@@ -314,11 +350,17 @@ def sync_sabnzbd(config: SabnzbdConfig) -> tuple[int, int]:
         tally(_sync_items("Servers", config.servers.items(), client.sync_server))
 
     if config.categories:
-        tally(_sync_items("Categories", config.categories.items(), client.sync_category))
+        tally(
+            _sync_items("Categories", config.categories.items(), client.sync_category)
+        )
 
     if config.misc:
-        tally(_sync_single(
-            "Settings", "misc settings", lambda: client.sync_misc_settings(config.misc)
-        ))
+        tally(
+            _sync_single(
+                "Settings",
+                "misc settings",
+                lambda: client.sync_misc_settings(config.misc),
+            )
+        )
 
     return success, failure

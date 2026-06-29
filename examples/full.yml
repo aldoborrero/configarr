@@ -1,0 +1,175 @@
+# Full configarr.yml — every service in one file, including a multi-instance
+# setup (a second Radarr instance for 4K). This is the kitchen-sink reference;
+# trim it down to what you actually run. See the per-service example files for
+# focused, commented versions of each section.
+
+radarr:
+  instances:
+    main:
+      base_url: http://localhost:7878
+      api_key: ${RADARR_API_KEY}
+      settings:
+        root_folders:
+          - path: /movies
+        media_management:
+          rename_movies: true
+          colon_replacement: smart
+          standard_movie_format: "{Movie CleanTitle} ({Release Year}) {Quality Full}"
+          movie_folder_format: "{Movie CleanTitle} ({Release Year})"
+      profiles:
+        quality_profiles:
+          definitions:
+            HD:
+              upgrades_allowed: true
+              upgrade_until_quality: WEBDL-1080p
+              qualities:
+                - WEBDL-1080p
+                - Bluray-1080p
+              custom_format_scores:
+                x265: 100
+      custom_formats:
+        definitions:
+          x265:
+            specifications:
+              - name: x265
+                implementation: ReleaseTitleSpecification
+                fields:
+                  value: "(x|h)265"
+      download_clients:
+        definitions:
+          qbittorrent:
+            implementation: QBittorrent
+            settings:
+              host: localhost
+              port: 8080
+              username: admin
+              password: ${QBIT_PASSWORD}
+              category: radarr
+
+    # A second Radarr instance for 4K, on another port.
+    uhd:
+      base_url: http://localhost:7879
+      api_key: ${RADARR_4K_API_KEY}
+      settings:
+        root_folders:
+          - path: /movies-4k
+      profiles:
+        quality_profiles:
+          definitions:
+            UHD:
+              upgrades_allowed: true
+              upgrade_until_quality: Bluray-2160p
+              qualities:
+                - WEBDL-2160p
+                - Bluray-2160p
+
+sonarr:
+  instances:
+    main:
+      base_url: http://localhost:8989
+      api_key: ${SONARR_API_KEY}
+      settings:
+        root_folders:
+          - path: /tv
+        media_management:
+          rename_episodes: true
+          multi_episode_style: range
+          series_folder_format: "{Series TitleYear}"
+          season_folder_format: "Season {season:00}"
+      profiles:
+        quality_profiles:
+          definitions:
+            HD:
+              upgrades_allowed: true
+              upgrade_until_quality: WEBDL-1080p
+              qualities:
+                - WEBDL-1080p
+                - Bluray-1080p
+      download_clients:
+        definitions:
+          sabnzbd:
+            implementation: Sabnzbd
+            settings:
+              host: localhost
+              port: 8080
+              apiKey: ${SABNZBD_API_KEY}
+              tvCategory: sonarr
+
+prowlarr:
+  instances:
+    main:
+      base_url: http://localhost:9696
+      api_key: ${PROWLARR_API_KEY}
+      indexers:
+        definitions:
+          mytracker:
+            implementation: Cardigann
+            definition: mytracker
+            settings:
+              apikey: ${TRACKER_API_KEY}
+      applications:
+        definitions:
+          sonarr:
+            implementation: Sonarr
+            sync_level: fullSync
+            settings:
+              baseUrl: http://localhost:8989
+              apiKey: ${SONARR_API_KEY}
+              prowlarrUrl: http://localhost:9696
+          radarr:
+            implementation: Radarr
+            sync_level: fullSync
+            settings:
+              baseUrl: http://localhost:7878
+              apiKey: ${RADARR_API_KEY}
+              prowlarrUrl: http://localhost:9696
+
+bazarr:
+  instances:
+    main:
+      base_url: http://localhost:6767
+      api_key: ${BAZARR_API_KEY}
+      general:
+        use_sonarr: true
+        use_radarr: true
+      sonarr:
+        ip: localhost
+        port: 8989
+        apikey: ${SONARR_API_KEY}
+      radarr:
+        ip: localhost
+        port: 7878
+        apikey: ${RADARR_API_KEY}
+      providers:
+        opensubtitlescom:
+          username: ${OST_USER}
+          password: ${OST_PASSWORD}
+      language_profiles:
+        - name: English
+          cutoff: English
+          languages:
+            - English
+
+sabnzbd:
+  instances:
+    main:
+      base_url: http://localhost:8080
+      api_key: ${SABNZBD_API_KEY}
+      servers:
+        news:
+          host: news.example.com
+          port: 563
+          ssl: true
+          username: ${USENET_USER}
+          password: ${USENET_PASSWORD}
+          connections: 20
+      categories:
+        sonarr:
+          dir: sonarr
+          priority: -100
+        radarr:
+          dir: radarr
+          priority: -100
+      misc:
+        download_dir: /downloads/incomplete
+        complete_dir: /downloads/complete

@@ -91,21 +91,25 @@ def parse_quality_profiles(config: dict[str, Any]) -> list[dict[str, Any]]:
         qualities_raw = profile_def.get("qualities", [])
         qualities = [{"name": q} if isinstance(q, str) else q for q in qualities_raw]
 
-        quality_profiles.append({
-            "name": profile_name,
-            "upgrade": {
-                "allowed": profile_def.get("upgrades_allowed", True),
-                "until_quality": profile_def.get("upgrade_until_quality", "WEBDL-1080p"),
-                "until_score": profile_def.get(
-                    "upgrade_until_custom_format_score", 10000
-                ),
-            },
-            "min_format_score": profile_def.get("minimum_custom_format_score", 0),
-            "custom_format_scores": profile_def.get("custom_format_scores", {}),
-            "quality_sort": "top",
-            "qualities": qualities,
-            "language": profile_def.get("language"),
-        })
+        quality_profiles.append(
+            {
+                "name": profile_name,
+                "upgrade": {
+                    "allowed": profile_def.get("upgrades_allowed", True),
+                    "until_quality": profile_def.get(
+                        "upgrade_until_quality", "WEBDL-1080p"
+                    ),
+                    "until_score": profile_def.get(
+                        "upgrade_until_custom_format_score", 10000
+                    ),
+                },
+                "min_format_score": profile_def.get("minimum_custom_format_score", 0),
+                "custom_format_scores": profile_def.get("custom_format_scores", {}),
+                "quality_sort": "top",
+                "qualities": qualities,
+                "language": profile_def.get("language"),
+            }
+        )
 
     return quality_profiles
 

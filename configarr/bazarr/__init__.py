@@ -48,7 +48,9 @@ class BazarrClient:
         self.profiles_api = SystemLanguagesProfilesApi(self.api_client)
 
         # Language profile manager (uses requests directly for better API support)
-        self._language_manager = LanguageProfileManager(base_url, api_key, dry_run, verbose)
+        self._language_manager = LanguageProfileManager(
+            base_url, api_key, dry_run, verbose
+        )
 
     # Settings methods
     def get_settings(self) -> dict[str, Any] | None:
