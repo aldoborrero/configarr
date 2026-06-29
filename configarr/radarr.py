@@ -202,7 +202,9 @@ class RadarrClient:
         """Get mapping of custom format name → ID (cached)."""
         if self._custom_format_ids is None:
             existing = self.custom_formats.list_custom_format()
-            self._custom_format_ids = {cf.name: cf.id for cf in existing if cf.name and cf.id}
+            self._custom_format_ids = {
+                cf.name: cf.id for cf in existing if cf.name and cf.id
+            }
         return self._custom_format_ids
 
     def sync_custom_format(self, name: str, config: dict[str, Any]) -> SyncStatus:
@@ -216,28 +218,36 @@ class RadarrClient:
             for field_name, field_value in spec_config.get("fields", {}).items():
                 fields.append(ContractField(name=field_name, value=field_value))
 
-            specs.append(CustomFormatSpecificationSchema(
-                name=spec_config["name"],
-                implementation=spec_config["implementation"],
-                negate=spec_config.get("negate", False),
-                required=spec_config.get("required", True),
-                fields=fields,
-            ))
+            specs.append(
+                CustomFormatSpecificationSchema(
+                    name=spec_config["name"],
+                    implementation=spec_config["implementation"],
+                    negate=spec_config.get("negate", False),
+                    required=spec_config.get("required", True),
+                    fields=fields,
+                )
+            )
 
         resource = CustomFormatResource(
             name=name,
-            include_custom_format_when_renaming=config.get("include_when_renaming", False),
+            include_custom_format_when_renaming=config.get(
+                "include_when_renaming", False
+            ),
             specifications=specs,
         )
 
         if found:
             resource.id = found.id
-            self.custom_formats.update_custom_format(str(found.id), custom_format_resource=resource)
+            self.custom_formats.update_custom_format(
+                str(found.id), custom_format_resource=resource
+            )
             self.get_custom_format_ids()[name] = found.id
             log.debug(f"Updated custom format: {name}")
             return SyncStatus.UPDATED
 
-        result = self.custom_formats.create_custom_format(custom_format_resource=resource)
+        result = self.custom_formats.create_custom_format(
+            custom_format_resource=resource
+        )
         self.get_custom_format_ids()[name] = result.id
         log.debug(f"Created custom format: {name}")
         return SyncStatus.CREATED
@@ -254,7 +264,9 @@ class RadarrClient:
         for lang in self._language_cache:
             if lang.name and lang.name.lower() == name.lower():
                 return Language(id=lang.id, name=lang.name)
-        log.warning(f"Language '{name}' not found, leaving quality profile language unset")
+        log.warning(
+            f"Language '{name}' not found, leaving quality profile language unset"
+        )
         return None
 
     def sync_quality_profile(self, name: str, config: dict[str, Any]) -> SyncStatus:
@@ -315,9 +327,13 @@ class RadarrClient:
             for cf_name, score in cf_scores.items():
                 cf_id = cf_ids.get(cf_name)
                 if cf_id is not None:
-                    format_items.append({"format": cf_id, "name": cf_name, "score": score})
+                    format_items.append(
+                        {"format": cf_id, "name": cf_name, "score": score}
+                    )
                 else:
-                    log.warning(f"Custom format '{cf_name}' not found, skipping score assignment")
+                    log.warning(
+                        f"Custom format '{cf_name}' not found, skipping score assignment"
+                    )
 
         upgrade_config = config.get("upgrade", {})
 
@@ -344,13 +360,13 @@ class RadarrClient:
 
         if found:
             resource.id = found.id
-            self.quality_profiles.update_quality_profile(str(found.id), quality_profile_resource=resource)
+            self.quality_profiles.update_quality_profile(
+                str(found.id), quality_profile_resource=resource
+            )
             log.debug(f"Updated quality profile: {name}")
             return SyncStatus.UPDATED
 
-        self.quality_profiles.create_quality_profile(
-            quality_profile_resource=resource
-        )
+        self.quality_profiles.create_quality_profile(quality_profile_resource=resource)
         log.debug(f"Created quality profile: {name}")
         return SyncStatus.CREATED
 
@@ -425,14 +441,14 @@ class RadarrClient:
             tags=config.get("tags", []),
         )
 
-        self.download_clients.create_download_client(
-            download_client_resource=resource
-        )
+        self.download_clients.create_download_client(download_client_resource=resource)
         log.debug(f"Created download client: {name}")
         return SyncStatus.CREATED
 
     # Notifications (Connections)
-    def get_notification_schema(self, implementation: str) -> NotificationResource | None:
+    def get_notification_schema(
+        self, implementation: str
+    ) -> NotificationResource | None:
         """Get schema for notification implementation (cached)."""
         if self._notification_schemas is None:
             schemas = self.notifications.list_notification_schema()
@@ -486,8 +502,6 @@ class RadarrClient:
             tags=config.get("tags", []),
         )
 
-        self.notifications.create_notification(
-            notification_resource=resource
-        )
+        self.notifications.create_notification(notification_resource=resource)
         log.debug(f"Created notification: {name}")
         return SyncStatus.CREATED

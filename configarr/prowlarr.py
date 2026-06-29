@@ -2,8 +2,8 @@
 
 import logging
 
-import requests as http_requests
 import prowlarr
+import requests as http_requests
 from prowlarr.api import ApplicationApi, DownloadClientApi, IndexerApi
 from prowlarr.models import (
     ApplicationResource,
@@ -67,14 +67,20 @@ class ProwlarrClient:
         """Get schema for application implementation (cached)."""
         if self._app_schemas is None:
             schemas = self.applications.list_applications_schema()
-            self._app_schemas = {s.implementation: s for s in schemas if s.implementation}
+            self._app_schemas = {
+                s.implementation: s for s in schemas if s.implementation
+            }
         return self._app_schemas.get(implementation)
 
-    def get_download_client_schema(self, implementation: str) -> DownloadClientResource | None:
+    def get_download_client_schema(
+        self, implementation: str
+    ) -> DownloadClientResource | None:
         """Get schema for download client implementation (cached)."""
         if self._client_schemas is None:
             schemas = self.download_clients.list_download_client_schema()
-            self._client_schemas = {s.implementation: s for s in schemas if s.implementation}
+            self._client_schemas = {
+                s.implementation: s for s in schemas if s.implementation
+            }
         return self._client_schemas.get(implementation)
 
     def build_fields(
@@ -197,7 +203,7 @@ class ProwlarrClient:
         # Filter out None values — Prowlarr NullReferenceException on null fields
         settings = config.get("settings", {})
         fields_list = []
-        for sf in (schema.fields or []):
+        for sf in schema.fields or []:
             value = settings.get(sf.name)
             if value is None:
                 value = sf.value if sf.value is not None else ""

@@ -11,7 +11,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 from configarr.config import parse_config
-from configarr.sync import sync_arr, sync_prowlarr, sync_bazarr, sync_sabnzbd
+from configarr.sync import sync_arr, sync_bazarr, sync_prowlarr, sync_sabnzbd
 
 console = Console()
 log = logging.getLogger("configarr")
@@ -27,7 +27,9 @@ log = logging.getLogger("configarr")
 )
 @click.option(
     "--service",
-    type=click.Choice(["radarr", "sonarr", "prowlarr", "bazarr", "sabnzbd"], case_sensitive=False),
+    type=click.Choice(
+        ["radarr", "sonarr", "prowlarr", "bazarr", "sabnzbd"], case_sensitive=False
+    ),
     help="Only process specific service type",
 )
 @click.option(
@@ -72,11 +74,13 @@ def main(
         )
         log.debug("Debug logging enabled")
 
-    console.print(Panel.fit(
-        "[bold cyan]Configarr[/bold cyan]\n"
-        "Configuration manager for Radarr, Sonarr, Prowlarr, Bazarr, and SABnzbd",
-        border_style="cyan",
-    ))
+    console.print(
+        Panel.fit(
+            "[bold cyan]Configarr[/bold cyan]\n"
+            "Configuration manager for Radarr, Sonarr, Prowlarr, Bazarr, and SABnzbd",
+            border_style="cyan",
+        )
+    )
     console.print()
 
     if dry_run:
@@ -90,7 +94,9 @@ def main(
     try:
         config = parse_config(config_path)
     except FileNotFoundError:
-        console.print(f"[bold red]Configuration file not found:[/bold red] {config_path}")
+        console.print(
+            f"[bold red]Configuration file not found:[/bold red] {config_path}"
+        )
         sys.exit(1)
     except yaml.YAMLError as e:
         console.print(f"[bold red]Invalid YAML syntax:[/bold red] {e}")

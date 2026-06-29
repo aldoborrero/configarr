@@ -130,7 +130,9 @@ class LanguageProfileManager:
                 lang_code = self.get_language_code(lang)
                 lang_config = {"language": lang_code}
             else:
-                lang_code = self.get_language_code(lang.get("name", lang.get("language", "")))
+                lang_code = self.get_language_code(
+                    lang.get("name", lang.get("language", ""))
+                )
                 lang_config = {
                     "language": lang_code,
                     "hi": str(lang.get("hi", False)),
@@ -139,13 +141,15 @@ class LanguageProfileManager:
                 }
 
             if lang_code:
-                items.append({
-                    "id": idx,
-                    "language": lang_code,
-                    "audio_exclude": lang_config.get("audio_exclude", "False"),
-                    "hi": lang_config.get("hi", "False"),
-                    "forced": lang_config.get("forced", "False"),
-                })
+                items.append(
+                    {
+                        "id": idx,
+                        "language": lang_code,
+                        "audio_exclude": lang_config.get("audio_exclude", "False"),
+                        "hi": lang_config.get("hi", "False"),
+                        "forced": lang_config.get("forced", "False"),
+                    }
+                )
                 # Check if this is the cutoff language
                 if cutoff_lang and lang_code == cutoff_code:
                     cutoff_id = idx
@@ -215,7 +219,9 @@ class LanguageProfileManager:
                 )
                 updated.append(name)
             else:
-                all_profiles.append(self._build_profile_payload(next_id, profile_config))
+                all_profiles.append(
+                    self._build_profile_payload(next_id, profile_config)
+                )
                 next_id += 1
                 created.append(name)
 
