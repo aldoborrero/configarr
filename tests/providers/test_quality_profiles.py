@@ -1,0 +1,116 @@
+import responses
+
+from configarr.diff.model import Op
+from configarr.diff.providers.quality_profiles import QualityProfileProvider
+
+BASE = "http://radarr.test"
+
+# /qualityprofile/schema: a default profile listing every quality (in semantic
+# order, all disallowed) and one FormatItem per existing custom format (score 0).
+SCHEMA = {
+    "name": "",
+    "upgradeAllowed": False,
+    "cutoff": 1,
+    "items": [
+        {"quality": {"id": 1, "name": "SDTV"}, "items": [], "allowed": False},
+        {"quality": {"id": 2, "name": "WEBDL-1080p"}, "items": [], "allowed": False},
+        {"quality": {"id": 3, "name": "Bluray-1080p"}, "items": [], "allowed": False},
+    ],
+    "minFormatScore": 0,
+    "cutoffFormatScore": 0,
+    "minUpgradeFormatScore": 1,
+    "formatItems": [
+        {"format": 10, "name": "x265", "score": 0},
+        {"format": 11, "name": "HDR", "score": 0},
+    ],
+    "language": {"id": 1, "name": "Any"},
+}
+
+CONFIG = [
+    {
+        "name": "HD",
+        "upgrade": {
+            "allowed": True,
+            "until_quality": "Bluray-1080p",
+            "until_score": 10000,
+        },
+        "min_format_score": 0,
+        "custom_format_scores": {"x265": 100},
+        "quality_sort": "top",
+        "qualities": [{"name": "WEBDL-1080p"}, {"name": "Bluray-1080p"}],
+        "language": None,
+    }
+]
+
+# What the instance returns once the "HD" profile exists (build_desired echoed
+# back with a server-assigned id).
+EXISTING = {
+    "id": 5,
+    "name": "HD",
+    "upgradeAllowed": True,
+    "cutoff": 3,
+    "items": [
+        {"quality": {"id": 1, "name": "SDTV"}, "items": [], "allowed": False},
+        {"quality": {"id": 2, "name": "WEBDL-1080p"}, "items": [], "allowed": True},
+        {"quality": {"id": 3, "name": "Bluray-1080p"}, "items": [], "allowed": True},
+    ],
+    "minFormatScore": 0,
+    "cutoffFormatScore": 10000,
+    "minUpgradeFormatScore": 1,
+    "formatItems": [
+        {"format": 10, "name": "x265", "score": 100},
+        {"format": 11, "name": "HDR", "score": 0},
+    ],
+    "language": {"id": 1, "name": "Any"},
+}
+
+
+def _provider(config):
+    return QualityProfileProvider(
+        base_url=BASE, api_key="k", config=config, kind="radarr.quality_profile"
+    )
+
+
+@responses.activate
+def test_create_when_absent(plan_provider):
+    responses.get(f"{BASE}/api/v3/qualityprofile", json=[])
+    responses.get(f"{BASE}/api/v3/qualityprofile/schema", json=SCHEMA)
+    plan = plan_provider(_provider(CONFIG))
+    assert len(plan.resources) == 1
+    assert plan.resources[0].op is Op.CREATE
+
+
+@responses.activate
+def test_cutoff_and_scores_resolved_in_desired():
+    responses.get(f"{BASE}/api/v3/qualityprofile", json=[])
+    responses.get(f"{BASE}/api/v3/qualityprofile/schema", json=SCHEMA)
+    [desired] = _provider(CONFIG).build_desired()
+    assert desired["cutoff"] == 3  # Bluray-1080p resolved by name -> id
+    allowed = {i["quality"]["name"] for i in desired["items"] if i["allowed"]}
+    assert allowed == {"WEBDL-1080p", "Bluray-1080p"}
+    scores = {fi["name"]: fi["score"] for fi in desired["formatItems"]}
+    assert scores == {"x265": 100, "HDR": 0}  # every CF present (validator)
+
+
+@responses.activate
+def test_idempotent_when_current_equals_desired(plan_provider):
+    responses.get(f"{BASE}/api/v3/qualityprofile", json=[EXISTING])
+    responses.get(f"{BASE}/api/v3/qualityprofile/schema", json=SCHEMA)
+    plan = plan_provider(_provider(CONFIG))
+    assert not plan.has_changes, plan.resources
+
+
+@responses.activate
+def test_apply_then_replan_is_noop(plan_provider, apply_changes):
+    responses.get(f"{BASE}/api/v3/qualityprofile", json=[])
+    responses.get(f"{BASE}/api/v3/qualityprofile/schema", json=SCHEMA)
+    responses.post(f"{BASE}/api/v3/qualityprofile", json=EXISTING, status=201)
+    p = _provider(CONFIG)
+    apply_changes(p, plan_provider(p))
+
+    # Second run: instance now returns the created profile. Schema is cached from
+    # the first run, so do NOT re-register it (would leave an unfired mock).
+    responses.reset()
+    responses.get(f"{BASE}/api/v3/qualityprofile", json=[EXISTING])
+    plan2 = plan_provider(p)
+    assert not plan2.has_changes, plan2.resources

@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Iterator
 
 from configarr.diff.providers.base import ResourceProvider
+from configarr.diff.providers.quality_profiles import QualityProfileProvider
 from configarr.diff.providers.radarr_custom_formats import RadarrCustomFormatProvider
 from configarr.models import ConfigarrConfig
 
@@ -40,6 +41,24 @@ REGISTRY: list[Registration] = [
         label="custom formats",
         factory=lambda inst: RadarrCustomFormatProvider(
             inst.base_url, inst.api_key, inst.custom_formats
+        ),
+    ),
+    # Quality profiles after custom formats: FormatItems must reference every CF
+    # on the instance, so the CFs must exist first.
+    Registration(
+        kind="radarr.quality_profile",
+        service="radarr",
+        label="quality profiles",
+        factory=lambda inst: QualityProfileProvider(
+            inst.base_url, inst.api_key, inst.quality_profiles, "radarr.quality_profile"
+        ),
+    ),
+    Registration(
+        kind="sonarr.quality_profile",
+        service="sonarr",
+        label="quality profiles",
+        factory=lambda inst: QualityProfileProvider(
+            inst.base_url, inst.api_key, inst.quality_profiles, "sonarr.quality_profile"
         ),
     ),
 ]
