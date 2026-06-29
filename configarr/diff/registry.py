@@ -22,6 +22,7 @@ from configarr.diff.providers.quality_profiles import QualityProfileProvider
 from configarr.diff.providers.radarr_custom_formats import RadarrCustomFormatProvider
 from configarr.diff.providers.release_profiles import ReleaseProfileProvider
 from configarr.diff.providers.root_folders import RootFolderProvider
+from configarr.diff.providers.sabnzbd_categories import SabnzbdCategoryProvider
 from configarr.diff.providers.sabnzbd_servers import SabnzbdServerProvider
 from configarr.models import ConfigarrConfig
 
@@ -224,6 +225,15 @@ REGISTRY: list[Registration] = [
         label="servers",
         factory=lambda inst: SabnzbdServerProvider(
             inst.base_url, inst.api_key, inst.servers, "sabnzbd.server"
+        ),
+    ),
+    # SABnzbd categories: after servers, same set-only config API (work-list #13).
+    Registration(
+        kind="sabnzbd.category",
+        service="sabnzbd",
+        label="categories",
+        factory=lambda inst: SabnzbdCategoryProvider(
+            inst.base_url, inst.api_key, inst.categories, "sabnzbd.category"
         ),
     ),
 ]
