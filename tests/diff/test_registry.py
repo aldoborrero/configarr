@@ -25,6 +25,7 @@ def test_yields_a_provider_per_radarr_instance():
     assert _instances_for_kind(planned, "radarr.quality_definition") == ["hd", "uhd"]
     assert _instances_for_kind(planned, "radarr.naming") == ["hd", "uhd"]
     assert _instances_for_kind(planned, "radarr.root_folder") == ["hd", "uhd"]
+    assert _instances_for_kind(planned, "radarr.delay_profile") == ["hd", "uhd"]
     assert all(p.service == "radarr" for p in planned)
 
 

@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Iterator
 
 from configarr.diff.providers.base import ResourceProvider
+from configarr.diff.providers.delay_profiles import DelayProfileProvider
 from configarr.diff.providers.naming import NamingProvider
 from configarr.diff.providers.quality_definitions import QualityDefinitionProvider
 from configarr.diff.providers.quality_profiles import QualityProfileProvider
@@ -116,6 +117,22 @@ REGISTRY: list[Registration] = [
         label="root folders",
         factory=lambda inst: RootFolderProvider(
             inst.base_url, inst.api_key, inst.root_folders, "sonarr.root_folder"
+        ),
+    ),
+    Registration(
+        kind="radarr.delay_profile",
+        service="radarr",
+        label="delay profiles",
+        factory=lambda inst: DelayProfileProvider(
+            inst.base_url, inst.api_key, inst.delay_profiles, "radarr.delay_profile"
+        ),
+    ),
+    Registration(
+        kind="sonarr.delay_profile",
+        service="sonarr",
+        label="delay profiles",
+        factory=lambda inst: DelayProfileProvider(
+            inst.base_url, inst.api_key, inst.delay_profiles, "sonarr.delay_profile"
         ),
     ),
 ]
