@@ -1,0 +1,3728 @@
+# TRaSH-Guides adaptation: Radarr "[Anime] Remux-1080p" quality profile.
+#
+# Generated from the TRaSH-Guides data (https://github.com/TRaSH-Guides/Guides,
+# MIT-licensed JSON) and translated into the configarr schema. Custom-format
+# specifications are copied verbatim; scores are each format's TRaSH `default`
+# score. The standard Unwanted Formats set is added at negative scores.
+#
+# Reference: https://trash-guides.info/Radarr/radarr-setup-quality-profiles-anime/#quality-profile
+#
+# TRaSH's cutoff for this profile is a quality *group*; configarr resolves
+# cutoffs by individual quality name, so it is mapped to Bluray-1080p here.
+#
+# Set RADARR_API_KEY in a .env beside your configarr.yml, adjust base_url, then:
+#   configarr --config examples/trash-guides/radarr/anime-remux-1080p.yml --service radarr
+
+radarr:
+  instances:
+    main:
+      base_url: http://localhost:7878
+      api_key: ${RADARR_API_KEY}
+      custom_formats:
+        definitions:
+          Anime BD Tier 01:
+            specifications:
+              - name: Bluray
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 9
+              - name: DVD
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 5
+              - name: DemiHuman
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(DemiHuman)\b
+              - name: FLE
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(FLE)\b
+              - name: Flugel
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Flugel)\b
+              - name: LYS1TH3A
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(LYS1TH3A)\b
+              - name: Moxie
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Moxie\]|-Moxie\b
+              - name: sam
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[sam\]|-sam\b
+              - name: smol
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[smol\]|-smol\b
+              - name: SoM
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[SoM\]|-SoM\b
+          Anime BD Tier 02:
+            specifications:
+              - name: Bluray
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 9
+              - name: DVD
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 5
+              - name: Aergia
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Aergia\]|-Aergia(?!-raws)\b
+              - name: Arg0
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Arg0)\b
+              - name: Arid
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Arid\]|-Arid\b
+              - name: BlackRose
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(BlackRose)\b
+              - name: FateSucks
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(FateSucks)\b
+              - name: hydes
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(hydes)\b
+              - name: hchcsen
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(hchcsen)\b
+              - name: JOHNTiTOR
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(JOHNTiTOR)\b
+              - name: JySzE
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(JySzE)\b
+              - name: koala
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[koala\]|-koala\b
+              - name: Kulot
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Kulot)\b
+              - name: LostYears
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(LostYears)\b
+              - name: Lulu
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Lulu\]|-Lulu\b
+              - name: Meakes
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Meakes)\b
+              - name: Orphan
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Orphan\]|-Orphan\b
+              - name: Vodes
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Vodes\]|(?<!Not)-Vodes\b
+              - name: WAP
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(WAP)\b
+              - name: YURI
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[YURI\]|-YURI\b
+              - name: ZeroBuild
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(ZeroBuild)\b
+          Anime BD Tier 03:
+            specifications:
+              - name: Bluray
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 9
+              - name: DVD
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 5
+              - name: ARC
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[ARC\]|-ARC\b
+              - name: BBT-RMX
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(BBT-RMX)\b
+              - name: cappybara
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[cappybara\]|-cappybara\b
+              - name: ChucksMux
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(ChucksMux)\b
+              - name: CRUCiBLE
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[CRUCiBLE\]|-CRUCiBLE\b
+              - name: CUNNY
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(CUNNY)\b
+              - name: Cunnysseur
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Cunnysseur)\b
+              - name: Doc
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Doc\]|-Doc\b
+              - name: fig
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[fig\]|-fig\b
+              - name: Headpatter
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Headpatter\]|-Headpatter\b
+              - name: Inka-Subs
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Inka-Subs)\b
+              - name: LaCroiX
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(LaCroiX)\b
+              - name: Legion
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Legion\]|-Legion\b
+              - name: Mehul
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Mehul\]|-Mehul\b
+              - name: MTBB
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(MTBB)\b
+              - name: Mysteria
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Mysteria\]|-Mysteria\b
+              - name: NAN0
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: (?<=remux).*\b(NAN0)\b
+              - name: Netaro
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Netaro)\b
+              - name: Noiy
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Noiy)\b
+              - name: npz
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(npz)\b
+              - name: NTRX
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(NTRX)\b
+              - name: Okay-Subs
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Okay-Subs)\b
+              - name: P9
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(P9)\b
+              - name: PMR
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: ^(?=.*\b(PMR)\b)(?=.*\b(Remux)\b)
+              - name: RUDY
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[RUDY\]|-RUDY\b
+              - name: RaiN
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[RaiN\]|-RaiN\b
+              - name: RMX
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(RMX)\b
+              - name: Sekkon
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Sekkon)\b
+              - name: Serendipity
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Serendipity\]|-Serendipity\b
+              - name: sgt
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[sgt\]|-sgt\b
+              - name: SubsMix
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(SubsMix)\b
+              - name: Sylvar
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Sylvar)\b
+              - name: uba
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[uba\]|-uba\b
+              - name: ZR
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(ZR)\b|-ZR-
+          Anime BD Tier 04:
+            specifications:
+              - name: Bluray
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 9
+              - name: DVD
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 5
+              - name: ABdex
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(ABdex)\b
+              - name: Afro
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Afro\]|-Afro\b
+              - name: aRMX
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(aRMX)\b
+              - name: BiRJU
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(BiRJU)\b
+              - name: BKC
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(BKC)\b
+              - name: CBT
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(CBT)\b
+              - name: Chimera
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Chimera\]|-Chimera\b
+              - name: derp
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[derp\]|-derp\b
+              - name: DIY
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[DIY\]|-DIY\b
+              - name: EXP
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[EXP\]|-EXP\b
+              - name: Foxtrot
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Foxtrot\]|-Foxtrot\b
+              - name: grimf
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(grimf)\b
+              - name: IK
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(IK)\b
+              - name: Iznjie Biznjie
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Iznjie[ .-]Biznjie)\b
+              - name: Kaleido-subs
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Kaleido-subs)\b
+              - name: Kametsu
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Kametsu)\b
+              - name: Kawatare
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Kawatare\]|-Kawatare\b
+              - name: KH
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(KH)\b
+              - name: LazyRemux
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(LazyRemux)\b
+              - name: Metal
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Metal\]|-Metal\b
+              - name: MK
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(MK)\b
+              - name: neko-kBaraka
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(neko-kBaraka)\b
+              - name: OZR
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(OZR)\b
+              - name: Pizza
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Pizza\]|-Pizza\b
+              - name: pog42
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(pog42)\b
+              - name: Quetzal
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Quetzal)\b
+              - name: Reza
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Reza)\b
+              - name: SCY
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(SCY)\b
+              - name: Shimatta
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Shimatta)\b
+              - name: Smoke
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Smoke\]|-Smoke\b
+              - name: Spirale
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Spirale)\b
+              - name: UDF
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(UDF)\b
+              - name: UQW
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(UQW)\b
+              - name: Virtuality
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Virtuality)\b
+              - name: Vanilla
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Vanilla\]|-Vanilla\b
+              - name: VULCAN
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[VULCAN\]|-VULCAN\b
+          Anime BD Tier 05:
+            specifications:
+              - name: Bluray
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 9
+              - name: DVD
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 5
+              - name: Animorphs
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Animorphs)\b
+              - name: AOmundson
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(AOmundson)\b
+              - name: ASC
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(ASC)\b
+              - name: Baws
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Baws|McBalls)\b
+              - name: Beatrice
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Beatrice\]|-Beatrice(?!-raws)\b
+              - name: B00BA
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(B00BA)\b
+              - name: Cait-Sidhe
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Cait-Sidhe)\b
+              - name: CsS
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(CsS)\b
+              - name: CTR
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(CTR)\b
+              - name: D4C
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(D4C)\b
+              - name: deanzel
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(deanzel)\b
+              - name: Drag
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Drag\]|-Drag\b
+              - name: eldon
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(eldon)\b
+              - name: Freehold
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Freehold)\b
+              - name: GHS
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(GHS)\b
+              - name: Hark0N
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Hark0N)\b
+              - name: Holomux
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Holomux)\b
+              - name: Judgement
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Judgment\]|-Judgment\b
+              - name: MC
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(MC)\b
+              - name: mottoj
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(mottoj)\b
+              - name: NH
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(NH)\b
+              - name: NTRM
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(NTRM)\b
+              - name: o7
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(o7)\b
+              - name: QM
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(QM)\b
+              - name: Thighs
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Thighs\]|-Thighs\b
+              - name: TTGA
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(TTGA)\b
+              - name: UltraRemux
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(UltraRemux)\b
+              - name: WBDP
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(WBDP)\b
+              - name: WSE
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(WSE)\b
+              - name: Yuki
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Yuki\]|-Yuki\b
+          Anime BD Tier 06:
+            specifications:
+              - name: Bluray
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 9
+              - name: DVD
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 5
+              - name: ANE
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[ANE\]|-ANE$
+              - name: Bunny-Apocalypse
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Bunny-Apocalypse)\b
+              - name: CyC
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(CyC)\b
+              - name: Datte13
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Datte13)\b
+              - name: EJF
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(EJF)\b
+              - name: GetItTwisted
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(GetItTwisted)\b
+              - name: GSK_kun
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(GSK[._-]kun)\b
+              - name: iKaos
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(iKaos)\b
+              - name: karios
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(karios)\b
+              - name: Pookie
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Pookie)\b
+              - name: RASETSU
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(RASETSU)\b
+              - name: Starbez
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Starbez)\b
+              - name: Tsundere
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Tsundere\]|-Tsundere(?!-)\b
+              - name: Yoghurt
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Yoghurt)\b
+              - name: YURASUKA
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[YURASUKA\]|-YURASUKA\b
+          Anime BD Tier 07:
+            specifications:
+              - name: Bluray
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 9
+              - name: DVD
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 5
+              - name: 9volt
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(9volt)\b
+              - name: AC
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[AC\]|-AC$
+              - name: Almighty
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Almighty\]|-Almighty\b
+              - name: Asakura
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Asakura\]|-Asakura\b
+              - name: Asenshi
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Asenshi)\b
+              - name: BlurayDesuYo
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(BlurayDesuYo)\b
+              - name: Bolshevik
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Bolshevik\]|-Bolshevik\b
+              - name: Brrrrrrr
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Brrrrrrr)\b
+              - name: Chihiro
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Chihiro\]|-Chihiro\b
+              - name: Commie
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Commie)\b
+              - name: Crow
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Crow\]|-Crow\b
+              - name: Dae
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Dae)\b
+              - name: Dekinai
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Dekinai\]|-Dekinai\b
+              - name: Dragon-Releases
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Dragon-Releases)\b
+              - name: DragsterPS
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(DragsterPS)\b
+              - name: Exiled-Destiny
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Exiled-Destiny|E-D)\b
+              - name: FFF
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(FFF)\b
+              - name: Final8
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Final8)\b
+              - name: Geonope
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Geonope)\b
+              - name: GJM
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(GJM)\b
+              - name: iAHD
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(iAHD)\b
+              - name: inid4c
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(inid4c)\b
+              - name: Koten_Gars
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Koten[ ._-]Gars)\b
+              - name: kuchikirukia
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(kuchikirukia)\b
+              - name: LCE
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(LCE)\b
+              - name: NTW
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(NTW)\b
+              - name: orz
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(orz)\b
+              - name: RAI
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(RAI)\b
+              - name: REVO
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(REVO)\b
+              - name: SCP-2223
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(SCP-2223)\b
+              - name: Senjou
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Senjou\]|-Senjou\b
+              - name: SEV
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(SEV)\b
+              - name: THORA
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(THORA)\b
+              - name: Vivid
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Vivid\]|-Vivid\b
+          Anime BD Tier 08:
+            specifications:
+              - name: Bluray
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 9
+              - name: DVD
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 5
+              - name: AkihitoSubs
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(AkihitoSubs)\b
+              - name: Arukoru
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Arukoru)\b
+              - name: EDGE
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[EDGE\]|-EDGE\b
+              - name: EMBER
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[EMBER\]|-EMBER\b
+              - name: GHOST
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[GHOST\]|-GHOST\b
+              - name: Judas
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Judas\]|-Judas
+              - name: naiyas
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[naiyas\]|-naiyas\b
+              - name: Nep_Blanc
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Nep[ ._-]Blanc)\b
+              - name: Prof
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Prof\]|-Prof\b
+              - name: Shirσ
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Shirσ)\b
+          Anime Web Tier 01:
+            specifications:
+              - name: WEBDL
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 7
+              - name: WEBRIP
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 8
+              - name: Arg0
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Arg0)\b
+              - name: Arid
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Arid\]|-Arid\b
+              - name: Baws
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Baws)\b
+              - name: FLE
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(FLE)\b
+              - name: LostYears
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(LostYears)\b
+              - name: LYS1TH3A
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(LYS1TH3A)\b
+              - name: McBalls
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(McBalls)\b
+              - name: sam
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[sam\]|-sam\b
+              - name: SCY
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(SCY)\b
+              - name: Setsugen
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Setsugen)\b
+              - name: smol
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[smol\]|-smol\b
+              - name: SoM
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[SoM\]|-SoM\b
+              - name: Vodes
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Vodes\]|(?<!Not)-Vodes\b
+              - name: Z4ST1N
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Z4ST1N)\b
+              - name: ZeroBuild
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(ZeroBuild)\b
+          Anime Web Tier 02:
+            specifications:
+              - name: WEBDL
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 7
+              - name: WEBRIP
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 8
+              - name: '0x539'
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(0x539)\b
+              - name: Asakura
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Asakura\]|-Asakura\b
+              - name: Cyan
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Cyan\]|-Cyan\b
+              - name: Cytox
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Cytox)\b
+              - name: Dae
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Dae\]|-Dae\b
+              - name: Foxtrot
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Foxtrot\]|-Foxtrot\b
+              - name: Gao
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Gao\]|-Gao\b
+              - name: GSK_kun
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(GSK[._-]kun)\b
+              - name: Half-Baked
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Half-Baked)\b
+              - name: HatSubs
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(HatSubs)\b
+              - name: MALD
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(MALD)\b
+              - name: MTBB
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(MTBB)\b
+              - name: Not-Vodes
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Not-Vodes\]|-Not-Vodes\b
+              - name: Okay-Subs
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Okay-Subs)\b
+              - name: Pizza
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Pizza\]|-Pizza\b
+              - name: Reza
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Reza)\b
+              - name: Slyfox
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Slyfox)\b
+              - name: SoLCE
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(SoLCE)\b
+              - name: Tenshi
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[tenshi\]|-tenshi$
+          Anime Web Tier 03:
+            specifications:
+              - name: WEBDL
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 7
+              - name: WEBRIP
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 8
+              - name: AnoZu
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(AnoZu)\b
+              - name: Dooky
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Dooky)\b
+              - name: Kitsune
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Kitsune\]|-Kitsune\b
+              - name: SubsPlus+
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(SubsPlus\+?)\b
+              - name: ZR
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(ZR)\b
+          Anime Web Tier 04:
+            specifications:
+              - name: WEBDL
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 7
+              - name: WEBRIP
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 8
+              - name: Erai-Raws
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Erai-raws)\b
+              - name: ToonsHub
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(ToonsHub)\b
+              - name: VARYG
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(VARYG)\b
+          Anime Web Tier 05:
+            specifications:
+              - name: WEBDL
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 7
+              - name: WEBRIP
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 8
+              - name: BlueLobster
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(BlueLobster)\b
+              - name: GST
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(GST)\b
+              - name: HorribleRips
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(HorribleRips)\b
+              - name: HorribleSubs
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(HorribleSubs)\b
+              - name: KAN3D2M
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(KAN3D2M)\b
+              - name: KiyoshiStar
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(KS|KiyoshiStar)\b
+              - name: Lia
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Lia\]|-Lia\b
+              - name: NanDesuKa
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(NanDesuKa)\b
+              - name: PlayWeb
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(PlayWeb)\b
+              - name: SobsPlease
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(SobsPlease)\b
+              - name: Some-Stuffs
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Some-Stuffs)\b
+              - name: SubsPlease
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(SubsPlease)\b
+              - name: URANIME
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(URANIME)\b
+              - name: ZigZag
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: "\\[ZigZag\\]|-ZigZab\b"
+          Anime Web Tier 06:
+            specifications:
+              - name: WEBDL
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 7
+              - name: WEBRIP
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 8
+              - name: 9volt
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(9volt)\b
+              - name: Asenshi
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Asenshi)\b
+              - name: Chihiro
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Chihiro\]|-Chihiro\b
+              - name: Commie
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Commie)\b
+              - name: DameDesuYo
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(DameDesuYo)\b
+              - name: Doki
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Doki\]|-Doki\b
+              - name: GJM
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(GJM)\b
+              - name: Kaleido
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Kaleido)\b
+              - name: Kantai
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Kantai\]|-Kantai\b
+              - name: KawaSubs
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(KawaSubs)\b
+              - name: Tsundere
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Tsundere\]|-Tsundere(?!-)\b
+          Remux Tier 01:
+            specifications:
+              - name: Remux
+                implementation: QualityModifierSpecification
+                fields:
+                  value: 5
+              - name: 3L
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(3L)$
+              - name: BiZKiT
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(BiZKiT)$
+              - name: BLURANiUM
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(BLURANiUM)$
+              - name: BMF
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(BMF)$
+              - name: CiNEPHiLES
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(CiNEPHiLES)$
+              - name: FraMeSToR
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(FraMeSToR)$
+              - name: PiRAMiDHEAD
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(PiRAMiDHEAD)$
+              - name: PmP
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(PmP)$
+              - name: WiLDCAT
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(WiLDCAT)$
+              - name: ZQ
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(ZQ)$
+          Remux Tier 02:
+            specifications:
+              - name: Remux
+                implementation: QualityModifierSpecification
+                fields:
+                  value: 5
+              - name: ATELiER
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(ATELiER)$
+              - name: NCmt
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(NCmt)$
+              - name: playBD
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(playBD)$
+              - name: SiCFoI
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(SiCFoI)$
+              - name: SURFINBIRD
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(SURFINBIRD)$
+              - name: TEPES
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(TEPES)$
+          Remux Tier 03:
+            specifications:
+              - name: Remux
+                implementation: QualityModifierSpecification
+                fields:
+                  value: 5
+              - name: 12GaugeShotgun
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(12GaugeShotgun)$
+              - name: decibeL
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(decibeL)$
+              - name: EPSiLON
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(EPSiLON)$
+              - name: HiFi
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(HiFi)$
+              - name: iFT
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(iFT)$
+              - name: KRaLiMaRKo
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(KRaLiMaRKo)$
+              - name: NTb
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(NTb)$
+              - name: PTP
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(PTP)$
+              - name: SumVision
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(SumVision)$
+              - name: TOA
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(TOA)$
+              - name: TRiToN
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(TRiToN)$
+          Anime Raws:
+            specifications:
+              - name: AsukaRaws
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: Asuka[ ._-]?(Raws)
+              - name: Beatrice-Raws
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: Beatrice[ ._-]?(Raws)
+              - name: Daddy-Raws
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: Daddy[ ._-]?(Raws)
+              - name: Fumi-Raws
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: Fumi[ ._-]?(Raws)
+              - name: IrizaRaws
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: Iriza[ ._-]?(Raws)
+              - name: Kawaiika-Raws
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: Kawaiika[ ._-]?(Raws)
+              - name: km
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[km\]|-km\b
+              - name: Koi-Raws
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: Koi[ ._-]?(Raws)
+              - name: Lilith-Raws
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: Lilith[ ._-]?(Raws)
+              - name: LowPower-Raws
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: LowPower[ ._-]?(Raws)
+              - name: Moozzi2
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Moozzi2)\b
+              - name: NanakoRaws
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: Nanako[ ._-]?(Raws)
+              - name: NC-Raws
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: NC[ ._-]?(Raws)
+              - name: neko-raws
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: neko[ ._-]?(raws)
+              - name: New-raws
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: New[ ._-]?(raws)
+              - name: Ohys-Raws
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: Ohys[ ._-]?(Raws)
+              - name: Pandoratv-Raws
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: Pandoratv[ ._-]?(Raws)
+              - name: Raws-Maji
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Raws-Maji)\b
+              - name: ReinForce
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(ReinForce)\b
+              - name: Scryous-Raws
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: Scryous[ ._-]?(Raws)
+              - name: Seicher-Raws
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: Seicher[ ._-]?(Raws)
+              - name: Shiniori-Raws
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: Shiniori[ ._-]?(Raws)
+          Anime LQ Groups:
+            specifications:
+              - name: $tore-Chill
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(\$tore-Chill)\b
+              - name: 0neshot
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(0neshot)\b
+              - name: '224'
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[224\]|-224\b
+              - name: A-Destiny
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(A-Destiny)\b
+              - name: AceAres
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(AceAres)\b
+              - name: AhmadDev
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(AhmadDev)\b
+              - name: Anime Chap
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Anime[ .-]?Chap)\b
+              - name: Anime Land
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Anime[ .-]?Land)\b
+              - name: Anime Time
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Anime[ .-]?Time)\b
+              - name: AnimeDynastyEN
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(AnimeDynastyEN)\b
+              - name: AnimeKuro
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(AnimeKuro)\b
+              - name: AnimeRG
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(AnimeRG)\b
+              - name: Animesubs
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Animesubs)\b
+              - name: AnimeTR
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(AnimeTR)\b
+              - name: Anitsu
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Anitsu)\b
+              - name: AniVoid
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(AniVoid)\b
+              - name: ArataEnc
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(ArataEnc)\b
+              - name: AREY
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(AREY)\b
+              - name: Ari
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Ari\]|-Ari\b
+              - name: ASW
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(ASW)\b
+              - name: BJX
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(BJX)\b
+              - name: BlackLuster
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(BlackLuster)\b
+              - name: bonkai77
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(bonkai77)\b
+              - name: CameEsp
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(CameEsp)\b
+              - name: Cat66
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Cat66)\b
+              - name: CBB
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(CBB)\b
+              - name: Cerberus
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Cerberus\]|-Cerberus\b
+              - name: Cleo
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Cleo\]|-Cleo
+              - name: CuaP
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(CuaP)\b
+              - name: DaddySubs
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Daddy(Subs)?\]|-Daddy(Subs)?\b
+              - name: DARKFLiX
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(DARKFLiX)\b
+              - name: DB
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[DB\]
+              - name: DBArabic
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(DBArabic)\b
+              - name: Deadmau- RAWS
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Deadmau[ .-]?[ .-]?RAWS)\b
+              - name: DKB
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(DKB)\b
+              - name: DP
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(DP)\b
+              - name: DsunS
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(DsunS)\b
+              - name: Emmid
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Emmid\]|-Emmid\b
+              - name: ExREN
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(ExREN)\b
+              - name: FAV
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[FAV\]|-FAV\b
+              - name: Fish
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b((Baked|Dead|Space)Fish)\b
+              - name: FunArts
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(FunArts)\b
+              - name: GERMini
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(GERMini)\b
+              - name: Hakata Ramen
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Hakata[ .-]?Ramen)\b
+              - name: Hall_of_C
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Hall_of_C)\b
+              - name: Hatsuyuki
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Hatsuyuki\]|-Hatsuyuki\b
+              - name: HAV1T
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(HAV1T)\b
+              - name: HENiL
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(HENiL)\b
+              - name: Hitoku
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Hitoku\]|-Hitoku\b
+              - name: HollowRoxas
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(HollowRoxas)\b
+              - name: HR
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[HR\]|-HR\b
+              - name: ICEBLUE
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(ICEBLUE)\b
+              - name: iPUNISHER
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(iPUNISHER)\b
+              - name: JacobSwaggedUp
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(JacobSwaggedUp)\b
+              - name: Johnny-englishsubs
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Johnny-englishsubs)\b
+              - name: Kallango
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Kallango\]|-Kallango\b
+              - name: Kanjouteki
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Kanjouteki)\b
+              - name: KEKMASTERS
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(KEKMASTERS)\b
+              - name: Kirion
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Kirion)\b
+              - name: KQRM
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(KQRM)\b
+              - name: KRP
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(KRP)\b
+              - name: LoliHouse
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(LoliHouse)\b
+              - name: M@nI
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(M@nI)\b
+              - name: mal lu zen
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(mal[ .-]lu[ .-]zen)\b
+              - name: Man.K
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Man\.K)\b
+              - name: Maximus
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Maximus\]|-Maximus\b
+              - name: MD
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[MD\]|-MD\b
+              - name: mdcx
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(mdcx)\b
+              - name: Metaljerk
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Metaljerk)\b
+              - name: MGD
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(MGD)\b
+              - name: MiniFreeza
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(MiniFreeza)\b
+              - name: MiniMTBB
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(MiniMTBB)\b
+              - name: MinisCuba
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(MinisCuba)\b
+              - name: MiniTheatre
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(MiniTheatre)\b
+              - name: Mites
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Mites)\b
+              - name: Modders Bay
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Modders[ .-]?Bay)\b
+              - name: Mr. Deadpool
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Mr\.Deadpool)\b
+              - name: NemDiggers
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(NemDiggers)\b
+              - name: neoHEVC
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(neoHEVC)\b
+              - name: Nokou
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Nokou)\b
+              - name: NoobSubs
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(N[eo][wo]b[ ._-]?Subs)\b
+              - name: NS
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(NS)\b
+              - name: Nyanpasu
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Nyanpasu)\b
+              - name: OldCastle
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(OldCastle)\b
+              - name: Pantsu
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Pantsu\]|-Pantsu\b
+              - name: Pao
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Pao\]|-Pao\b
+              - name: phazer11
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(phazer11)\b
+              - name: Pixel
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Pixel\]|-Pixel\b
+              - name: Plex Friendly
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Plex[ .-]?Friendly)\b
+              - name: PnPSubs
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(PnPSubs)\b
+              - name: Polarwindz
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Polarwindz)\b
+              - name: Project-gxs
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Project-gxs)\b
+              - name: PuyaSubs
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(PuyaSubs)\b
+              - name: QaS
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(QAS)\b
+              - name: QCE
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(QCE)\b
+              - name: Rando235
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Rando235)\b
+              - name: Ranger
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Ranger\]|-Ranger\b
+              - name: Rapta
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Rapta\]|-Rapta\b
+              - name: Raw Files
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(M2TS|BDMV|BDVD)\b
+              - name: Raze
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Raze\]|-Raze\b
+              - name: Reaktor
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Reaktor)\b
+              - name: RightShiftBy2
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(RightShiftBy2)\b
+              - name: Rip Time
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Rip[ .-]?Time)\b
+              - name: SAD
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[SAD\]|-SAD\b
+              - name: Salieri
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Salieri)\b
+              - name: Samir755
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Samir755)\b
+              - name: SanKyuu
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(SanKyuu)\b
+              - name: SEiN
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[SEiN\]|-SEiN\b
+              - name: sekkusu&ok
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(sekkusu&ok)\b
+              - name: SHFS
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(SHFS)\b
+              - name: shincaps
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(shincaps)\b
+              - name: SLAX
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(SLAX)\b
+              - name: Sokudo
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Sokudo\]|-Sokudo\b
+              - name: SRW
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(SRW)\b
+              - name: SSA
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(SSA)\b
+              - name: StrayGods
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(StrayGods)\b
+              - name: Suki Desu
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Suki[ .-]?Desu\]|-Suki[ .-]?Desu\b
+              - name: TeamTurquoize
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(TeamTurquoize)\b
+              - name: Tenrai Sensei
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Tenrai[ .-]?Sensei)\b
+              - name: TnF
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(TnF)\b
+              - name: TOPKEK
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(TOPKEK)\b
+              - name: Trix
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Trix\]|-Trix\b
+              - name: U3-Web
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(U3-Web)\b
+              - name: UNBIASED
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[UNBIASED\]|-UNBIASED\b
+              - name: uP
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[uP\]
+              - name: USD
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[USD\]|-USD\b
+              - name: Valenciano
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Valenciano)\b
+              - name: VipapkStudios
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(VipapkStudios)\b
+              - name: Wardevil
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Wardevil\]|-Wardevil\b
+              - name: WtF Anime
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(WtF[ ._-]?Anime)\b
+              - name: xiao-av1
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(xiao-av1)\b
+              - name: Yabai_Desu_NeRandomRemux
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Yabai_Desu_NeRandomRemux)\b
+              - name: YakuboEncodes
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(YakuboEncodes)\b
+              - name: youshikibi
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(youshikibi)\b
+              - name: YuiSubs
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(YuiSubs)\b
+              - name: Yun
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Yun\]|-Yun\b
+              - name: zza
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[zza\]|-zza\b
+          Uncensored:
+            include_when_renaming: true
+            specifications:
+              - name: Uncensored
+                implementation: ReleaseTitleSpecification
+                fields:
+                  value: \b(Uncut|Unrated|Uncensored|AT[-_. ]?X)\b
+          v0:
+            include_when_renaming: true
+            specifications:
+              - name: v0
+                implementation: ReleaseTitleSpecification
+                fields:
+                  value: (\b|\d)(v0)\b
+          v1:
+            include_when_renaming: true
+            specifications:
+              - name: v1
+                implementation: ReleaseTitleSpecification
+                fields:
+                  value: (\b|\d)(v1)\b
+          v2:
+            include_when_renaming: true
+            specifications:
+              - name: v2
+                implementation: ReleaseTitleSpecification
+                fields:
+                  value: (\b|\d)(v2)\b|\b(Repack|Proper|Rerip)\b
+              - name: Not Higher Versions
+                implementation: ReleaseTitleSpecification
+                negate: true
+                fields:
+                  value: (\b|\d)(v[3-4])\b|\b((repack|proper)[23])\b|\bREAL\.(REAL\.)?(PROPER|REPACK)\b
+          v3:
+            include_when_renaming: true
+            specifications:
+              - name: v3
+                implementation: ReleaseTitleSpecification
+                fields:
+                  value: (\b|\d)(v3)\b|\b((repack|proper)2)\b|\b(REAL\.(PROPER|REPACK))\b
+              - name: Not Higher Versions
+                implementation: ReleaseTitleSpecification
+                negate: true
+                fields:
+                  value: (\b|\d)(v[4])\b|\b((repack|proper)3)\b|\bREAL\.(REAL\.)(PROPER|REPACK)\b
+          v4:
+            include_when_renaming: true
+            specifications:
+              - name: v4
+                implementation: ReleaseTitleSpecification
+                fields:
+                  value: (\b|\d)(v4)\b|\b((repack|proper)3)\b|\b(REAL\.REAL\.(PROPER|REPACK))\b
+          VRV:
+            include_when_renaming: true
+            specifications:
+              - name: VRV
+                implementation: ReleaseTitleSpecification
+                fields:
+                  value: \b(vrv)\b
+              - name: WEBDL
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 7
+              - name: WEBRIP
+                implementation: SourceSpecification
+                required: false
+                fields:
+                  value: 8
+          10bit:
+            specifications:
+              - name: 10bit
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: 10[.-]?bit
+              - name: hi10p
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: hi10p
+          Anime Dual Audio:
+            specifications:
+              - name: Dual Audio
+                implementation: ReleaseTitleSpecification
+                fields:
+                  value: dual[ ._-]?(audio)|[([]dual[])]|\b(JA|ZH|KO)(?= ?\+ ?.*?\b(EN))|\b(EN)(?= ?\+ ?.*?\b(JA|ZH|KO))|\b(Japanese|Chinese|Korean) ?[ ._\+&-] ?\b(English)|\b(English) ?[ ._\+&-] ?\b(Japanese|Chinese|Korean)|\b(\d{3,4}(p|i)|4K|U(ltra)?HD)\b.*\b(DUAL)\b(?!.*\(|\))
+              - name: Not Single Language Only
+                implementation: ReleaseTitleSpecification
+                negate: true
+                fields:
+                  value: \[(JA|ZH|KO)\]
+              - name: Japanese Language
+                implementation: LanguageSpecification
+                required: false
+                fields:
+                  value: 8
+              - name: Chinese Language
+                implementation: LanguageSpecification
+                required: false
+                fields:
+                  value: 10
+              - name: Korean Language
+                implementation: LanguageSpecification
+                required: false
+                fields:
+                  value: 21
+          Dubs Only:
+            specifications:
+              - name: Dubbed
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: ^(?!.*(Dual|Multi)[-_. ]?Audio).*((?<!multi-)\b(dub(bed)?)\b|(funi|eng(lish)?)_?dub)
+              - name: Golumpa
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Golumpa)\b
+              - name: KaiDubs (Not Dual Audio)
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: ^(?!.*(dual[ ._-]?audio|[([]dual[])]|(JA|ZH|KO)\+EN|EN\+(JA|ZH|KO))).*\b(KaiDubs)\b
+              - name: KamiFS
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(KamiFS)\b
+              - name: KS (Not Dual Audio)
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: ^(?!.*(dual[ ._-]?audio|[([]dual[])]|(JA|ZH|KO)\+EN|EN\+(JA|ZH|KO))).*\bKS\b
+              - name: torenter69
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(torenter69)\b
+              - name: Yameii
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[Yameii\]|-Yameii\b
+          VOSTFR:
+            include_when_renaming: true
+            specifications:
+              - name: VOSTFR
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(VOST.*?FR(E|A)?)\b
+              - name: SUBFRENCH
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(SUBFR(A|ENCH)?)\b
+          AV1:
+            specifications:
+              - name: AV1
+                implementation: ReleaseTitleSpecification
+                fields:
+                  value: \bAV1\b
+          3D:
+            specifications:
+              - name: 3D
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: (?<=\b[12]\d{3}\b).*\b(3d|sbs|half[ .-]ou|half[ .-]sbs)\b
+              - name: BluRay3D
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(BluRay3D)\b
+              - name: BD3D
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(BD3D)\b
+          Bad Dual Groups:
+            specifications:
+              - name: alfaHD
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(alfaHD.*)$
+              - name: BAT
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(BAT)$
+              - name: BlackBit
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(BlackBit)$
+              - name: BNd
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(BNd)$
+              - name: C.A.A
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(C\.A\.A)$
+              - name: C76
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(C76)$
+              - name: Cory
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(Cory)$
+              - name: CYPHER
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(CYPHER)$
+              - name: EniaHD
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(EniaHD)$
+              - name: EXTREME
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(EXTREME)$
+              - name: FF
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(FF)$
+              - name: FOXX
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(FOXX)$
+              - name: G4RiS
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(G4RiS)$
+              - name: GUEIRA
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(GUEIRA)$
+              - name: LCD
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(LCD)$
+              - name: MGE
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(MGE\b.*)$
+              - name: MLH
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(MLH)$
+              - name: N3G4N
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(N3G4N)$
+              - name: ONLYMOViE
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(ONLYMOViE)$
+              - name: PD
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(PD)$
+              - name: PTHome
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(PTHome)$
+              - name: RiPER
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(RiPER)$
+              - name: RK
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(RK)$
+              - name: SiGLA
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(SiGLA)$
+              - name: Tars
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(Tars)$
+              - name: TM
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(TM\b)$
+              - name: tokar86a
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(tokar86a)$
+              - name: TURG
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(TURG)$
+              - name: TvR
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(TvR)$
+              - name: vnlls
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(vnlls)$
+              - name: WTV
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(WTV)$
+              - name: XiQUEXiQUE
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(XiQUEXiQUE)$
+              - name: Yatogam1
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(Yatogam1)$
+              - name: YusukeFLA
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(YusukeFLA)$
+              - name: ZigZag
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(ZigZag)$
+              - name: ZNM
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(ZNM)$
+          Black and White Editions:
+            specifications:
+              - name: Blackout/B&W/Black&Chrome
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: (?<=\b[12]\d{3}\b).*\b((B(lack)?[ ._-]?(out|(and|[n&])?[ ._-]?(W(hite)?|Chrome))))\b(?!$)
+              - name: Monochrome
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: (?<=\b[12]\d{3}\b).*\b(Monochrome)\b(?!$)
+              - name: Noir
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: (?<=\b[12]\d{3}\b).*\b(Noir)\b(?!$)
+              - name: Shush Cut
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: (?<=\b[12]\d{3}\b).*\b(Shush[ ._-]?Cut)\b(?!$)
+              - name: No/Minus Color
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: (?<=\b[12]\d{3}\b).*\b((No|Minus)[ ._-]?Colou?r)\b(?!$)
+              - name: Grayscale
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: (?<=\b[12]\d{3}\b).*\b(Gr[ae]y([ ._-]?(scale))?)\b(?!$)
+              - name: Darkness and Light
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: (?<=\b[12]\d{3}\b).*\b(Darkness?[ ._-]?(and|&)[ ._-]?(Light))\b(?!$)
+          BR-DISK:
+            specifications:
+              - name: BR-DISK
+                implementation: ReleaseTitleSpecification
+                fields:
+                  value: ^(?!.*\b((?<!HD[._ -]|HD)DVD|BDRip|720p|MKV|XviD|WMV|d3g|(BD)?REMUX|^(?=.*1080p)(?=.*HEVC)|[xh][-_. ]?26[45]|German.*[DM]L|((?<=\d{4}).*German.*([DM]L)?)(?=.*\b(AVC|HEVC|VC[-_. ]?1|MVC|MPEG[-_. ]?2)\b))\b)(((?=.*\b(Blu[-_. ]?ray|BD|HD[-_. ]?DVD)\b)(?=.*\b(AVC|HEVC|VC[-_. ]?1|MVC|MPEG[-_. ]?2|BDMV|ISO)\b))|^((?=.*\b(((?=.*\b((.*_)?COMPLETE.*|Dis[ck])\b)(?=.*(Blu[-_. ]?ray|HD[-_. ]?DVD)))|3D[-_. ]?BD|BR[-_. ]?DISK|Full[-_. ]?Blu[-_. ]?ray|^((?=.*((BD|UHD)[-_. ]?(25|50|66|100|ISO)))))))).*
+          Extras:
+            specifications:
+              - name: Extras
+                implementation: ReleaseTitleSpecification
+                fields:
+                  value: (?<=\b[12]\d{3}\b).*\b(Extras|Bonus|Extended[ ._-]Clip)\b
+          Generated Dynamic HDR:
+            specifications:
+              - name: BiTOR
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(BiTOR)$
+              - name: DepraveD
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(DepraveD)$
+              - name: Flights
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(Flights)$
+              - name: GuyZo
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(GuyZo|BR-GuyZo)$
+              - name: SasukeducK
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(SasukeducK)$
+              - name: tarunk9c
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(tarunk9c)$
+              - name: VD0N
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(VD0N)$
+              - name: VECTOR
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(VECTOR)$
+              - name: VisionXpert
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(VisionXpert)$
+              - name: HDR10+
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \bHDR10(\+|P(lus)?\b)
+              - name: DV
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(dv|dovi|dolby[ .]?v(ision)?)\b
+          Line/Mic Dubbed:
+            specifications:
+              - name: Line Dubbed
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(LD|AC3LD|Line[ .-]?Dubbed)\b
+              - name: Mic Dubbed
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(MD|AC3MD|Mic[ .-]?Dubbed)\b
+          LQ:
+            specifications:
+              - name: 24xHD
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: \b(24xHD)\b
+              - name: 41RGB
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(41RGB)$
+              - name: 4K4U
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(4K4U)$
+              - name: AOC
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(AOC)$
+              - name: AROMA
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(AROMA)$
+              - name: aXXo
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(aXXo)$
+              - name: AZAZE
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(AZAZE)$
+              - name: BARC0DE
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(BARC0DE)$
+              - name: BAUCKLEY
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(BAUCKLEY)$
+              - name: BdC
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(BdC)$
+              - name: beAst
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(beAst)$
+              - name: BTM
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(BTM)$
+              - name: C1NEM4
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(C1NEM4)$
+              - name: C4K
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(C4K)$
+              - name: CDDHD
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(CDDHD)$
+              - name: CHAOS
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(CHAOS)$
+              - name: CHD
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(CHD)$
+              - name: CiNE
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(CiNE)$
+              - name: COLLECTiVE
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(COLLECTiVE)$
+              - name: CREATiVE24
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(CREATiVE24)$
+              - name: CrEwSaDe
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(CrEwSaDe)$
+              - name: CTFOH
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(CTFOH)$
+              - name: d3g
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(d3g)$
+              - name: DDR
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(DDR)$
+              - name: DNL
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(DNL)$
+              - name: DRX
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(DRX)$
+              - name: E
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(E)$
+              - name: EPiC
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(EPiC)$
+              - name: EuReKA
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(EuReKA)$
+              - name: FaNGDiNG0
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(FaNGDiNG0)$
+              - name: Feranki1980
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(Feranki1980)$
+              - name: FGT
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(FGT)$
+              - name: FMD
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(FMD)$
+              - name: FRDS
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(FRDS)$
+              - name: FZHD
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(FZHD)$
+              - name: GalaxyRG
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(GalaxyRG)$
+              - name: GHD
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(GHD)$
+              - name: GPTHD
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(GPTHD)$
+              - name: HDHUB4U
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(HDHUB4U)$
+              - name: HDS
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(HDS)$
+              - name: HDT
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(HDT)$
+              - name: HDTime
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(HDTime)$
+              - name: HDWinG
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(HDWinG)$
+              - name: iNTENSO
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(iNTENSO)$
+              - name: iPlanet
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(iPlanet)$
+              - name: iVy
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(iVy)$
+              - name: jennaortega
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(jennaortega(UHD)?)$
+              - name: JFF
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(JFF)$
+              - name: KC
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(KC)$
+              - name: KiNGDOM
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(KiNGDOM)$
+              - name: KIRA
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(KIRA)$
+              - name: L0SERNIGHT
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(L0SERNIGHT)$
+              - name: LAMA
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(LAMA)$
+              - name: Leffe
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(Leffe)$
+              - name: Liber8
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(Liber8)$
+              - name: LiGaS
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(LiGaS)$
+              - name: LUCY
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(LUCY)$
+              - name: MarkII
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(MarkII)$
+              - name: MeGusta
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(MeGusta)$
+              - name: Mesc
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(Mesc)$
+              - name: mHD
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(mHD)$
+              - name: mSD
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(mSD)$
+              - name: MTeam
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(MTeam|MT)$
+              - name: MySiLU
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(MySiLU)$
+              - name: NhaNc3
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(NhaNc3)$
+              - name: nHD
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(nHD)$
+              - name: nikt0
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(nikt0)$
+              - name: NoGroup
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: NoGr(ou)?p
+              - name: nSD
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(nSD)$
+              - name: OFT
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(OFT)$
+              - name: Pahe
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: Pahe(\.(ph|in))?\b
+              - name: PATOMiEL
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(PATOMiEL)$
+              - name: PRODJi
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(PRODJi)$
+              - name: PSA
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(PSA)$
+              - name: PTNK
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(PTNK)$
+              - name: RARBG
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(RARBG)$
+              - name: RBB
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(RBB)$
+              - name: RDN
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(RDN)$
+              - name: RiffTrax
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(Rifftrax)$
+              - name: RU4HD
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(RU4HD)$
+              - name: SANTi
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(SANTi)$
+              - name: Scene
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(Scene)$
+              - name: SHD
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(SHD)$
+              - name: ShieldBearer
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(ShieldBearer)$
+              - name: STUTTERSHIT
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(STUTTERSHIT)$
+              - name: SUNSCREEN
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(SUNSCREEN)$
+              - name: TBS
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(TBS)$
+              - name: TEKNO3D
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(TEKNO3D)$
+              - name: Tigole
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(Tigole)$
+              - name: TIKO
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(TIKO)$
+              - name: VISIONPLUSHDR
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(VISIONPLUSHDR(-X|1000)?)$
+              - name: WAF
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(WAF)$
+              - name: WiKi
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(WiKi)$
+              - name: x0r
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(x0r)$
+              - name: YIFY
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(YIFY)$
+              - name: YTS
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(YTS(.(MX|LT|AG))?)$
+              - name: Zeus
+                implementation: ReleaseGroupSpecification
+                required: false
+                fields:
+                  value: ^(Zeus)$
+          LQ (Release Title):
+            specifications:
+              - name: 1XBET
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(1XBET)\b
+              - name: BEN THE MEN
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(BEN[ ._-]THE[ ._-]MEN)\b
+              - name: D3US
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: (-D3US|D3US-)
+              - name: EVO (no WEBDL)
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: (?<=\b[12]\d{3}\b.*?)(?<!\b(web[ ._-]?(dl|rip)?).*?)\b(EVO)\b
+              - name: Feranki1980
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Feranki1980)\b
+              - name: GalaxyRG
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(GalaxyRG)\b
+              - name: HHWEB (No MA)
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: ^(?!.*\bMA\b.*\bWEB-?DL\b).*\b(HHWEB)\b
+              - name: jennaortega
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: (?<!-)\b(jennaortega(UHD)?)\b
+              - name: PiRaTeS (no WEBDL)
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: (?<=\b[12]\d{3}\b.*?)(?<!\b(web[ ._-]?(dl|rip)?).*?)\b(PiRaTeS)\b
+              - name: R&H
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(R&H)\b
+              - name: READ NOTE
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(READ(\s|\.)+NOTE)\b
+              - name: SWTYBLZ
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(SWTYBLZ)\b
+              - name: TeeWee
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(TeeWee)\b
+              - name: TEKNO3D
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(TEKNO3D)\b
+              - name: UnKn0wn (NoRemux)
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: (?<!\b(remux).*?)\b(unkn0wn)\b
+              - name: Will1869
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(Will1869)\b
+          No-RlsGroup:
+            specifications:
+              - name: No Parsed Group
+                implementation: ReleaseGroupSpecification
+                negate: true
+                required: false
+                fields:
+                  value: .
+          Obfuscated:
+            specifications:
+              - name: 4P
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: -4P\b
+              - name: 4Planet
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: -4Planet\b
+              - name: AsRequested
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: -AsRequested\b
+              - name: BUYMORE
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: -BUYMORE\b
+              - name: Chamele0n
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: -Chamele0n\b
+              - name: GEROV
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: -GEROV\b
+              - name: iNC0GNiTO
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: -iNC0GNiTO\b
+              - name: NZBGeek
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: -NZBGeek\b
+              - name: Obfuscated
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: -Obfuscated\b
+              - name: postbot
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: -postbot\b
+              - name: Rakuv
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: -Rakuv\b
+              - name: Scrambled
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: (?<=\b[12]\d{3}\b).*(Scrambled)\b
+              - name: WhiteRev
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: -WhiteRev\b
+              - name: xpost
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: -xpost\b
+              - name: WRTEAM
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: -WRTEAM\b
+              - name: CAPTCHA
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: -CAPTCHA\b
+              - name: _nzb
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: _nzb\b
+          Retags:
+            specifications:
+              - name: '[rartv]'
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[rartv\]
+              - name: '[rarbg]'
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[rarbg\]
+              - name: '[eztv]'
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[eztvx?[ ._-]?(io|re|to)?\]
+              - name: '[TGx]'
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \[TGx\]
+              - name: .VAV
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: '[.]VAV\b'
+              - name: .heb
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: '[.]heb\b'
+              - name: ORARBG
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(ORARBG)\b
+          Scene:
+            specifications:
+              - name: Scene Groups + Naming
+                implementation: ReleaseTitleSpecification
+                fields:
+                  value: ^(?=.*(\b\d{3,4}p\b).*([_. ]WEB[_. ])(?!DL)\b)|\b(-CAKES|-GGEZ|-GGWP|-GLHF|-GOSSIP|-NAISU|-KOGI|-PECULATE|-SLOT|-EDITH|-ETHEL|-ELEANOR|-B2B|-SPAMnEGGS|-FTP|-DiRT|-SYNCOPY|-BAE|-SuccessfulCrab|-NHTFS|-SURCODE|-B0MBARDIERS|-D3US|-BROTHERHOOD|-W4K|-STRiKES)
+              - name: Not INFLATE/DEFLATE
+                implementation: ReleaseTitleSpecification
+                negate: true
+                fields:
+                  value: \b(INFLATE|DEFLATE)\b
+              - name: Not GERMAN
+                implementation: ReleaseTitleSpecification
+                negate: true
+                fields:
+                  value: \b(GERMAN)\b
+          Sing-Along Versions:
+            specifications:
+              - name: Sing-Along
+                implementation: ReleaseTitleSpecification
+                fields:
+                  value: (?<=\b[12]\d{3}\b).*\b(Sing[-_. ]Along)\b
+          Upscaled:
+            specifications:
+              - name: AI Upscales
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: (?<=\b[12]\d{3}\b)(?=.*\b(HEVC)\b)(?=.*\b(AI)\b)
+              - name: AIUS
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(AIUS)\b
+              - name: GuyZo
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(GuyZo|BR-GuyZo)\b
+              - name: Regrade
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b((Upscale)?Re-?graded?)\b
+              - name: RW
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(RW)\b
+              - name: TheUpscaler
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: \b(The[ ._-]?Upscaler)\b
+              - name: Upscaled
+                implementation: ReleaseTitleSpecification
+                required: false
+                fields:
+                  value: (?<=\b[12]\d{3}\b).*\b(AI[ ._-]?Enhanced?|UPS(UHD)?|Upscaled?([ ._-]?UHD)?|UpRez)\b
+      profiles:
+        quality_profiles:
+          definitions:
+            '[Anime] Remux-1080p':
+              upgrades_allowed: true
+              upgrade_until_quality: Bluray-1080p
+              upgrade_until_custom_format_score: 10000
+              minimum_custom_format_score: 100
+              qualities:
+                - name: Remux 1080p
+                  qualities:
+                    - Remux-1080p
+                    - Bluray-1080p
+                  enabled: true
+                - name: WEB 1080p
+                  qualities:
+                    - HDTV-1080p
+                    - WEBRip-1080p
+                    - WEBDL-1080p
+                  enabled: true
+                - Bluray-720p
+                - name: WEB 720p
+                  qualities:
+                    - HDTV-720p
+                    - WEBRip-720p
+                    - WEBDL-720p
+                  enabled: true
+                - Bluray-576p
+                - Bluray-480p
+                - name: WEB 480p
+                  qualities:
+                    - WEBRip-480p
+                    - WEBDL-480p
+                  enabled: true
+                - DVD
+                - SDTV
+              custom_format_scores:
+                Anime BD Tier 01: 1400
+                Anime BD Tier 02: 1300
+                Anime BD Tier 03: 1200
+                Anime BD Tier 04: 1100
+                Anime BD Tier 05: 1000
+                Anime BD Tier 06: 900
+                Anime BD Tier 07: 800
+                Anime BD Tier 08: 700
+                Anime Web Tier 01: 600
+                Anime Web Tier 02: 500
+                Anime Web Tier 03: 400
+                Anime Web Tier 04: 300
+                Anime Web Tier 05: 200
+                Anime Web Tier 06: 100
+                Remux Tier 01: 1950
+                Remux Tier 02: 1900
+                Remux Tier 03: 1850
+                Anime Raws: -10000
+                Anime LQ Groups: -10000
+                v0: -51
+                v1: 1
+                v2: 2
+                v3: 3
+                v4: 4
+                VRV: 10
+                Dubs Only: -10000
+                VOSTFR: -10000
+                AV1: -10000
+                3D: -10000
+                Bad Dual Groups: -10000
+                Black and White Editions: -10000
+                BR-DISK: -10000
+                Extras: -10000
+                Generated Dynamic HDR: -10000
+                Line/Mic Dubbed: -10000
+                LQ: -10000
+                LQ (Release Title): -10000
+                No-RlsGroup: -10000
+                Obfuscated: -10000
+                Retags: -10000
+                Scene: -10000
+                Sing-Along Versions: -10000
+                Upscaled: -10000
+              language: Original

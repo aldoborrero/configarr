@@ -1,16 +1,14 @@
-# TRaSH-Guides adaptation: Radarr "HD Bluray + WEB" quality profile.
+# TRaSH-Guides adaptation: Radarr "UHD Bluray + WEB" quality profile.
 #
-# Generated from the TRaSH-Guides data (https://trash-guides.info,
-# https://github.com/TRaSH-Guides/Guides, MIT-licensed JSON) and translated into
-# the configarr schema. Custom-format specifications are copied verbatim; scores
-# are each format's TRaSH `default` score.
+# Generated from the TRaSH-Guides data (https://github.com/TRaSH-Guides/Guides,
+# MIT-licensed JSON) and translated into the configarr schema. Custom-format
+# specifications are copied verbatim; scores are each format's TRaSH `default`
+# score. The standard Unwanted Formats set is added at negative scores.
 #
-# Covers WEBDL 1080p and Bluray 720p/1080p, prefers higher-quality release-group
-# tiers, and rejects unwanted sources (BR-DISK, LQ, x265 HD transcodes, ...) with
-# large negative scores. See: https://trash-guides.info/Radarr/radarr-setup-quality-profiles/#hd-bluray-web
+# Reference: https://trash-guides.info/Radarr/radarr-setup-quality-profiles/#uhd-bluray-web
 #
 # Set RADARR_API_KEY in a .env beside your configarr.yml, adjust base_url, then:
-#   configarr --config examples/trash-guides/radarr-hd-bluray-web.yml --service radarr
+#   configarr --config examples/trash-guides/radarr/uhd-bluray-web.yml --service radarr
 
 radarr:
   instances:
@@ -19,207 +17,92 @@ radarr:
       api_key: ${RADARR_API_KEY}
       custom_formats:
         definitions:
-          HD Bluray Tier 01:
+          UHD Bluray Tier 01:
             specifications:
-              - name: BLURAY
-                implementation: SourceSpecification
-                fields:
-                  value: 9
               - name: Not REMUX
                 implementation: QualityModifierSpecification
                 negate: true
                 fields:
                   value: 5
-              - name: Not 2160p
-                implementation: ResolutionSpecification
+              - name: Not WEBDL
+                implementation: SourceSpecification
                 negate: true
                 fields:
+                  value: 7
+              - name: Not WEBRIP
+                implementation: SourceSpecification
+                negate: true
+                fields:
+                  value: 8
+              - name: 2160p
+                implementation: ResolutionSpecification
+                fields:
                   value: 2160
-              - name: BBQ
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(BBQ)$
-              - name: BMF
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(BMF)$
-              - name: c0kE
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(c0kE)$
-              - name: Chotab
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(Chotab)$
-              - name: CRiSC
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(CRiSC)$
               - name: CtrlHD
                 implementation: ReleaseGroupSpecification
                 required: false
                 fields:
                   value: ^(CtrlHD)$
-              - name: D-Z0N3
+              - name: MainFrame
                 implementation: ReleaseGroupSpecification
                 required: false
                 fields:
-                  value: ^(D-Z0N3)$
-              - name: Dariush
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(Dariush)$
-              - name: decibeL
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(decibeL)$
+                  value: ^(MainFrame)$
               - name: DON
                 implementation: ReleaseGroupSpecification
                 required: false
                 fields:
                   value: ^(DON)$
-              - name: EbP
+              - name: W4NK3R
                 implementation: ReleaseGroupSpecification
                 required: false
                 fields:
-                  value: ^(EbP)$
-              - name: EDPH
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(EDPH)$
-              - name: Geek
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(Geek)$
-              - name: LolHD
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(LolHD)$
-              - name: NCmt
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(NCmt)$
-              - name: PTer
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(PTer)$
-              - name: TayTO
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(TayTO)$
-              - name: TDD
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(TDD)$
-              - name: TnP
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(TnP)$
-              - name: VietHD
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(VietHD)$
-              - name: ZQ
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(ZQ)$
-              - name: ZoroSenpai
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(ZoroSenpai)$
-          HD Bluray Tier 02:
+                  value: ^(W4NK3R)$
+          UHD Bluray Tier 02:
             specifications:
-              - name: BLURAY
-                implementation: SourceSpecification
-                fields:
-                  value: 9
               - name: Not REMUX
                 implementation: QualityModifierSpecification
                 negate: true
                 fields:
                   value: 5
-              - name: Not 2160p
-                implementation: ResolutionSpecification
+              - name: Not WEBDL
+                implementation: SourceSpecification
                 negate: true
+                fields:
+                  value: 7
+              - name: Not WEBRIP
+                implementation: SourceSpecification
+                negate: true
+                fields:
+                  value: 8
+              - name: 2160p
+                implementation: ResolutionSpecification
                 fields:
                   value: 2160
-              - name: ATELiER
+              - name: HQMUX
                 implementation: ReleaseGroupSpecification
                 required: false
                 fields:
-                  value: ^(ATELiER)$
-              - name: EA
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(EA)$
-              - name: HiDt
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(HiDt)$
-              - name: HiSD
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(HiSD)$
-              - name: iFT
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(iFT)$
-              - name: NTb
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(NTb)$
-              - name: QOQ
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(QOQ)$
-              - name: SA89
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(SA89)$
-              - name: sbR
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(sbR)$
-          HD Bluray Tier 03:
+                  value: ^(HQMUX)$
+          UHD Bluray Tier 03:
             specifications:
-              - name: BLURAY
-                implementation: SourceSpecification
-                fields:
-                  value: 9
               - name: Not REMUX
                 implementation: QualityModifierSpecification
                 negate: true
                 fields:
                   value: 5
-              - name: Not 2160p
-                implementation: ResolutionSpecification
+              - name: Not WEBDL
+                implementation: SourceSpecification
                 negate: true
+                fields:
+                  value: 7
+              - name: Not WEBRIP
+                implementation: SourceSpecification
+                negate: true
+                fields:
+                  value: 8
+              - name: 2160p
+                implementation: ResolutionSpecification
                 fields:
                   value: 2160
               - name: BHDStudio
@@ -232,36 +115,26 @@ radarr:
                 required: false
                 fields:
                   value: ^(hallowed)$
-              - name: HiFi
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(HiFi)$
               - name: HONE
                 implementation: ReleaseGroupSpecification
                 required: false
                 fields:
                   value: ^(HONE)$
-              - name: LoRD
+              - name: PTer
                 implementation: ReleaseGroupSpecification
                 required: false
                 fields:
-                  value: ^(LoRD)$
-              - name: playHD
-                implementation: ReleaseGroupSpecification
-                required: false
-                fields:
-                  value: ^(playHD)$
+                  value: ^(PTer)$
               - name: SPHD
                 implementation: ReleaseGroupSpecification
                 required: false
                 fields:
                   value: ^(SPHD)$
-              - name: W4NK3R
+              - name: WEBDV
                 implementation: ReleaseGroupSpecification
                 required: false
                 fields:
-                  value: ^(W4NK3R)$
+                  value: ^(WEBDV)$
           WEB Tier 01:
             specifications:
               - name: ABBIE
@@ -1629,23 +1502,22 @@ radarr:
       profiles:
         quality_profiles:
           definitions:
-            HD Bluray + WEB:
+            UHD Bluray + WEB:
               upgrades_allowed: true
-              upgrade_until_quality: Bluray-1080p
+              upgrade_until_quality: Bluray-2160p
               upgrade_until_custom_format_score: 10000
               minimum_custom_format_score: 0
               qualities:
-                - Bluray-1080p
-                - name: WEB 1080p
+                - Bluray-2160p
+                - name: WEB 2160p
                   qualities:
-                    - WEBRip-1080p
-                    - WEBDL-1080p
+                    - WEBRip-2160p
+                    - WEBDL-2160p
                   enabled: true
-                - Bluray-720p
               custom_format_scores:
-                HD Bluray Tier 01: 1800
-                HD Bluray Tier 02: 1750
-                HD Bluray Tier 03: 1700
+                UHD Bluray Tier 01: 1800
+                UHD Bluray Tier 02: 1750
+                UHD Bluray Tier 03: 1700
                 WEB Tier 01: 1700
                 WEB Tier 02: 1650
                 WEB Tier 03: 1600
