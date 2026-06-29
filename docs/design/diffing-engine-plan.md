@@ -57,6 +57,8 @@ interpreter that carries the runtime libs (minus the nix-only generated clients,
 which the pilot tests never import) plus `pytest`/`responses`. Rewrite
 `nix/devshell.nix`:
 
+Preserve the existing mdbook docs tooling — only the Python interpreter changes:
+
 ```nix
 {pkgs, ...}:
 let
@@ -79,6 +81,12 @@ pkgs.mkShell {
     python
     pkgs.ruff
     pkgs.mypy
+
+    # Docs: `mdbook serve docs` for a live preview. mdbook-linkcheck2 backs the
+    # link check that runs as part of `mdbook build` / `nix flake check`.
+    pkgs.mdbook
+    pkgs.mdbook-mermaid
+    pkgs.mdbook-linkcheck2
   ];
 }
 ```
