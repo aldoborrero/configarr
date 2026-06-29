@@ -9,6 +9,7 @@ from typing import Any, Callable, Iterator
 
 from configarr.diff.providers.applications import ApplicationProvider
 from configarr.diff.providers.base import ResourceProvider
+from configarr.diff.providers.bazarr_settings import BazarrSettingsProvider
 from configarr.diff.providers.delay_profiles import DelayProfileProvider
 from configarr.diff.providers.download_clients import DownloadClientProvider
 from configarr.diff.providers.indexers import IndexerProvider
@@ -245,6 +246,32 @@ REGISTRY: list[Registration] = [
         label="misc settings",
         factory=lambda inst: SabnzbdMiscProvider(
             inst.base_url, inst.api_key, inst.misc, "sabnzbd.misc"
+        ),
+    ),
+    # Bazarr settings sections: general/sonarr/radarr each own one section of the
+    # /system/settings document, written via a partial form-POST (work-list #15).
+    Registration(
+        kind="bazarr.general",
+        service="bazarr",
+        label="general settings",
+        factory=lambda inst: BazarrSettingsProvider(
+            inst.base_url, inst.api_key, inst.general, "bazarr.general"
+        ),
+    ),
+    Registration(
+        kind="bazarr.sonarr",
+        service="bazarr",
+        label="sonarr settings",
+        factory=lambda inst: BazarrSettingsProvider(
+            inst.base_url, inst.api_key, inst.sonarr, "bazarr.sonarr"
+        ),
+    ),
+    Registration(
+        kind="bazarr.radarr",
+        service="bazarr",
+        label="radarr settings",
+        factory=lambda inst: BazarrSettingsProvider(
+            inst.base_url, inst.api_key, inst.radarr, "bazarr.radarr"
         ),
     ),
 ]

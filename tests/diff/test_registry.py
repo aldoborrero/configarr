@@ -1,6 +1,7 @@
 from configarr.diff.registry import providers_for
 from configarr.models import (
     ArrServiceConfig,
+    BazarrConfig,
     ConfigarrConfig,
     ProwlarrConfig,
     SabnzbdConfig,
@@ -121,6 +122,25 @@ def test_sabnzbd_misc_is_sabnzbd_only():
 
     assert _instances_for_kind(planned, "sabnzbd.misc") == ["sab"]
     assert _instances_for_kind(planned, "radarr.misc") == []
+
+
+def _bazarr(name: str) -> BazarrConfig:
+    return BazarrConfig(
+        name=name,
+        base_url=f"http://{name}.test",
+        api_key="k",
+    )
+
+
+def test_bazarr_settings_are_bazarr_only():
+    config = ConfigarrConfig(radarr=[_radarr("hd")], bazarr=[_bazarr("subs")])
+
+    planned = list(providers_for(config))
+
+    assert _instances_for_kind(planned, "bazarr.general") == ["subs"]
+    assert _instances_for_kind(planned, "bazarr.sonarr") == ["subs"]
+    assert _instances_for_kind(planned, "bazarr.radarr") == ["subs"]
+    assert _instances_for_kind(planned, "radarr.general") == []
 
 
 def test_service_filter_narrows_to_matching_service():
