@@ -9,6 +9,7 @@ from typing import Any, Callable, Iterator
 
 from configarr.diff.providers.base import ResourceProvider
 from configarr.diff.providers.delay_profiles import DelayProfileProvider
+from configarr.diff.providers.download_clients import DownloadClientProvider
 from configarr.diff.providers.naming import NamingProvider
 from configarr.diff.providers.quality_definitions import QualityDefinitionProvider
 from configarr.diff.providers.quality_profiles import QualityProfileProvider
@@ -143,6 +144,22 @@ REGISTRY: list[Registration] = [
         label="release profiles",
         factory=lambda inst: ReleaseProfileProvider(
             inst.base_url, inst.api_key, inst.release_profiles, "sonarr.release_profile"
+        ),
+    ),
+    Registration(
+        kind="radarr.download_client",
+        service="radarr",
+        label="download clients",
+        factory=lambda inst: DownloadClientProvider(
+            inst.base_url, inst.api_key, inst.download_clients, "radarr.download_client"
+        ),
+    ),
+    Registration(
+        kind="sonarr.download_client",
+        service="sonarr",
+        label="download clients",
+        factory=lambda inst: DownloadClientProvider(
+            inst.base_url, inst.api_key, inst.download_clients, "sonarr.download_client"
         ),
     ),
 ]
