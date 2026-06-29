@@ -1,5 +1,5 @@
 from configarr.diff.registry import providers_for
-from configarr.models import ArrServiceConfig, ConfigarrConfig
+from configarr.models import ArrServiceConfig, ConfigarrConfig, ProwlarrConfig
 
 
 def _radarr(name: str) -> ArrServiceConfig:
@@ -46,6 +46,23 @@ def test_release_profile_is_sonarr_only():
 
     assert _instances_for_kind(planned, "sonarr.release_profile") == ["tv"]
     assert _instances_for_kind(planned, "radarr.release_profile") == []
+
+
+def _prowlarr(name: str) -> ProwlarrConfig:
+    return ProwlarrConfig(
+        name=name,
+        base_url=f"http://{name}.test",
+        api_key="k",
+    )
+
+
+def test_indexer_is_prowlarr_only():
+    config = ConfigarrConfig(radarr=[_radarr("hd")], prowlarr=[_prowlarr("idx")])
+
+    planned = list(providers_for(config))
+
+    assert _instances_for_kind(planned, "prowlarr.indexer") == ["idx"]
+    assert _instances_for_kind(planned, "radarr.indexer") == []
 
 
 def test_service_filter_narrows_to_matching_service():

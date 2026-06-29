@@ -10,6 +10,7 @@ from typing import Any, Callable, Iterator
 from configarr.diff.providers.base import ResourceProvider
 from configarr.diff.providers.delay_profiles import DelayProfileProvider
 from configarr.diff.providers.download_clients import DownloadClientProvider
+from configarr.diff.providers.indexers import IndexerProvider
 from configarr.diff.providers.naming import NamingProvider
 from configarr.diff.providers.notifications import NotificationProvider
 from configarr.diff.providers.quality_definitions import QualityDefinitionProvider
@@ -177,6 +178,15 @@ REGISTRY: list[Registration] = [
         label="notifications",
         factory=lambda inst: NotificationProvider(
             inst.base_url, inst.api_key, inst.notifications, "sonarr.notification"
+        ),
+    ),
+    # Prowlarr-only: indexers are the first Prowlarr resource in the rollout.
+    Registration(
+        kind="prowlarr.indexer",
+        service="prowlarr",
+        label="indexers",
+        factory=lambda inst: IndexerProvider(
+            inst.base_url, inst.api_key, inst.indexers, "prowlarr.indexer"
         ),
     ),
 ]
