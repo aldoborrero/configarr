@@ -1,0 +1,34 @@
+# Minimal configarr.yml — just enough to connect to each service.
+#
+# Every instance requires `base_url` and `api_key`. Add the sections you need
+# from the per-service examples in this folder. Drop any service you don't run.
+
+radarr:
+  instances:
+    main:
+      base_url: http://localhost:7878
+      api_key: ${RADARR_API_KEY}
+
+sonarr:
+  instances:
+    main:
+      base_url: http://localhost:8989
+      api_key: ${SONARR_API_KEY}
+
+prowlarr:
+  instances:
+    main:
+      base_url: http://localhost:9696
+      api_key: ${PROWLARR_API_KEY}
+
+bazarr:
+  instances:
+    main:
+      base_url: http://localhost:6767
+      api_key: ${BAZARR_API_KEY}
+
+sabnzbd:
+  instances:
+    main:
+      base_url: http://localhost:8080
+      api_key: ${SABNZBD_API_KEY}

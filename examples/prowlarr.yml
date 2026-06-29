@@ -1,0 +1,47 @@
+# Prowlarr example — indexers, applications (the *arr apps Prowlarr syncs to),
+# and download clients. All three nest under a `definitions` map.
+
+prowlarr:
+  instances:
+    main:
+      base_url: http://localhost:9696
+      api_key: ${PROWLARR_API_KEY}
+
+      indexers:
+        definitions:
+          mytracker:
+            implementation: Cardigann
+            definition: mytracker
+            enable: true
+            priority: 25
+            settings:
+              apikey: ${TRACKER_API_KEY}
+
+      applications:
+        definitions:
+          sonarr:
+            implementation: Sonarr
+            sync_level: fullSync
+            settings:
+              baseUrl: http://localhost:8989
+              apiKey: ${SONARR_API_KEY}
+              prowlarrUrl: http://localhost:9696
+          radarr:
+            implementation: Radarr
+            sync_level: fullSync
+            settings:
+              baseUrl: http://localhost:7878
+              apiKey: ${RADARR_API_KEY}
+              prowlarrUrl: http://localhost:9696
+
+      download_clients:
+        definitions:
+          qbittorrent:
+            implementation: QBittorrent
+            enable: true
+            priority: 1
+            settings:
+              host: localhost
+              port: 8080
+              username: admin
+              password: ${QBIT_PASSWORD}

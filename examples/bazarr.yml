@@ -1,0 +1,41 @@
+# Bazarr example — connections to Sonarr/Radarr, subtitle providers, and
+# language profiles.
+#
+# `general`, `sonarr` and `radarr` are flat passthrough maps: every key is sent
+# to the matching Bazarr settings field of the same name. Provider maps are
+# passthrough too (sent as settings-<provider>-<field>); configarr additively
+# enables each provider you list. Profiles you list are rebuilt from this config
+# and overwrite the server copy; profiles only on the server are left untouched.
+
+bazarr:
+  instances:
+    main:
+      base_url: http://localhost:6767
+      api_key: ${BAZARR_API_KEY}
+
+      general:
+        use_sonarr: true
+        use_radarr: true
+
+      sonarr:
+        ip: localhost
+        port: 8989
+        apikey: ${SONARR_API_KEY}
+
+      radarr:
+        ip: localhost
+        port: 7878
+        apikey: ${RADARR_API_KEY}
+
+      providers:
+        opensubtitlescom:
+          username: ${OST_USER}
+          password: ${OST_PASSWORD}
+
+      language_profiles:
+        - name: English
+          cutoff: English
+          languages:
+            - English
+            - name: Spanish
+              forced: true

@@ -1,0 +1,34 @@
+# SABnzbd example — Usenet servers, categories, and misc settings.
+#
+# `servers` and `categories` are keyed by name. Only the `misc` keys listed in
+# the schema reference are recognized; anything else is ignored.
+
+sabnzbd:
+  instances:
+    main:
+      base_url: http://localhost:8080
+      api_key: ${SABNZBD_API_KEY}
+
+      servers:
+        news:
+          host: news.example.com
+          port: 563
+          ssl: true
+          username: ${USENET_USER}
+          password: ${USENET_PASSWORD}
+          connections: 20
+          retention: 3000
+
+      categories:
+        sonarr:
+          dir: sonarr
+          priority: -100
+        radarr:
+          dir: radarr
+          priority: -100
+
+      misc:
+        download_dir: /downloads/incomplete
+        complete_dir: /downloads/complete
+        bandwidth_max: 50M
+        pre_check: true

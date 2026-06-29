@@ -50,7 +50,10 @@ docker run --rm \
 
 ## Configuration
 
-See [configarr.yml.example](configarr.yml.example) for a full example.
+See the [`examples/`](examples/) folder for ready-to-adapt configs — a
+[minimal](examples/minimal.yml) skeleton, one file per service, and a
+[full](examples/full.yml) multi-instance example. Every supported key is
+documented in the [schema reference](skills/configarr-config/references/schema.md).
 
 ## Claude Code skill
 
