@@ -14,3 +14,6 @@ result-*
 
 # mdbook build output
 docs/book/
+
+# Local reference checkouts (not part of the project)
+.claude/
