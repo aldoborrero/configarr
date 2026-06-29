@@ -114,6 +114,15 @@ def test_sabnzbd_category_is_sabnzbd_only():
     assert _instances_for_kind(planned, "radarr.category") == []
 
 
+def test_sabnzbd_misc_is_sabnzbd_only():
+    config = ConfigarrConfig(radarr=[_radarr("hd")], sabnzbd=[_sabnzbd("sab")])
+
+    planned = list(providers_for(config))
+
+    assert _instances_for_kind(planned, "sabnzbd.misc") == ["sab"]
+    assert _instances_for_kind(planned, "radarr.misc") == []
+
+
 def test_service_filter_narrows_to_matching_service():
     config = ConfigarrConfig(radarr=[_radarr("hd")])
 

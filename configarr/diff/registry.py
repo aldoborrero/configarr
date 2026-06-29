@@ -23,6 +23,7 @@ from configarr.diff.providers.radarr_custom_formats import RadarrCustomFormatPro
 from configarr.diff.providers.release_profiles import ReleaseProfileProvider
 from configarr.diff.providers.root_folders import RootFolderProvider
 from configarr.diff.providers.sabnzbd_categories import SabnzbdCategoryProvider
+from configarr.diff.providers.sabnzbd_misc import SabnzbdMiscProvider
 from configarr.diff.providers.sabnzbd_servers import SabnzbdServerProvider
 from configarr.models import ConfigarrConfig
 
@@ -234,6 +235,16 @@ REGISTRY: list[Registration] = [
         label="categories",
         factory=lambda inst: SabnzbdCategoryProvider(
             inst.base_url, inst.api_key, inst.categories, "sabnzbd.category"
+        ),
+    ),
+    # SABnzbd misc settings: the global-settings singleton, same set-only config
+    # API written per keyword/value (work-list #14).
+    Registration(
+        kind="sabnzbd.misc",
+        service="sabnzbd",
+        label="misc settings",
+        factory=lambda inst: SabnzbdMiscProvider(
+            inst.base_url, inst.api_key, inst.misc, "sabnzbd.misc"
         ),
     ),
 ]
