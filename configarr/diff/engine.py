@@ -17,6 +17,16 @@ def _field_diffs(before: dict, after: dict) -> list[FieldDiff]:
     return diffs
 
 
+def _index(items: list[dict], match_key: Callable[[dict], Hashable], side: str) -> dict:
+    out: dict = {}
+    for r in items:
+        k = match_key(r)
+        if k in out:
+            raise ValueError(f"duplicate key in {side}: {k!r}")
+        out[k] = r
+    return out
+
+
 def diff(
     kind: str,
     current: list[dict[str, Any]],
@@ -25,7 +35,8 @@ def diff(
     match_key: Callable[[dict], Hashable],
     normalize: Callable[[dict], dict],
 ) -> Plan:
-    cur_by_key = {match_key(r): r for r in current}
+    cur_by_key = _index(current, match_key, "current")
+    _index(desired, match_key, "desired")
     plans: list[ResourcePlan] = []
     for d in desired:
         key = match_key(d)

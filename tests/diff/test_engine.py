@@ -1,3 +1,5 @@
+import pytest
+
 from configarr.diff.engine import diff
 from configarr.diff.model import Op
 
@@ -20,6 +22,13 @@ def test_diff_detects_create_update_unchanged():
 
 
 def test_diff_is_idempotent_on_equal_inputs():
-    items = [{"name": "a", "v": 1}]
-    plan = diff("cf", items, items, match_key=lambda r: r["name"], normalize=_norm)
+    current = [{"name": "a", "v": 1}]
+    desired = [{"name": "a", "v": 1}]  # different objects, equal values
+    plan = diff("cf", current, desired, match_key=lambda r: r["name"], normalize=_norm)
     assert not plan.has_changes
+
+
+def test_diff_rejects_duplicate_keys():
+    dup = [{"name": "a", "v": 1}, {"name": "a", "v": 2}]
+    with pytest.raises(ValueError):
+        diff("cf", dup, [], match_key=lambda r: r["name"], normalize=_norm)
