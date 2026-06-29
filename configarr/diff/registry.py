@@ -7,6 +7,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Callable, Iterator
 
+from configarr.diff.providers.applications import ApplicationProvider
 from configarr.diff.providers.base import ResourceProvider
 from configarr.diff.providers.delay_profiles import DelayProfileProvider
 from configarr.diff.providers.download_clients import DownloadClientProvider
@@ -187,6 +188,15 @@ REGISTRY: list[Registration] = [
         label="indexers",
         factory=lambda inst: IndexerProvider(
             inst.base_url, inst.api_key, inst.indexers, "prowlarr.indexer"
+        ),
+    ),
+    # Prowlarr applications: after indexers, both Prowlarr-only.
+    Registration(
+        kind="prowlarr.application",
+        service="prowlarr",
+        label="applications",
+        factory=lambda inst: ApplicationProvider(
+            inst.base_url, inst.api_key, inst.applications, "prowlarr.application"
         ),
     ),
 ]

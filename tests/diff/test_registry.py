@@ -65,6 +65,15 @@ def test_indexer_is_prowlarr_only():
     assert _instances_for_kind(planned, "radarr.indexer") == []
 
 
+def test_application_is_prowlarr_only():
+    config = ConfigarrConfig(radarr=[_radarr("hd")], prowlarr=[_prowlarr("app")])
+
+    planned = list(providers_for(config))
+
+    assert _instances_for_kind(planned, "prowlarr.application") == ["app"]
+    assert _instances_for_kind(planned, "radarr.application") == []
+
+
 def test_service_filter_narrows_to_matching_service():
     config = ConfigarrConfig(radarr=[_radarr("hd")])
 
