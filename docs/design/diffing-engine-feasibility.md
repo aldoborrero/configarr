@@ -11,6 +11,21 @@ does **not** change runtime code.
 
 ---
 
+## Status
+
+Phase 0 (scaffolding) and the Phase 1 Radarr custom-format pilot are **implemented**.
+The implementation lives under `configarr/diff/` — `model`, `normalize`, `engine`,
+`providers/base`, `providers/radarr_custom_formats`, `render`, `runner`.
+
+- A read-only `--plan` CLI flag previews Radarr custom-format changes before applying.
+- Idempotency is confirmed by an apply-then-replan test (second plan is always empty);
+  the full pytest suite runs in CI via `nix/checks/pytest.nix`.
+- See the [implementation plan](./diffing-engine-plan.md) for the detailed phase design.
+- Rolling the provider pattern out to the remaining resources and services is tracked as
+  follow-up work (per the plan's "Follow-up plans" section).
+
+---
+
 ## 1. What "won't break" actually means
 
 Reading the goal precisely, a "proper diffing engine" needs four properties the
