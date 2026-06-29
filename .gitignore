@@ -1,7 +1,13 @@
+# Python
 *.pyc
 __pycache__/
-*.pyc
-result
-configarr.egg-info/
-uv.lock
+*.egg-info/
 .venv/
+uv.lock
+
+# Nix build outputs
+result
+result-*
+
+# Local config / secrets
+.env
