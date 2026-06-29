@@ -3,19 +3,19 @@
 from __future__ import annotations
 
 from configarr.diff.engine import diff
-from configarr.diff.providers.radarr_custom_formats import RadarrCustomFormatProvider
+from configarr.diff.registry import providers_for
 from configarr.diff.render import render_plan
 from configarr.models import ConfigarrConfig
 
 
-def run_plan(config: ConfigarrConfig) -> str:
-    if not config.radarr:
-        return "No supported resources configured for --plan."
+def run_plan(
+    config: ConfigarrConfig,
+    service: str | None = None,
+    instance: str | None = None,
+) -> str:
     sections: list[str] = []
-    for inst in config.radarr:
-        provider = RadarrCustomFormatProvider(
-            inst.base_url, inst.api_key, inst.custom_formats
-        )
+    for planned in providers_for(config, service, instance):
+        provider = planned.provider
         plan = diff(
             provider.kind,
             provider.fetch_current(),
@@ -23,6 +23,8 @@ def run_plan(config: ConfigarrConfig) -> str:
             match_key=provider.match_key,
             normalize=provider.normalize,
         )
-        sections.append(f"radarr/{inst.name} — custom formats")
+        sections.append(f"{planned.service}/{planned.instance} — {planned.label}")
         sections.append(render_plan(plan))
+    if not sections:
+        return "No supported resources configured for --plan."
     return "\n".join(sections)
