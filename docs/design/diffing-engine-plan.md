@@ -10,6 +10,8 @@
 
 **Companion docs:** [`diffing-engine-feasibility.md`](./diffing-engine-feasibility.md), [`diffing-engine-radarr-notes.md`](./diffing-engine-radarr-notes.md). Read the Radarr notes before Task 6 — they define the API constraints the provider must honor.
 
+**Testing constraint (critical):** the generated API clients (`radarr-py`, `sonarr-py`, …) are **not on PyPI** — they are nix-only packages. `configarr/sync.py` and the per-service modules import them at module load. Therefore **tests must import only `configarr.diff.*` and `configarr.config`/`configarr.models` (all client-free) — never `configarr.sync` or `configarr.__main__`.** Keep `configarr/diff/` free of generated-client imports (the provider talks HTTP via `requests` directly). The `--plan` logic lives in a client-free `configarr/diff/runner.py`; `__main__.py` only thinly calls it.
+
 **Scope note:** This plan covers Phase 0 + the custom-formats pilot only. Rolling the provider interface out to the remaining Radarr/Sonarr resources, Prowlarr, SABnzbd, and Bazarr — plus opt-in `--prune` (`DELETED`) and apply-through-engine — are **separate follow-up plans**, each gated by its own idempotency tests.
 
 ---
@@ -47,13 +49,38 @@
 - Modify: `pyproject.toml`
 - Create: `tests/__init__.py`, `tests/conftest.py`, `tests/test_smoke.py`
 
-- [ ] **Step 1: Add test deps to the devshell**
+- [ ] **Step 1: Give the devshell a Python with runtime + test libs**
 
-In `nix/devshell.nix`, add to `packages`:
+The current devshell exposes a bare `python313`, so `import configarr.config`
+(needs `pydantic`/`pyyaml`) would fail under pytest. Switch to a `withPackages`
+interpreter that carries the runtime libs (minus the nix-only generated clients,
+which the pilot tests never import) plus `pytest`/`responses`. Rewrite
+`nix/devshell.nix`:
+
 ```nix
-    python313Packages.pytest
-    python313Packages.responses
-    python313Packages.rich
+{pkgs, ...}:
+let
+  python = pkgs.python313.withPackages (ps:
+    with ps; [
+      # runtime libs needed to import configarr.config / configarr.diff
+      click
+      pydantic
+      pyyaml
+      requests
+      rich
+      # test tooling
+      pytest
+      responses
+      pip
+    ]);
+in
+pkgs.mkShell {
+  packages = [
+    python
+    pkgs.ruff
+    pkgs.mypy
+  ];
+}
 ```
 
 - [ ] **Step 2: Add pytest config + test extra to pyproject.toml**
@@ -246,6 +273,9 @@ def coerce_scalar(value: Any) -> Any:
             return int(value)
         except ValueError:
             pass
+        # Guard so free-text fields don't coerce to inf/nan via float().
+        if low in {"inf", "+inf", "-inf", "infinity", "nan"}:
+            return value
         try:
             return float(value)
         except ValueError:
@@ -463,7 +493,9 @@ Responsibilities (complete implementation in this step):
 - `fetch_current()` — GET `/api/v3/customformat`, return list as-is.
 - `_schema()` — GET `/api/v3/customformat/schema`, cache; index by `implementation`.
 - `build_desired()` — for each `name -> definition` in config, construct the resource: `{"name", "includeCustomFormatWhenRenaming": def.get(..., False), "specifications": [...]}`; for each spec, start from the schema template for its `implementation`, set `negate`/`required`, and overlay `fields` (dict → list of `{"name","value"}` merged over schema defaults).
-- `normalize(r)` — canonical comparable shape: `{"includeCustomFormatWhenRenaming": bool, "specifications": [sorted/normalized specs]}` where each spec is `{"implementation", "negate", "required", "fields": {name: coerce_scalar(value)}}`; **exclude `id`, server-echoed `name`/`label` on fields, and any masked secrets** (`drop_masked_secrets`). Spec list compared as a set keyed by spec `name`+`implementation` to ignore order.
+- `normalize(r)` — canonical comparable shape: `{"includeCustomFormatWhenRenaming": bool, "specifications": [sorted/normalized specs]}` where each spec is `{"implementation", "negate", "required", "fields": {name: coerce_scalar(value)}}`; **exclude `id`, server-echoed `name`/`label` on fields, and any masked secrets** (`drop_masked_secrets`). **Sort the specifications list deterministically by `(name, implementation)`** so the engine's list comparison is order-stable (do not rely on set semantics — the spec dicts aren't hashable).
+
+  > Note: for custom formats `build_desired` overlays config onto `/schema` defaults (matching configarr's existing whole-object rebuild). This is fine here because CF has no server-managed fields to preserve. The quality-profile follow-up is different — it must merge desired over **current** (full-replace PUT) and include every custom format in `FormatItems`; do not copy the schema-only overlay there.
 - `to_action(plan, current, desired)` — CREATE → payload = desired (no id); UPDATE → payload = `{**desired, "id": current["id"]}`.
 - `apply(action)` — CREATE: POST `/api/v3/customformat`; UPDATE: PUT `/api/v3/customformat/{id}`. Raise on non-2xx.
 
@@ -499,10 +531,12 @@ def test_apply_then_replan_is_noop():
     for rp in plan.resources:
         if rp.changed:
             p.apply(p.to_action(rp, None, {d["name"]: d for d in p.build_desired()}[rp.key]))
-    # Second run: instance now returns the created CF
+    # Second run: instance now returns the created CF.
+    # NOTE: do NOT re-register /customformat/schema — _schema() is cached from the
+    # first run, so it issues no second GET; re-registering it would leave an unfired
+    # mock and `responses` would error (assert_all_requests_are_fired defaults True).
     responses.reset()
     responses.get(f"{BASE}/api/v3/customformat", json=[created])
-    responses.get(f"{BASE}/api/v3/customformat/schema", json=SCHEMA)
     plan2 = diff(p.kind, p.fetch_current(), p.build_desired(),
                  match_key=p.match_key, normalize=p.normalize)
     assert not plan2.has_changes, plan2.resources
@@ -539,18 +573,110 @@ def test_render_shows_changes():
 
 ---
 
-## Task 9: CLI `--plan` wiring (read-only)
+## Task 9: `--plan` runner (client-free) + thin CLI wiring (read-only)
 
 **Files:**
+- Create: `configarr/diff/runner.py`
 - Modify: `configarr/__main__.py`
-- Test: `tests/test_cli_plan.py`
+- Test: `tests/test_plan_runner.py`
 
-- [ ] **Step 1: Write the failing test** — invoke the CLI with `--plan` via click's `CliRunner`, a temp config with one Radarr instance + one custom format, and `responses`-mocked endpoints; assert exit 0 and that rendered output mentions the CF name and "create". Assert **no POST/PUT** was issued (plan is read-only).
+> Per the Testing constraint: the test exercises the client-free **runner** directly
+> (parsing config via `configarr.config`, building the provider, diffing, rendering).
+> It must NOT go through `configarr.__main__`/`configarr.sync` (those import the nix-only
+> generated clients and would break collection). The `--plan` flag in `__main__.py` is a
+> 3-line wrapper around the runner and is verified manually / via `nix run` in CI, not in
+> the client-free pytest env.
 
-- [ ] **Step 2: Run → FAIL.**
-- [ ] **Step 3: Implement** — add `@click.option("--plan", is_flag=True, ...)`. When set: for each parsed Radarr instance, build `RadarrCustomFormatProvider`, compute the plan via `diff(...)`, print `render_plan(...)`, and **return before** the existing sync runs (no writes anywhere). When not set: existing behavior, untouched.
+- [ ] **Step 1: Write the failing test** (`tests/test_plan_runner.py`)
+
+```python
+import responses
+from configarr.config import parse_config
+from configarr.diff.runner import run_plan
+
+BASE = "http://radarr.test"
+SCHEMA = [{"name": "Release Title", "implementation": "ReleaseTitleSpecification",
+           "negate": False, "required": False, "fields": [{"name": "value", "value": ""}]}]
+
+CONFIG_YAML = """
+radarr:
+  instances:
+    main:
+      base_url: http://radarr.test
+      api_key: k
+      custom_formats:
+        definitions:
+          x265:
+            specifications:
+              - name: x265
+                implementation: ReleaseTitleSpecification
+                fields:
+                  value: "(x|h)265"
+"""
+
+@responses.activate
+def test_run_plan_reports_create_and_writes_nothing(tmp_path):
+    cfg = tmp_path / "configarr.yml"
+    cfg.write_text(CONFIG_YAML)
+    config = parse_config(cfg)
+    responses.get(f"{BASE}/api/v3/customformat", json=[])
+    responses.get(f"{BASE}/api/v3/customformat/schema", json=SCHEMA)
+
+    out = run_plan(config)
+
+    assert "x265" in out and "create" in out.lower()
+    assert all(c.request.method == "GET" for c in responses.calls)  # read-only
+```
+
+- [ ] **Step 2: Run → FAIL** (`ModuleNotFoundError: configarr.diff.runner`).
+
+- [ ] **Step 3: Implement** (`configarr/diff/runner.py`) — client-free; imports only
+`configarr.diff.*`. Iterates `config.radarr` (each an `ArrServiceConfig` with `.name`,
+`.base_url`, `.api_key`, `.custom_formats`), builds a `RadarrCustomFormatProvider`,
+computes the plan, and concatenates rendered output.
+
+```python
+"""Read-only plan runner. MUST stay free of generated-client imports."""
+
+from __future__ import annotations
+
+from configarr.diff.engine import diff
+from configarr.diff.providers.radarr_custom_formats import RadarrCustomFormatProvider
+from configarr.diff.render import render_plan
+
+
+def run_plan(config) -> str:
+    sections: list[str] = []
+    for inst in config.radarr:
+        provider = RadarrCustomFormatProvider(inst.base_url, inst.api_key, inst.custom_formats)
+        plan = diff(
+            provider.kind,
+            provider.fetch_current(),
+            provider.build_desired(),
+            match_key=provider.match_key,
+            normalize=provider.normalize,
+        )
+        sections.append(f"radarr/{inst.name} — custom formats")
+        sections.append(render_plan(plan))
+    return "\n".join(sections)
+```
+
 - [ ] **Step 4: Run → PASS.**
-- [ ] **Step 5: Commit** `feat(cli): add read-only --plan for Radarr custom formats`.
+
+- [ ] **Step 5: Wire the CLI** (`configarr/__main__.py`) — add the flag and a thin,
+lazily-imported call so the normal path is untouched:
+
+```python
+@click.option("--plan", "plan_only", is_flag=True,
+              help="Show what would change for supported resources, then exit (no writes).")
+# ... inside main(), after config is parsed, before any sync:
+if plan_only:
+    from configarr.diff.runner import run_plan
+    click.echo(run_plan(config))
+    return
+```
+
+- [ ] **Step 6: Commit** `feat(cli): add read-only --plan for Radarr custom formats`.
 
 ---
 
@@ -579,7 +705,7 @@ pkgs.runCommandLocal "pytest-check" { } ''
 ''
 ```
 
-> Note: the runtime API-client deps (`radarr-py` etc.) are not on PyPI; the pilot's tests mock HTTP and import only `configarr.diff.*`, so they don't import the generated clients. Keep `configarr/diff/` import-clean of the generated clients (the provider uses `requests` directly) so this check needs no custom packages.
+> Note: the runtime API-client deps (`radarr-py` etc.) are not on PyPI; the pilot's tests mock HTTP and import only `configarr.diff.*` and `configarr.config`/`configarr.models` (all client-free), never `configarr.sync`/`configarr.__main__`. The env's package list (`click pydantic pyyaml requests rich pytest responses`) covers `parse_config`. Keep `configarr/diff/` import-clean of the generated clients (the provider uses `requests` directly) so this check needs no nix-only packages. **Add a guard test** (`tests/test_import_isolation.py`) asserting `import configarr.diff.runner` succeeds without `radarr`/`sonarr`/etc. importable — this catches accidental client imports that would only fail in CI.
 
 - [ ] **Step 2: Run** `nix build .#checks.x86_64-linux.pytest -L` → success; then `nix flake check --all-systems` → all pass.
 - [ ] **Step 3: Commit** `ci: run pytest as a flake check`.
