@@ -7,7 +7,7 @@ with pkgs;
 
 python313.pkgs.buildPythonApplication rec {
   pname = "configarr";
-  version = "2.0.0";
+  version = "0.1.0";
   pyproject = true;
 
   src = lib.fileset.toSource {
