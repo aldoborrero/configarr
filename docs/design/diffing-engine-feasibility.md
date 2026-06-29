@@ -1,6 +1,6 @@
 # Feasibility study: a proper diffing engine for configarr
 
-**Status:** Study / exploration (no implementation)
+**Status:** Phase 0 + Radarr custom-format pilot implemented; rollout to other resources/services pending (see Status below)
 **Branch:** `diffing-engine`
 **Goal:** Assess whether configarr can be evolved into a tool that configures *every*
 aspect of any *arr app and applies changes with confidence that they "won't break" —
