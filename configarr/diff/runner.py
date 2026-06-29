@@ -22,6 +22,9 @@ def run_plan(
             provider.build_desired(),
             match_key=provider.match_key,
             normalize=provider.normalize,
+            # Full-replace providers opt in so the engine surfaces current-only keys;
+            # the schema-overlay CF pilot leaves it unset (additive default).
+            full_replace=getattr(provider, "full_replace", False),
         )
         sections.append(f"{planned.service}/{planned.instance} — {planned.label}")
         sections.append(render_plan(plan))

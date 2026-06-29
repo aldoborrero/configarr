@@ -32,3 +32,48 @@ def test_diff_rejects_duplicate_keys():
     dup = [{"name": "a", "v": 1}, {"name": "a", "v": 2}]
     with pytest.raises(ValueError):
         diff("cf", dup, [], match_key=lambda r: r["name"], normalize=_norm)
+
+
+def test_default_diff_ignores_current_only_keys():
+    # Schema-overlay/additive mode (the CF pilot default): a key present only in
+    # current is not surfaced, because apply only touches desired keys.
+    current = [{"name": "a", "v": 1, "server_managed": 7}]
+    desired = [{"name": "a", "v": 1}]
+    plan = diff("cf", current, desired, match_key=lambda r: r["name"], normalize=_norm)
+    assert plan.resources[0].op is Op.UNCHANGED
+
+
+def test_full_replace_surfaces_current_only_keys():
+    # Full-replace apply PUTs the whole desired object, so a key present only in
+    # current would be reset on the server. The plan must report UPDATE (not
+    # UNCHANGED) and surface the key so it can't under-report.
+    current = [{"name": "a", "v": 1, "server_managed": 7}]
+    desired = [{"name": "a", "v": 1}]
+    plan = diff(
+        "qp",
+        current,
+        desired,
+        match_key=lambda r: r["name"],
+        normalize=_norm,
+        full_replace=True,
+    )
+    r = plan.resources[0]
+    assert r.op is Op.UPDATE
+    surfaced = {d.path: (d.before, d.after) for d in r.field_diffs}
+    assert surfaced["server_managed"] == (7, None)
+
+
+def test_full_replace_is_unchanged_when_desired_covers_current():
+    # When build_desired merged over current, desired carries every current key,
+    # so the guard adds nothing and the plan stays UNCHANGED.
+    current = [{"name": "a", "v": 1, "server_managed": 7}]
+    desired = [{"name": "a", "v": 1, "server_managed": 7}]
+    plan = diff(
+        "qp",
+        current,
+        desired,
+        match_key=lambda r: r["name"],
+        normalize=_norm,
+        full_replace=True,
+    )
+    assert plan.resources[0].op is Op.UNCHANGED

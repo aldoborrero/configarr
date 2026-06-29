@@ -17,6 +17,19 @@ def _field_diffs(before: dict, after: dict) -> list[FieldDiff]:
     return diffs
 
 
+def _current_only_diffs(before: dict, after: dict) -> list[FieldDiff]:
+    # Full-replace apply PUTs the whole desired object, so any key in the normalized
+    # current but absent from desired would be reset on the server. Surface these so
+    # a plan can't report UNCHANGED while apply silently mutates state. A provider
+    # that merges desired over current (Phase A5) carries every current key and never
+    # trips this guard.
+    return [
+        FieldDiff(path=key, before=before[key], after=None)
+        for key in before
+        if key not in after
+    ]
+
+
 def _index(items: list[dict], match_key: Callable[[dict], Hashable], side: str) -> dict:
     out: dict = {}
     for r in items:
@@ -34,6 +47,7 @@ def diff(
     *,
     match_key: Callable[[dict], Hashable],
     normalize: Callable[[dict], dict],
+    full_replace: bool = False,
 ) -> Plan:
     cur_by_key = _index(current, match_key, "current")
     _index(desired, match_key, "desired")
@@ -46,5 +60,7 @@ def diff(
             continue
         nc = normalize(cur_by_key[key])
         fds = _field_diffs(nc, nd)
+        if full_replace:
+            fds = fds + _current_only_diffs(nc, nd)
         plans.append(ResourcePlan(kind, key, Op.UPDATE if fds else Op.UNCHANGED, fds))
     return Plan(resources=plans)
