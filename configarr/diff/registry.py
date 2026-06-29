@@ -12,6 +12,7 @@ from configarr.diff.providers.naming import NamingProvider
 from configarr.diff.providers.quality_definitions import QualityDefinitionProvider
 from configarr.diff.providers.quality_profiles import QualityProfileProvider
 from configarr.diff.providers.radarr_custom_formats import RadarrCustomFormatProvider
+from configarr.diff.providers.root_folders import RootFolderProvider
 from configarr.models import ConfigarrConfig
 
 
@@ -99,6 +100,22 @@ REGISTRY: list[Registration] = [
         label="naming",
         factory=lambda inst: NamingProvider(
             inst.base_url, inst.api_key, inst.naming_config, "sonarr.naming"
+        ),
+    ),
+    Registration(
+        kind="radarr.root_folder",
+        service="radarr",
+        label="root folders",
+        factory=lambda inst: RootFolderProvider(
+            inst.base_url, inst.api_key, inst.root_folders, "radarr.root_folder"
+        ),
+    ),
+    Registration(
+        kind="sonarr.root_folder",
+        service="sonarr",
+        label="root folders",
+        factory=lambda inst: RootFolderProvider(
+            inst.base_url, inst.api_key, inst.root_folders, "sonarr.root_folder"
         ),
     ),
 ]
