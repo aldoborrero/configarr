@@ -11,12 +11,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Resolve pinned nixpkgs
+        id: nixpkgs
+        run: echo "url=https://github.com/NixOS/nixpkgs/archive/$(jq -r '.nodes.nixpkgs.locked.rev' flake.lock).tar.gz" >> "$GITHUB_OUTPUT"
 
       - name: Install Nix
-        uses: cachix/install-nix-action@v31
+        uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31.10.6
         with:
-          nix_path: nixpkgs=channel:nixos-unstable
+          nix_path: nixpkgs=${{ steps.nixpkgs.outputs.url }}
+          extra_nix_config: |
+            experimental-features = nix-command flakes
 
       - name: Run flake check
         run: nix flake check --all-systems
@@ -26,12 +32,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Resolve pinned nixpkgs
+        id: nixpkgs
+        run: echo "url=https://github.com/NixOS/nixpkgs/archive/$(jq -r '.nodes.nixpkgs.locked.rev' flake.lock).tar.gz" >> "$GITHUB_OUTPUT"
 
       - name: Install Nix
-        uses: cachix/install-nix-action@v31
+        uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31.10.6
         with:
-          nix_path: nixpkgs=channel:nixos-unstable
+          nix_path: nixpkgs=${{ steps.nixpkgs.outputs.url }}
+          extra_nix_config: |
+            experimental-features = nix-command flakes
 
       - name: Build configarr
         run: nix build
