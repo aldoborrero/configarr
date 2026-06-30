@@ -162,3 +162,18 @@ def test_apply_then_replan_is_noop(plan_provider, apply_changes):
     _mock_get_config([created])
     plan2 = plan_provider(p)
     assert not plan2.has_changes, plan2.resources
+
+
+@responses.activate
+def test_plan_fetches_current_once(plan_provider):
+    # build_desired() reads current to merge over it, and the runner diffs against
+    # current too. Both must share one GET — not re-fetch (TOCTOU + 2x load).
+    current = responses.get(
+        f"{SAB}/api",
+        json={"config": {"servers": [CURRENT_SERVER]}},
+        match=[
+            matchers.query_param_matcher({"mode": "get_config"}, strict_match=False)
+        ],
+    )
+    plan_provider(_provider(CONFIG))
+    assert current.call_count == 1

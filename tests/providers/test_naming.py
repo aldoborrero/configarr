@@ -121,3 +121,12 @@ def test_apply_then_replan_is_noop(plan_provider, apply_changes):
     responses.get(f"{RADARR}/api/v3/config/naming", json=updated)
     plan2 = plan_provider(p)
     assert not plan2.has_changes, plan2.resources
+
+
+@responses.activate
+def test_plan_fetches_current_once(plan_provider):
+    # build_desired() reads current to merge over it, and the runner diffs against
+    # current too. Both must share one GET — not re-fetch (TOCTOU + 2x load).
+    current = responses.get(f"{RADARR}/api/v3/config/naming", json=RADARR_CURRENT)
+    plan_provider(_radarr(RADARR_CONFIG))
+    assert current.call_count == 1

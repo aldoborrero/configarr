@@ -243,3 +243,15 @@ def test_apply_payload_is_valid_json(plan_provider, apply_changes):
     end = rendered.rindex("]") + 1
     parsed = json.loads(rendered[start:end])
     assert isinstance(parsed, list)
+
+
+@responses.activate
+def test_plan_fetches_current_once(plan_provider):
+    # build_desired() reads current to merge over it, and the runner diffs against
+    # current too. Both must share one GET — not re-fetch (TOCTOU + 2x load).
+    current = responses.get(
+        f"{BAZARR}/api/system/languages/profiles", json=[DEFAULT_PROFILE]
+    )
+    responses.get(f"{BAZARR}/api/system/languages", json=LANGUAGES)
+    plan_provider(_provider([CONFIG_DEFAULT]))
+    assert current.call_count == 1
