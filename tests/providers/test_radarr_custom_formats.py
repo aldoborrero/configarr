@@ -100,6 +100,61 @@ def test_idempotent_when_current_equals_desired(plan_provider):
 
 
 @responses.activate
+def test_prune_deletes_unmanaged_and_keeps_managed(plan_provider, apply_changes):
+    existing = [
+        {
+            "id": 7,
+            "name": "x265",
+            "includeCustomFormatWhenRenaming": False,
+            "specifications": [
+                {
+                    "name": "x265",
+                    "implementation": "ReleaseTitleSpecification",
+                    "negate": False,
+                    "required": False,
+                    "fields": [{"name": "value", "value": "(x|h)265"}],
+                }
+            ],
+        },
+        {
+            "id": 9,
+            "name": "stale",
+            "includeCustomFormatWhenRenaming": False,
+            "specifications": [],
+        },
+    ]
+    responses.get(f"{BASE}/api/v3/customformat", json=existing)
+    responses.get(f"{BASE}/api/v3/customformat/schema", json=SCHEMA)
+    responses.delete(f"{BASE}/api/v3/customformat/9", status=200)
+    config = {
+        "x265": {
+            "specifications": [
+                {
+                    "name": "x265",
+                    "implementation": "ReleaseTitleSpecification",
+                    "fields": {"value": "(x|h)265"},
+                }
+            ]
+        }
+    }
+    p = _provider(config)
+    plan = plan_provider(p, prune=True)
+    ops = {r.key: r.op for r in plan.resources}
+    assert ops == {"x265": Op.UNCHANGED, "stale": Op.DELETE}
+
+    apply_changes(p, plan)
+    deletes = [c for c in responses.calls if c.request.method == "DELETE"]
+    assert len(deletes) == 1
+    assert deletes[0].request.url == f"{BASE}/api/v3/customformat/9"
+
+    # Re-plan with the managed CF still present, stale gone: nothing left to prune.
+    responses.reset()
+    responses.get(f"{BASE}/api/v3/customformat", json=[existing[0]])
+    plan2 = plan_provider(p, prune=True)
+    assert not plan2.has_changes, plan2.resources
+
+
+@responses.activate
 def test_apply_then_replan_is_noop(plan_provider, apply_changes):
     created = {
         "id": 7,

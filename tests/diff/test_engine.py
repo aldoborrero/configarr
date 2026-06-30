@@ -63,6 +63,32 @@ def test_full_replace_surfaces_current_only_keys():
     assert surfaced["server_managed"] == (7, None)
 
 
+def test_prune_emits_delete_for_current_only_keys():
+    # With prune enabled, a resource present in current but absent from desired is
+    # an unmanaged leftover the engine should flag for deletion.
+    current = [{"name": "a", "v": 1}, {"name": "stale", "v": 9}]
+    desired = [{"name": "a", "v": 1}]
+    plan = diff(
+        "cf",
+        current,
+        desired,
+        match_key=lambda r: r["name"],
+        normalize=_norm,
+        prune=True,
+    )
+    by_key = {r.key: r for r in plan.resources}
+    assert by_key["a"].op is Op.UNCHANGED
+    assert by_key["stale"].op is Op.DELETE
+
+
+def test_prune_off_leaves_current_only_keys_alone():
+    # Default additive behavior: an unmanaged resource is never deleted.
+    current = [{"name": "a", "v": 1}, {"name": "stale", "v": 9}]
+    desired = [{"name": "a", "v": 1}]
+    plan = diff("cf", current, desired, match_key=lambda r: r["name"], normalize=_norm)
+    assert {r.key for r in plan.resources} == {"a"}
+
+
 def test_full_replace_is_unchanged_when_desired_covers_current():
     # When build_desired merged over current, desired carries every current key,
     # so the guard adds nothing and the plan stays UNCHANGED.

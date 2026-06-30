@@ -64,6 +64,13 @@ log = logging.getLogger("configarr")
     help="Apply changes for supported resources through the diffing engine "
     "(additive: creates/updates only, no deletions), then exit.",
 )
+@click.option(
+    "--prune",
+    is_flag=True,
+    help="Opt in to deleting unmanaged resources (those on the server but absent "
+    "from config) for providers that expose deletion. Combine with --plan to "
+    "preview deletions or --apply to perform them; respects --service/--instance.",
+)
 def main(
     config_path: Path,
     service: str | None,
@@ -73,6 +80,7 @@ def main(
     debug: bool,
     plan_only: bool,
     apply_engine: bool,
+    prune: bool,
 ):
     """
     Configarr - Configuration manager for *arr applications and SABnzbd.
@@ -123,13 +131,13 @@ def main(
     if plan_only:
         from configarr.diff.runner import run_plan
 
-        click.echo(run_plan(config, service=service, instance=instance))
+        click.echo(run_plan(config, service=service, instance=instance, prune=prune))
         return
 
     if apply_engine:
         from configarr.diff.runner import run_apply
 
-        click.echo(run_apply(config, service=service, instance=instance))
+        click.echo(run_apply(config, service=service, instance=instance, prune=prune))
         return
 
     # Validate --service / --instance against what's actually configured, so a typo

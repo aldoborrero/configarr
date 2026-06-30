@@ -18,6 +18,11 @@ class Action:
 @runtime_checkable
 class ResourceProvider(Protocol):
     kind: str
+    # Providers that expose a per-resource DELETE endpoint set this True so the
+    # engine may prune unmanaged resources under --prune. Singletons and
+    # set-only/config providers (naming, sabnzbd.*, bazarr settings sections)
+    # leave it False, since deletion is meaningless or unsafe for them.
+    prunable: bool = False
 
     def match_key(self, resource: dict[str, Any]) -> Hashable: ...
     def fetch_current(self) -> list[dict[str, Any]]: ...
@@ -43,6 +48,9 @@ class CurrentStateCache:
     """
 
     _current_cache: list[dict[str, Any]] | None = None
+    # Additive by default; providers that expose a DELETE endpoint set this True
+    # to participate in --prune (see ResourceProvider.prunable).
+    prunable: bool = False
 
     def fetch_current(self) -> list[dict[str, Any]]:
         if self._current_cache is None:

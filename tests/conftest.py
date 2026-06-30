@@ -14,9 +14,10 @@ import pytest
 from configarr.diff.engine import diff
 
 
-def _plan_provider(provider):
+def _plan_provider(provider, prune=False):
     """Plan a provider exactly as runner.run_plan does, including the opt-in
-    full_replace flag, so tests and production never diverge on diff semantics."""
+    full_replace flag, so tests and production never diverge on diff semantics.
+    ``prune`` mirrors the runner's opt-in deletion of unmanaged resources."""
     return diff(
         provider.kind,
         provider.fetch_current(),
@@ -24,6 +25,7 @@ def _plan_provider(provider):
         match_key=provider.match_key,
         normalize=provider.normalize,
         full_replace=getattr(provider, "full_replace", False),
+        prune=prune and getattr(provider, "prunable", False),
     )
 
 

@@ -48,9 +48,10 @@ def diff(
     match_key: Callable[[dict], Hashable],
     normalize: Callable[[dict], dict],
     full_replace: bool = False,
+    prune: bool = False,
 ) -> Plan:
     cur_by_key = _index(current, match_key, "current")
-    _index(desired, match_key, "desired")
+    des_by_key = _index(desired, match_key, "desired")
     plans: list[ResourcePlan] = []
     for d in desired:
         key = match_key(d)
@@ -63,4 +64,10 @@ def diff(
         if full_replace:
             fds = fds + _current_only_diffs(nc, nd)
         plans.append(ResourcePlan(kind, key, Op.UPDATE if fds else Op.UNCHANGED, fds))
+    if prune:
+        # Opt-in deletion: any current resource not in desired is an unmanaged
+        # leftover. The default path never reaches here, so sync stays additive.
+        for key in cur_by_key:
+            if key not in des_by_key:
+                plans.append(ResourcePlan(kind, key, Op.DELETE))
     return Plan(resources=plans)

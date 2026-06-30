@@ -13,6 +13,7 @@ from configarr.diff.providers.base import Action, CurrentStateCache
 
 class RadarrCustomFormatProvider(CurrentStateCache):
     kind = "radarr.custom_format"
+    prunable = True
 
     def __init__(self, base_url: str, api_key: str, config: dict[str, Any]):
         self.base_url = base_url.rstrip("/")
@@ -94,11 +95,16 @@ class RadarrCustomFormatProvider(CurrentStateCache):
     def to_action(
         self, plan: ResourcePlan, current: dict | None, desired: dict | None
     ) -> Action:
-        assert plan.op in (Op.CREATE, Op.UPDATE), (
+        assert plan.op in (Op.CREATE, Op.UPDATE, Op.DELETE), (
             f"to_action: unexpected op {plan.op!r}"
         )
         if plan.op is Op.CREATE:
             return Action(op=plan.op, key=plan.key, payload=dict(desired or {}))
+        if plan.op is Op.DELETE:
+            # Prune only carries the current object; we just need its id to delete.
+            return Action(
+                op=plan.op, key=plan.key, payload={"id": (current or {})["id"]}
+            )
         payload = {**(desired or {}), "id": (current or {})["id"]}
         return Action(op=plan.op, key=plan.key, payload=payload)
 
@@ -112,6 +118,9 @@ class RadarrCustomFormatProvider(CurrentStateCache):
             resp = self._session.put(
                 self._url(f"/api/v3/customformat/{cf_id}"), json=action.payload
             )
+        elif action.op is Op.DELETE:
+            cf_id = action.payload["id"]
+            resp = self._session.delete(self._url(f"/api/v3/customformat/{cf_id}"))
         else:
             raise NotImplementedError(f"apply: unsupported op {action.op!r}")
         resp.raise_for_status()
