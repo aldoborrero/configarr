@@ -7,23 +7,16 @@
 # and configarr.config/models (client-free), so the nix-only generated API
 # clients are not needed here.
 let
-  py = pkgs.python313.withPackages (
+  helpers = import ../lib { inherit pkgs; };
+  py = helpers.pyWith (
     ps: with ps; [
-      click
-      pydantic
-      pyyaml
-      requests
-      rich
       pytest
       responses
     ]
   );
 in
-pkgs.runCommandLocal "pytest-check" { } ''
-  cp -r ${inputs.self} src
-  chmod -R u+w src
-  export HOME=$(mktemp -d)
-  cd src
-  ${py}/bin/pytest -q
-  touch $out
-''
+helpers.srcCheck {
+  name = "pytest-check";
+  src = inputs.self;
+  command = "${py}/bin/pytest -q";
+}

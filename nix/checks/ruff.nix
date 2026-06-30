@@ -7,11 +7,11 @@
 # and correctness lints — not just import sorting — fail CI. Scoped to the diff
 # engine and its tests, matching the mypy gate; the ruleset lives in pyproject so
 # `nix develop -c ruff check` and this check agree.
-pkgs.runCommandLocal "ruff-check" { } ''
-  cp -r ${inputs.self} src
-  chmod -R u+w src
-  export HOME=$(mktemp -d)
-  cd src
-  ${pkgs.ruff}/bin/ruff check configarr/diff tests
-  touch $out
-''
+let
+  helpers = import ../lib { inherit pkgs; };
+in
+helpers.srcCheck {
+  name = "ruff-check";
+  src = inputs.self;
+  command = "${pkgs.ruff}/bin/ruff check configarr/diff tests";
+}

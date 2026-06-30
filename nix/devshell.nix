@@ -1,19 +1,14 @@
 { pkgs, ... }:
 let
-  python = pkgs.python313.withPackages (
+  # Same runtime libs the CI checks use, plus the dev tooling. mypy lives inside
+  # the python env so it resolves pydantic/requests stubs (matching the mypy gate).
+  python = (import ./lib { inherit pkgs; }).pyWith (
     ps: with ps; [
-      # runtime libs needed to import configarr.config / configarr.diff
-      click
-      pydantic
-      pyyaml
-      requests
-      rich
-      # test tooling
       pytest
       responses
-      pip
-      # type-check stubs (mypy --strict gate)
+      mypy
       types-requests
+      pip
     ]
   );
 in
@@ -21,7 +16,6 @@ pkgs.mkShell {
   packages = [
     python
     pkgs.ruff
-    pkgs.mypy
 
     # Docs: `mdbook serve docs` for a live preview. mdbook-linkcheck2 backs the
     # link check that runs as part of `mdbook build` / `nix flake check`.
