@@ -8,10 +8,10 @@ import requests
 
 from configarr.diff.model import Op, ResourcePlan
 from configarr.diff.normalize import coerce_scalar, drop_masked_secrets
-from configarr.diff.providers.base import Action
+from configarr.diff.providers.base import Action, CurrentStateCache
 
 
-class RadarrCustomFormatProvider:
+class RadarrCustomFormatProvider(CurrentStateCache):
     kind = "radarr.custom_format"
 
     def __init__(self, base_url: str, api_key: str, config: dict[str, Any]):
@@ -34,7 +34,7 @@ class RadarrCustomFormatProvider:
     def match_key(self, resource: dict[str, Any]) -> Hashable:
         return resource["name"]
 
-    def fetch_current(self) -> list[dict[str, Any]]:
+    def _load_current(self) -> list[dict[str, Any]]:
         resp = self._session.get(self._url("/api/v3/customformat"))
         resp.raise_for_status()
         return resp.json()
@@ -115,3 +115,4 @@ class RadarrCustomFormatProvider:
         else:
             raise NotImplementedError(f"apply: unsupported op {action.op!r}")
         resp.raise_for_status()
+        self.invalidate_current()

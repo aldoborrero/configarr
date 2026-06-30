@@ -24,7 +24,7 @@ import requests
 
 from configarr.diff.model import Op, ResourcePlan
 from configarr.diff.normalize import coerce_scalar
-from configarr.diff.providers.base import Action
+from configarr.diff.providers.base import Action, CurrentStateCache
 
 # The allow-listed misc keys this provider manages (mirrors the legacy
 # sync_misc_settings key_map, which maps config keys 1:1 to SABnzbd API keys).
@@ -61,7 +61,7 @@ def _encode(value: Any) -> Any:
     return value
 
 
-class SabnzbdMiscProvider:
+class SabnzbdMiscProvider(CurrentStateCache):
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
         self.kind = kind
         self.base_url = base_url.rstrip("/")
@@ -86,7 +86,7 @@ class SabnzbdMiscProvider:
     def match_key(self, resource: dict[str, Any]) -> Hashable:
         return _MISC_KEY
 
-    def fetch_current(self) -> list[dict[str, Any]]:
+    def _load_current(self) -> list[dict[str, Any]]:
         data = self._call({"mode": "get_config", "section": "misc"})
         # Singleton: wrap the one object so the engine can index it like any list.
         return [data.get("config", {}).get("misc", {})]
@@ -130,3 +130,4 @@ class SabnzbdMiscProvider:
                     "value": value,
                 }
             )
+        self.invalidate_current()

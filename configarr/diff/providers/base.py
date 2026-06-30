@@ -27,3 +27,30 @@ class ResourceProvider(Protocol):
         self, plan: ResourcePlan, current: dict | None, desired: dict | None
     ) -> Action: ...
     def apply(self, action: Action) -> None: ...
+
+
+class CurrentStateCache:
+    """Mixin memoizing the current-state fetch per provider instance.
+
+    A plan reads current state twice — the runner diffs against it, and most
+    providers also read it inside ``build_desired()`` to merge over current.
+    Without memoization that is two GETs per plan (up to four through the
+    apply-then-replan harness), and the two reads can observe different server
+    state (TOCTOU). Providers implement ``_load_current()`` for the raw HTTP
+    read; ``fetch_current()`` caches it. ``apply()`` MUST call
+    ``invalidate_current()`` after a successful write so a re-plan observes
+    post-write state.
+    """
+
+    _current_cache: list[dict[str, Any]] | None = None
+
+    def fetch_current(self) -> list[dict[str, Any]]:
+        if self._current_cache is None:
+            self._current_cache = self._load_current()
+        return self._current_cache
+
+    def invalidate_current(self) -> None:
+        self._current_cache = None
+
+    def _load_current(self) -> list[dict[str, Any]]:
+        raise NotImplementedError

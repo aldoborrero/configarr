@@ -23,10 +23,10 @@ from configarr.diff.normalize import (
     drop_secret_fields,
     secret_field_names,
 )
-from configarr.diff.providers.base import Action
+from configarr.diff.providers.base import Action, CurrentStateCache
 
 
-class DownloadClientProvider:
+class DownloadClientProvider(CurrentStateCache):
     full_replace = True
 
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
@@ -54,7 +54,7 @@ class DownloadClientProvider:
     def match_key(self, resource: dict[str, Any]) -> Hashable:
         return resource.get("name")
 
-    def fetch_current(self) -> list[dict[str, Any]]:
+    def _load_current(self) -> list[dict[str, Any]]:
         resp = self._session.get(self._url("/api/v3/downloadclient"))
         resp.raise_for_status()
         return resp.json()
@@ -148,3 +148,4 @@ class DownloadClientProvider:
         else:
             raise NotImplementedError(f"apply: unsupported op {action.op!r}")
         resp.raise_for_status()
+        self.invalidate_current()

@@ -106,6 +106,15 @@ def test_update_merges_over_current():
 
 
 @responses.activate
+def test_plan_fetches_current_once(plan_provider):
+    # build_desired() reads current to merge over it, and the runner diffs against
+    # current too. Both must share a single GET — not re-fetch (TOCTOU + 2x load).
+    current = responses.get(f"{RADARR}/api/v3/downloadclient", json=[EXISTING])
+    plan_provider(_radarr(CONFIG))
+    assert current.call_count == 1
+
+
+@responses.activate
 def test_no_config_plans_nothing(plan_provider):
     responses.get(f"{RADARR}/api/v3/downloadclient", json=[EXISTING])
     plan = plan_provider(_radarr(None))

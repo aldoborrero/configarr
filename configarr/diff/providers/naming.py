@@ -21,7 +21,7 @@ import requests
 from configarr.diff.build import merge_full_replace
 from configarr.diff.model import Op, ResourcePlan
 from configarr.diff.normalize import coerce_scalar
-from configarr.diff.providers.base import Action
+from configarr.diff.providers.base import Action, CurrentStateCache
 
 _COLON_RADARR = {
     "delete": "delete",
@@ -71,7 +71,7 @@ _SERVICE_FIELDS: dict[str, dict[str, tuple[str, dict[str, Any] | None]]] = {
 }
 
 
-class NamingProvider:
+class NamingProvider(CurrentStateCache):
     full_replace = True
 
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
@@ -88,7 +88,7 @@ class NamingProvider:
     def match_key(self, resource: dict[str, Any]) -> Hashable:
         return resource.get("id")
 
-    def fetch_current(self) -> list[dict[str, Any]]:
+    def _load_current(self) -> list[dict[str, Any]]:
         resp = self._session.get(self._url("/api/v3/config/naming"))
         resp.raise_for_status()
         # Singleton: wrap the one object so the engine can index it like any list.
@@ -134,3 +134,4 @@ class NamingProvider:
             self._url(f"/api/v3/config/naming/{naming_id}"), json=action.payload
         )
         resp.raise_for_status()
+        self.invalidate_current()

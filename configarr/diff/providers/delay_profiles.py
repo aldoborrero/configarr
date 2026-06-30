@@ -25,7 +25,7 @@ import requests
 from configarr.diff.build import merge_full_replace
 from configarr.diff.model import Op, ResourcePlan
 from configarr.diff.normalize import coerce_scalar
-from configarr.diff.providers.base import Action
+from configarr.diff.providers.base import Action, CurrentStateCache
 
 # config key -> API field (straight passthrough of the user's value).
 _FIELD_MAP = {
@@ -54,7 +54,7 @@ _CREATE_DEFAULTS: dict[str, Any] = {
 }
 
 
-class DelayProfileProvider:
+class DelayProfileProvider(CurrentStateCache):
     full_replace = True
 
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
@@ -70,7 +70,7 @@ class DelayProfileProvider:
     def match_key(self, resource: dict[str, Any]) -> Hashable:
         return tuple(sorted(resource.get("tags") or []))
 
-    def fetch_current(self) -> list[dict[str, Any]]:
+    def _load_current(self) -> list[dict[str, Any]]:
         resp = self._session.get(self._url("/api/v3/delayprofile"))
         resp.raise_for_status()
         return resp.json()
@@ -136,3 +136,4 @@ class DelayProfileProvider:
         else:
             raise NotImplementedError(f"apply: unsupported op {action.op!r}")
         resp.raise_for_status()
+        self.invalidate_current()

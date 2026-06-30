@@ -24,7 +24,7 @@ import requests
 
 from configarr.diff.model import Op, ResourcePlan
 from configarr.diff.normalize import coerce_scalar
-from configarr.diff.providers.base import Action
+from configarr.diff.providers.base import Action, CurrentStateCache
 
 # Documented defaults for a brand-new server (mirrors the legacy sync_server).
 # host has no default — it is required and identifies the upstream.
@@ -60,7 +60,7 @@ def _encode(value: Any) -> Any:
     return value
 
 
-class SabnzbdServerProvider:
+class SabnzbdServerProvider(CurrentStateCache):
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
         self.kind = kind
         self.base_url = base_url.rstrip("/")
@@ -85,7 +85,7 @@ class SabnzbdServerProvider:
     def match_key(self, resource: dict[str, Any]) -> Hashable:
         return resource.get("name")
 
-    def fetch_current(self) -> list[dict[str, Any]]:
+    def _load_current(self) -> list[dict[str, Any]]:
         data = self._call({"mode": "get_config", "section": "servers"})
         return data.get("config", {}).get("servers", [])
 
@@ -146,3 +146,4 @@ class SabnzbdServerProvider:
                 continue
             params[key] = value
         self._call(params)
+        self.invalidate_current()

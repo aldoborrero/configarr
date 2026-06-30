@@ -23,7 +23,7 @@ import requests
 
 from configarr.diff.model import Op, ResourcePlan
 from configarr.diff.normalize import coerce_scalar
-from configarr.diff.providers.base import Action
+from configarr.diff.providers.base import Action, CurrentStateCache
 
 
 def _form_value(value: Any) -> str:
@@ -34,7 +34,7 @@ def _form_value(value: Any) -> str:
     return str(value)
 
 
-class BazarrSettingsProvider:
+class BazarrSettingsProvider(CurrentStateCache):
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
         self.kind = kind
         # kind is "bazarr.<section>"; the section is the trailing segment.
@@ -51,7 +51,7 @@ class BazarrSettingsProvider:
         # Singleton per section: identity is the section itself.
         return self.section
 
-    def fetch_current(self) -> list[dict[str, Any]]:
+    def _load_current(self) -> list[dict[str, Any]]:
         resp = self._session.get(self._settings_url(), params={"apikey": self.api_key})
         resp.raise_for_status()
         settings = resp.json() or {}
@@ -89,3 +89,4 @@ class BazarrSettingsProvider:
             self._settings_url(), params={"apikey": self.api_key}, files=files
         )
         resp.raise_for_status()
+        self.invalidate_current()
