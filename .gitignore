@@ -17,3 +17,6 @@ docs/book/
 
 # Local reference checkouts (not part of the project)
 .claude/
+
+# gnhf run artifacts
+.gnhf/
