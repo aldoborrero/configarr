@@ -23,7 +23,11 @@ import requests
 
 from configarr.diff.build import merge_full_replace
 from configarr.diff.model import Op, ResourcePlan
-from configarr.diff.normalize import coerce_scalar, drop_secret_fields
+from configarr.diff.normalize import (
+    coerce_scalar,
+    drop_secret_fields,
+    secret_field_names,
+)
 from configarr.diff.providers.base import Action
 
 # Valid ApplicationSyncLevel values (mirrors the generated client enum, kept local
@@ -41,6 +45,7 @@ class ApplicationProvider:
         self._session = requests.Session()
         self._session.headers["X-Api-Key"] = api_key
         self._schema_cache: dict[str, dict] | None = None
+        self._secret_names: set[str] = set()
 
     def _url(self, path: str) -> str:
         return f"{self.base_url}{path}"
@@ -65,12 +70,12 @@ class ApplicationProvider:
         resp.raise_for_status()
         return resp.json()
 
-    @staticmethod
     def _overlay_fields(
-        base_fields: list[dict[str, Any]], settings: dict[str, Any]
+        self, base_fields: list[dict[str, Any]], settings: dict[str, Any]
     ) -> list[dict[str, Any]]:
         """Overlay configured settings onto a field list, keeping each field's
         existing value (current on update, schema default on create) when unset."""
+        self._secret_names |= secret_field_names(base_fields)
         out: list[dict[str, Any]] = []
         for f in base_fields:
             name = f["name"]
@@ -122,7 +127,7 @@ class ApplicationProvider:
         fields = {
             f["name"]: coerce_scalar(f.get("value")) for f in resource.get("fields", [])
         }
-        fields = drop_secret_fields(fields)
+        fields = drop_secret_fields(fields, self._secret_names)
         return {
             "syncLevel": resource.get("syncLevel", "fullSync"),
             "implementation": resource.get("implementation"),

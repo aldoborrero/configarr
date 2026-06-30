@@ -166,7 +166,7 @@ def test_configured_secret_does_not_perpetually_diff(plan_provider):
         "fields": [
             {"name": "baseUrl", "value": "http://sonarr"},
             {"name": "prowlarrUrl", "value": "http://prowlarr"},
-            {"name": "apiKey", "value": "********"},
+            {"name": "apiKey", "value": "********", "privacy": "apiKey"},
         ],
     }
     responses.get(f"{PROWLARR}/api/v1/applications", json=[existing])

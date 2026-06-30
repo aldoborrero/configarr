@@ -127,8 +127,8 @@ def test_configured_secret_does_not_perpetually_diff(plan_provider):
         "name": "Sab",
         "implementation": "Sabnzbd",
         "fields": [
-            {"name": "host", "value": "localhost"},
-            {"name": "apiKey", "value": "********"},
+            {"name": "host", "value": "localhost", "privacy": "normal"},
+            {"name": "apiKey", "value": "********", "privacy": "apiKey"},
         ],
     }
     responses.get(f"{PROWLARR}/api/v1/downloadclient", json=[existing])

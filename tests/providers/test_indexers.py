@@ -163,8 +163,8 @@ def test_configured_secret_does_not_perpetually_diff(plan_provider):
     existing = {
         **EXISTING,
         "fields": [
-            {"name": "baseUrl", "value": "http://news"},
-            {"name": "apiKey", "value": "********"},
+            {"name": "baseUrl", "value": "http://news", "privacy": "normal"},
+            {"name": "apiKey", "value": "********", "privacy": "apiKey"},
         ],
     }
     responses.get(f"{PROWLARR}/api/v1/indexer", json=[existing])

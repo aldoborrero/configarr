@@ -128,8 +128,8 @@ def test_configured_secret_does_not_perpetually_diff(plan_provider):
         "name": "Sab",
         "implementation": "Sabnzbd",
         "fields": [
-            {"name": "host", "value": "localhost"},
-            {"name": "apiKey", "value": "********"},
+            {"name": "host", "value": "localhost", "privacy": "normal"},
+            {"name": "apiKey", "value": "********", "privacy": "apiKey"},
         ],
     }
     responses.get(f"{RADARR}/api/v3/downloadclient", json=[existing])
@@ -137,6 +137,31 @@ def test_configured_secret_does_not_perpetually_diff(plan_provider):
         "Sab": {
             "implementation": "Sabnzbd",
             "settings": {"host": "localhost", "apiKey": "real-secret"},
+        }
+    }
+    plan = plan_provider(_radarr(cfg))
+    assert not plan.has_changes, plan.resources
+
+
+@responses.activate
+def test_schema_privacy_secret_does_not_perpetually_diff(plan_provider):
+    # A secret field NOT named apiKey/password: its schema *privacy* marks it secret,
+    # so it must be skipped from the diff or a configured value would perpetually
+    # UPDATE against the masked server value.
+    existing = {
+        **EXISTING,
+        "name": "Bot",
+        "implementation": "TelegramBot",
+        "fields": [
+            {"name": "host", "value": "localhost", "privacy": "normal"},
+            {"name": "botToken", "value": "********", "privacy": "apiKey"},
+        ],
+    }
+    responses.get(f"{RADARR}/api/v3/downloadclient", json=[existing])
+    cfg = {
+        "Bot": {
+            "implementation": "TelegramBot",
+            "settings": {"host": "localhost", "botToken": "real-token"},
         }
     }
     plan = plan_provider(_radarr(cfg))

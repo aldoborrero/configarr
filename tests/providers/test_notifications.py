@@ -151,8 +151,8 @@ def test_configured_secret_does_not_perpetually_diff(plan_provider):
         "name": "Telegram",
         "implementation": "Telegram",
         "fields": [
-            {"name": "chatId", "value": "123"},
-            {"name": "apiKey", "value": "********"},
+            {"name": "chatId", "value": "123", "privacy": "normal"},
+            {"name": "apiKey", "value": "********", "privacy": "apiKey"},
         ],
     }
     responses.get(f"{RADARR}/api/v3/notification", json=[existing])
