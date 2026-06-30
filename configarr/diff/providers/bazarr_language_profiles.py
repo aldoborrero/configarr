@@ -189,10 +189,14 @@ class BazarrLanguageProfileProvider(CurrentStateCache):
         return desired
 
     def normalize(self, resource: dict[str, Any]) -> dict[str, Any]:
-        return _canonicalize(resource)
+        result: dict[str, Any] = _canonicalize(resource)
+        return result
 
     def to_action(
-        self, plan: ResourcePlan, current: dict | None, desired: dict | None
+        self,
+        plan: ResourcePlan,
+        current: dict[str, Any] | None,
+        desired: dict[str, Any] | None,
     ) -> Action:
         assert plan.op in (Op.CREATE, Op.UPDATE), (
             f"to_action: unexpected op {plan.op!r}"

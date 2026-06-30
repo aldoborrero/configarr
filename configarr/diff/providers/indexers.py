@@ -40,18 +40,20 @@ class IndexerProvider(CurrentStateCache):
         self._session = requests.Session()
         self._session.headers["X-Api-Key"] = api_key
         # (by implementation, by schema name) — built together, cached.
-        self._schema_cache: tuple[dict[str, dict], dict[str, dict]] | None = None
+        self._schema_cache: (
+            tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]] | None
+        ) = None
         self._secret_names: set[str] = set()
 
     def _url(self, path: str) -> str:
         return f"{self.base_url}{path}"
 
-    def _schemas(self) -> tuple[dict[str, dict], dict[str, dict]]:
+    def _schemas(self) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
         if self._schema_cache is None:
             resp = self._session.get(self._url("/api/v1/indexer/schema"))
             resp.raise_for_status()
-            by_impl: dict[str, dict] = {}
-            by_name: dict[str, dict] = {}
+            by_impl: dict[str, dict[str, Any]] = {}
+            by_name: dict[str, dict[str, Any]] = {}
             for s in resp.json():
                 impl = s.get("implementation")
                 # First schema per implementation wins (matches generic indexers).
@@ -62,7 +64,9 @@ class IndexerProvider(CurrentStateCache):
             self._schema_cache = (by_impl, by_name)
         return self._schema_cache
 
-    def _schema_for(self, implementation: str, definition: str | None) -> dict:
+    def _schema_for(
+        self, implementation: str, definition: str | None
+    ) -> dict[str, Any]:
         by_impl, by_name = self._schemas()
         if definition:
             return by_name.get(definition, {})
@@ -74,7 +78,8 @@ class IndexerProvider(CurrentStateCache):
     def _load_current(self) -> list[dict[str, Any]]:
         resp = self._session.get(self._url("/api/v1/indexer"))
         resp.raise_for_status()
-        return resp.json()
+        data: list[dict[str, Any]] = resp.json()
+        return data
 
     def _overlay_fields(
         self, base_fields: list[dict[str, Any]], settings: dict[str, Any]
@@ -146,7 +151,10 @@ class IndexerProvider(CurrentStateCache):
         }
 
     def to_action(
-        self, plan: ResourcePlan, current: dict | None, desired: dict | None
+        self,
+        plan: ResourcePlan,
+        current: dict[str, Any] | None,
+        desired: dict[str, Any] | None,
     ) -> Action:
         assert plan.op in (Op.CREATE, Op.UPDATE), (
             f"to_action: unexpected op {plan.op!r}"

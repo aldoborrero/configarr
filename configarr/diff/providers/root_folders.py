@@ -36,7 +36,8 @@ class RootFolderProvider(CurrentStateCache):
     def _load_current(self) -> list[dict[str, Any]]:
         resp = self._session.get(self._url("/api/v3/rootfolder"))
         resp.raise_for_status()
-        return resp.json()
+        data: list[dict[str, Any]] = resp.json()
+        return data
 
     def build_desired(self) -> list[dict[str, Any]]:
         return [{"path": entry["path"]} for entry in self.config if entry.get("path")]
@@ -47,7 +48,10 @@ class RootFolderProvider(CurrentStateCache):
         return {"path": resource.get("path")}
 
     def to_action(
-        self, plan: ResourcePlan, current: dict | None, desired: dict | None
+        self,
+        plan: ResourcePlan,
+        current: dict[str, Any] | None,
+        desired: dict[str, Any] | None,
     ) -> Action:
         assert plan.op is Op.CREATE, f"to_action: unexpected op {plan.op!r}"
         return Action(op=plan.op, key=plan.key, payload=dict(desired or {}))

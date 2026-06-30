@@ -78,7 +78,7 @@ class SabnzbdMiscProvider(CurrentStateCache):
         query = {**params, "apikey": self.api_key, "output": "json"}
         resp = self._session.get(self._url("/api"), params=query)
         resp.raise_for_status()
-        data = resp.json()
+        data: dict[str, Any] = resp.json()
         if isinstance(data, dict) and "error" in data:
             raise RuntimeError(f"SABnzbd API error: {data['error']}")
         return data
@@ -113,7 +113,10 @@ class SabnzbdMiscProvider(CurrentStateCache):
         return out
 
     def to_action(
-        self, plan: ResourcePlan, current: dict | None, desired: dict | None
+        self,
+        plan: ResourcePlan,
+        current: dict[str, Any] | None,
+        desired: dict[str, Any] | None,
     ) -> Action:
         assert plan.op is Op.UPDATE, f"to_action: unexpected op {plan.op!r}"
         return Action(op=plan.op, key=plan.key, payload=dict(desired or {}))

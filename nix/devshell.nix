@@ -12,6 +12,8 @@ let
       pytest
       responses
       pip
+      # type-check stubs (mypy --strict gate)
+      types-requests
     ]
   );
 in

@@ -59,12 +59,14 @@ class QualityProfileProvider(CurrentStateCache):
         return None
 
     def match_key(self, resource: dict[str, Any]) -> Hashable:
-        return resource["name"]
+        name: str = resource["name"]
+        return name
 
     def _load_current(self) -> list[dict[str, Any]]:
         resp = self._session.get(self._url("/api/v3/qualityprofile"))
         resp.raise_for_status()
-        return resp.json()
+        data: list[dict[str, Any]] = resp.json()
+        return data
 
     @staticmethod
     def _enabled_names(profile: dict[str, Any]) -> set[str]:
@@ -197,7 +199,10 @@ class QualityProfileProvider(CurrentStateCache):
         }
 
     def to_action(
-        self, plan: ResourcePlan, current: dict | None, desired: dict | None
+        self,
+        plan: ResourcePlan,
+        current: dict[str, Any] | None,
+        desired: dict[str, Any] | None,
     ) -> Action:
         assert plan.op in (Op.CREATE, Op.UPDATE), (
             f"to_action: unexpected op {plan.op!r}"

@@ -73,7 +73,10 @@ class BazarrSettingsProvider(CurrentStateCache):
         return {key: coerce_scalar(value) for key, value in resource.items()}
 
     def to_action(
-        self, plan: ResourcePlan, current: dict | None, desired: dict | None
+        self,
+        plan: ResourcePlan,
+        current: dict[str, Any] | None,
+        desired: dict[str, Any] | None,
     ) -> Action:
         assert plan.op is Op.UPDATE, f"to_action: unexpected op {plan.op!r}"
         return Action(op=plan.op, key=plan.key, payload=dict(desired or {}))

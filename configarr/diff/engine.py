@@ -7,7 +7,7 @@ from typing import Any, Callable, Hashable
 from configarr.diff.model import FieldDiff, Op, Plan, ResourcePlan
 
 
-def _field_diffs(before: dict, after: dict) -> list[FieldDiff]:
+def _field_diffs(before: dict[str, Any], after: dict[str, Any]) -> list[FieldDiff]:
     diffs: list[FieldDiff] = []
     # Only desired keys drive updates; absent desired keys are left to the
     # provider's build_desired (which already merged defaults/current).
@@ -17,7 +17,9 @@ def _field_diffs(before: dict, after: dict) -> list[FieldDiff]:
     return diffs
 
 
-def _current_only_diffs(before: dict, after: dict) -> list[FieldDiff]:
+def _current_only_diffs(
+    before: dict[str, Any], after: dict[str, Any]
+) -> list[FieldDiff]:
     # Full-replace apply PUTs the whole desired object, so any key in the normalized
     # current but absent from desired would be reset on the server. Surface these so
     # a plan can't report UNCHANGED while apply silently mutates state. A provider
@@ -30,8 +32,12 @@ def _current_only_diffs(before: dict, after: dict) -> list[FieldDiff]:
     ]
 
 
-def _index(items: list[dict], match_key: Callable[[dict], Hashable], side: str) -> dict:
-    out: dict = {}
+def _index(
+    items: list[dict[str, Any]],
+    match_key: Callable[[dict[str, Any]], Hashable],
+    side: str,
+) -> dict[Hashable, dict[str, Any]]:
+    out: dict[Hashable, dict[str, Any]] = {}
     for r in items:
         k = match_key(r)
         if k in out:
@@ -45,8 +51,8 @@ def diff(
     current: list[dict[str, Any]],
     desired: list[dict[str, Any]],
     *,
-    match_key: Callable[[dict], Hashable],
-    normalize: Callable[[dict], dict],
+    match_key: Callable[[dict[str, Any]], Hashable],
+    normalize: Callable[[dict[str, Any]], dict[str, Any]],
     full_replace: bool = False,
     prune: bool = False,
 ) -> Plan:

@@ -5,12 +5,13 @@ from __future__ import annotations
 
 from configarr.diff.engine import diff
 from configarr.diff.model import Plan
+from configarr.diff.providers.base import ResourceProvider
 from configarr.diff.registry import providers_for
 from configarr.diff.render import render_plan
 from configarr.models import ConfigarrConfig
 
 
-def _plan_provider(provider, prune: bool = False) -> Plan:
+def _plan_provider(provider: ResourceProvider, prune: bool = False) -> Plan:
     """Diff a single provider exactly as the runner does, honoring the opt-in
     full_replace flag so plan and apply never diverge on diff semantics. ``prune``
     enables opt-in deletion of unmanaged resources (default additive)."""

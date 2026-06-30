@@ -26,6 +26,6 @@ pkgs.runCommandLocal "mypy-check" { } ''
   chmod -R u+w src
   export HOME=$(mktemp -d)
   cd src
-  ${py}/bin/mypy configarr/diff
+  ${py}/bin/mypy --strict configarr/diff
   touch $out
 ''

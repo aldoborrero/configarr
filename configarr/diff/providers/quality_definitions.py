@@ -44,7 +44,8 @@ class QualityDefinitionProvider(CurrentStateCache):
     def _load_current(self) -> list[dict[str, Any]]:
         resp = self._session.get(self._url("/api/v3/qualitydefinition"))
         resp.raise_for_status()
-        return resp.json()
+        data: list[dict[str, Any]] = resp.json()
+        return data
 
     def build_desired(self) -> list[dict[str, Any]]:
         current_by_name = {self.match_key(c): c for c in self.fetch_current()}
@@ -72,7 +73,10 @@ class QualityDefinitionProvider(CurrentStateCache):
         }
 
     def to_action(
-        self, plan: ResourcePlan, current: dict | None, desired: dict | None
+        self,
+        plan: ResourcePlan,
+        current: dict[str, Any] | None,
+        desired: dict[str, Any] | None,
     ) -> Action:
         assert plan.op is Op.UPDATE, f"to_action: unexpected op {plan.op!r}"
         payload = {**(desired or {}), "id": (current or {})["id"]}

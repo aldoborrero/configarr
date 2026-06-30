@@ -35,7 +35,7 @@ class DownloadClientProvider(CurrentStateCache):
         self.config = config or {}
         self._session = requests.Session()
         self._session.headers["X-Api-Key"] = api_key
-        self._schema_cache: dict[str, dict] | None = None
+        self._schema_cache: dict[str, dict[str, Any]] | None = None
         # Secret field names (schema privacy=apiKey/password) seen while building
         # desired; consulted by normalize so a configured secret is skipped on both
         # sides of the diff. Populated from schema (create) or current (update) fields.
@@ -44,7 +44,7 @@ class DownloadClientProvider(CurrentStateCache):
     def _url(self, path: str) -> str:
         return f"{self.base_url}{path}"
 
-    def _schema(self) -> dict[str, dict]:
+    def _schema(self) -> dict[str, dict[str, Any]]:
         if self._schema_cache is None:
             resp = self._session.get(self._url("/api/v3/downloadclient/schema"))
             resp.raise_for_status()
@@ -57,7 +57,8 @@ class DownloadClientProvider(CurrentStateCache):
     def _load_current(self) -> list[dict[str, Any]]:
         resp = self._session.get(self._url("/api/v3/downloadclient"))
         resp.raise_for_status()
-        return resp.json()
+        data: list[dict[str, Any]] = resp.json()
+        return data
 
     def _overlay_fields(
         self, base_fields: list[dict[str, Any]], settings: dict[str, Any]
@@ -127,7 +128,10 @@ class DownloadClientProvider(CurrentStateCache):
         }
 
     def to_action(
-        self, plan: ResourcePlan, current: dict | None, desired: dict | None
+        self,
+        plan: ResourcePlan,
+        current: dict[str, Any] | None,
+        desired: dict[str, Any] | None,
     ) -> Action:
         assert plan.op in (Op.CREATE, Op.UPDATE), (
             f"to_action: unexpected op {plan.op!r}"
