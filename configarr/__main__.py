@@ -57,6 +57,13 @@ log = logging.getLogger("configarr")
     is_flag=True,
     help="Show what would change for supported resources, then exit (no writes).",
 )
+@click.option(
+    "--apply",
+    "apply_engine",
+    is_flag=True,
+    help="Apply changes for supported resources through the diffing engine "
+    "(additive: creates/updates only, no deletions), then exit.",
+)
 def main(
     config_path: Path,
     service: str | None,
@@ -65,6 +72,7 @@ def main(
     verbose: bool,
     debug: bool,
     plan_only: bool,
+    apply_engine: bool,
 ):
     """
     Configarr - Configuration manager for *arr applications and SABnzbd.
@@ -116,6 +124,12 @@ def main(
         from configarr.diff.runner import run_plan
 
         click.echo(run_plan(config, service=service, instance=instance))
+        return
+
+    if apply_engine:
+        from configarr.diff.runner import run_apply
+
+        click.echo(run_apply(config, service=service, instance=instance))
         return
 
     # Validate --service / --instance against what's actually configured, so a typo
