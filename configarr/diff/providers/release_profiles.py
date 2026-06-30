@@ -17,12 +17,10 @@ from __future__ import annotations
 from collections.abc import Hashable
 from typing import Any
 
-import requests
-
 from configarr.diff.build import merge_full_replace
 from configarr.diff.model import Op, ResourcePlan
 from configarr.diff.normalize import coerce_scalar
-from configarr.diff.providers.base import Action, CurrentStateCache
+from configarr.diff.providers.base import Action, HttpProvider
 
 # config key -> API field (straight passthrough of the user's value).
 _FIELD_MAP = {
@@ -44,26 +42,19 @@ _CREATE_DEFAULTS: dict[str, Any] = {
 }
 
 
-class ReleaseProfileProvider(CurrentStateCache):
+class ReleaseProfileProvider(HttpProvider):
     full_replace = True
 
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
+        super().__init__(base_url, api_key)
         self.kind = kind
-        self.base_url = base_url.rstrip("/")
         self.config = config or []
-        self._session = requests.Session()
-        self._session.headers["X-Api-Key"] = api_key
-
-    def _url(self, path: str) -> str:
-        return f"{self.base_url}{path}"
 
     def match_key(self, resource: dict[str, Any]) -> Hashable:
         return resource.get("name")
 
     def _load_current(self) -> list[dict[str, Any]]:
-        resp = self._session.get(self._url("/api/v3/releaseprofile"))
-        resp.raise_for_status()
-        data: list[dict[str, Any]] = resp.json()
+        data: list[dict[str, Any]] = self._get("/api/v3/releaseprofile").json()
         return data
 
     @staticmethod
@@ -116,15 +107,10 @@ class ReleaseProfileProvider(CurrentStateCache):
 
     def apply(self, action: Action) -> None:
         if action.op is Op.CREATE:
-            resp = self._session.post(
-                self._url("/api/v3/releaseprofile"), json=action.payload
-            )
+            self._post("/api/v3/releaseprofile", json=action.payload)
         elif action.op is Op.UPDATE:
             rp_id = action.payload["id"]
-            resp = self._session.put(
-                self._url(f"/api/v3/releaseprofile/{rp_id}"), json=action.payload
-            )
+            self._put(f"/api/v3/releaseprofile/{rp_id}", json=action.payload)
         else:
             raise NotImplementedError(f"apply: unsupported op {action.op!r}")
-        resp.raise_for_status()
         self.invalidate_current()

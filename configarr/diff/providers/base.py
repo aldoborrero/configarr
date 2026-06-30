@@ -6,6 +6,8 @@ from collections.abc import Hashable
 from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
 
+import requests
+
 from configarr.diff.model import Op, ResourcePlan
 
 
@@ -66,3 +68,42 @@ class CurrentStateCache:
 
     def _load_current(self) -> list[dict[str, Any]]:
         raise NotImplementedError
+
+
+class HttpProvider(CurrentStateCache):
+    """Base for the *arr providers: an ``X-Api-Key`` session plus HTTP helpers.
+
+    Holds the shared transport boilerplate every Radarr/Sonarr/Prowlarr provider
+    repeated: a ``requests.Session`` carrying the API key, ``_url()`` for joining
+    paths to ``base_url``, and ``_get/_post/_put/_delete`` wrappers that call
+    ``raise_for_status()`` so each call site does not. Subclasses set their own
+    ``kind``/``config`` after calling ``super().__init__()``.
+    """
+
+    def __init__(self, base_url: str, api_key: str) -> None:
+        self.base_url = base_url.rstrip("/")
+        self._session = requests.Session()
+        self._session.headers["X-Api-Key"] = api_key
+
+    def _url(self, path: str) -> str:
+        return f"{self.base_url}{path}"
+
+    def _get(self, path: str) -> requests.Response:
+        resp = self._session.get(self._url(path))
+        resp.raise_for_status()
+        return resp
+
+    def _post(self, path: str, json: Any) -> requests.Response:
+        resp = self._session.post(self._url(path), json=json)
+        resp.raise_for_status()
+        return resp
+
+    def _put(self, path: str, json: Any) -> requests.Response:
+        resp = self._session.put(self._url(path), json=json)
+        resp.raise_for_status()
+        return resp
+
+    def _delete(self, path: str) -> requests.Response:
+        resp = self._session.delete(self._url(path))
+        resp.raise_for_status()
+        return resp

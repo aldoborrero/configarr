@@ -17,12 +17,10 @@ from __future__ import annotations
 from collections.abc import Hashable
 from typing import Any
 
-import requests
-
 from configarr.diff.build import merge_full_replace
 from configarr.diff.model import Op, ResourcePlan
 from configarr.diff.normalize import coerce_scalar
-from configarr.diff.providers.base import Action, CurrentStateCache
+from configarr.diff.providers.base import Action, HttpProvider
 
 _COLON_RADARR = {
     "delete": "delete",
@@ -72,28 +70,21 @@ _SERVICE_FIELDS: dict[str, dict[str, tuple[str, dict[str, Any] | None]]] = {
 }
 
 
-class NamingProvider(CurrentStateCache):
+class NamingProvider(HttpProvider):
     full_replace = True
 
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
+        super().__init__(base_url, api_key)
         self.kind = kind
-        self.base_url = base_url.rstrip("/")
         self.config = config or {}
         self._fields = _SERVICE_FIELDS[kind.split(".")[0]]
-        self._session = requests.Session()
-        self._session.headers["X-Api-Key"] = api_key
-
-    def _url(self, path: str) -> str:
-        return f"{self.base_url}{path}"
 
     def match_key(self, resource: dict[str, Any]) -> Hashable:
         return resource.get("id")
 
     def _load_current(self) -> list[dict[str, Any]]:
-        resp = self._session.get(self._url("/api/v3/config/naming"))
-        resp.raise_for_status()
         # Singleton: wrap the one object so the engine can index it like any list.
-        return [resp.json()]
+        return [self._get("/api/v3/config/naming").json()]
 
     def _overrides(self) -> dict[str, Any]:
         out: dict[str, Any] = {}
@@ -134,8 +125,5 @@ class NamingProvider(CurrentStateCache):
         if action.op is not Op.UPDATE:
             raise NotImplementedError(f"apply: unsupported op {action.op!r}")
         naming_id = action.payload["id"]
-        resp = self._session.put(
-            self._url(f"/api/v3/config/naming/{naming_id}"), json=action.payload
-        )
-        resp.raise_for_status()
+        self._put(f"/api/v3/config/naming/{naming_id}", json=action.payload)
         self.invalidate_current()

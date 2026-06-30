@@ -14,33 +14,24 @@ import copy
 from collections.abc import Hashable
 from typing import Any
 
-import requests
-
 from configarr.diff.build import merge_full_replace
 from configarr.diff.model import Op, ResourcePlan
-from configarr.diff.providers.base import Action, CurrentStateCache
+from configarr.diff.providers.base import Action, HttpProvider
 
 
-class QualityProfileProvider(CurrentStateCache):
+class QualityProfileProvider(HttpProvider):
     full_replace = True
 
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
+        super().__init__(base_url, api_key)
         self.kind = kind
-        self.base_url = base_url.rstrip("/")
         self.config = config or []
-        self._session = requests.Session()
-        self._session.headers["X-Api-Key"] = api_key
         self._schema_cache: dict[str, Any] | None = None
         self._language_cache: list[dict[str, Any]] | None = None
 
-    def _url(self, path: str) -> str:
-        return f"{self.base_url}{path}"
-
     def _schema(self) -> dict[str, Any]:
         if self._schema_cache is None:
-            resp = self._session.get(self._url("/api/v3/qualityprofile/schema"))
-            resp.raise_for_status()
-            self._schema_cache = resp.json()
+            self._schema_cache = self._get("/api/v3/qualityprofile/schema").json()
         return self._schema_cache
 
     def _resolve_language(self, name: str) -> dict[str, Any] | None:
@@ -50,9 +41,7 @@ class QualityProfileProvider(CurrentStateCache):
         language untouched (falling back to current/schema).
         """
         if self._language_cache is None:
-            resp = self._session.get(self._url("/api/v3/language"))
-            resp.raise_for_status()
-            self._language_cache = resp.json()
+            self._language_cache = self._get("/api/v3/language").json()
         for lang in self._language_cache:
             lang_name = lang.get("name")
             if lang_name and lang_name.lower() == name.lower():
@@ -64,9 +53,7 @@ class QualityProfileProvider(CurrentStateCache):
         return name
 
     def _load_current(self) -> list[dict[str, Any]]:
-        resp = self._session.get(self._url("/api/v3/qualityprofile"))
-        resp.raise_for_status()
-        data: list[dict[str, Any]] = resp.json()
+        data: list[dict[str, Any]] = self._get("/api/v3/qualityprofile").json()
         return data
 
     @staticmethod
@@ -216,15 +203,10 @@ class QualityProfileProvider(CurrentStateCache):
 
     def apply(self, action: Action) -> None:
         if action.op is Op.CREATE:
-            resp = self._session.post(
-                self._url("/api/v3/qualityprofile"), json=action.payload
-            )
+            self._post("/api/v3/qualityprofile", json=action.payload)
         elif action.op is Op.UPDATE:
             qp_id = action.payload["id"]
-            resp = self._session.put(
-                self._url(f"/api/v3/qualityprofile/{qp_id}"), json=action.payload
-            )
+            self._put(f"/api/v3/qualityprofile/{qp_id}", json=action.payload)
         else:
             raise NotImplementedError(f"apply: unsupported op {action.op!r}")
-        resp.raise_for_status()
         self.invalidate_current()

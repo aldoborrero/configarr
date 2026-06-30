@@ -19,8 +19,6 @@ from __future__ import annotations
 from collections.abc import Hashable
 from typing import Any
 
-import requests
-
 from configarr.diff.build import merge_full_replace
 from configarr.diff.model import Op, ResourcePlan
 from configarr.diff.normalize import (
@@ -28,18 +26,16 @@ from configarr.diff.normalize import (
     drop_secret_fields,
     secret_field_names,
 )
-from configarr.diff.providers.base import Action, CurrentStateCache
+from configarr.diff.providers.base import Action, HttpProvider
 
 
-class IndexerProvider(CurrentStateCache):
+class IndexerProvider(HttpProvider):
     full_replace = True
 
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
+        super().__init__(base_url, api_key)
         self.kind = kind
-        self.base_url = base_url.rstrip("/")
         self.config = config or {}
-        self._session = requests.Session()
-        self._session.headers["X-Api-Key"] = api_key
         # (by implementation, by schema name) — built together, cached.
         self._schema_cache: (
             tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]] | None
@@ -49,16 +45,11 @@ class IndexerProvider(CurrentStateCache):
         self._secret_names: set[str] = set()
         self._secret_names_ready = False
 
-    def _url(self, path: str) -> str:
-        return f"{self.base_url}{path}"
-
     def _schemas(self) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
         if self._schema_cache is None:
-            resp = self._session.get(self._url("/api/v1/indexer/schema"))
-            resp.raise_for_status()
             by_impl: dict[str, dict[str, Any]] = {}
             by_name: dict[str, dict[str, Any]] = {}
-            for s in resp.json():
+            for s in self._get("/api/v1/indexer/schema").json():
                 impl = s.get("implementation")
                 # First schema per implementation wins (matches generic indexers).
                 if impl and impl not in by_impl:
@@ -80,9 +71,7 @@ class IndexerProvider(CurrentStateCache):
         return resource.get("name")
 
     def _load_current(self) -> list[dict[str, Any]]:
-        resp = self._session.get(self._url("/api/v1/indexer"))
-        resp.raise_for_status()
-        data: list[dict[str, Any]] = resp.json()
+        data: list[dict[str, Any]] = self._get("/api/v1/indexer").json()
         return data
 
     def _overlay_fields(
@@ -174,16 +163,10 @@ class IndexerProvider(CurrentStateCache):
 
     def apply(self, action: Action) -> None:
         if action.op is Op.CREATE:
-            resp = self._session.post(
-                self._url("/api/v1/indexer?forceSave=true"), json=action.payload
-            )
+            self._post("/api/v1/indexer?forceSave=true", json=action.payload)
         elif action.op is Op.UPDATE:
             ix_id = action.payload["id"]
-            resp = self._session.put(
-                self._url(f"/api/v1/indexer/{ix_id}?forceSave=true"),
-                json=action.payload,
-            )
+            self._put(f"/api/v1/indexer/{ix_id}?forceSave=true", json=action.payload)
         else:
             raise NotImplementedError(f"apply: unsupported op {action.op!r}")
-        resp.raise_for_status()
         self.invalidate_current()
