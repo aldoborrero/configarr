@@ -261,7 +261,7 @@ A map keyed by client name.
 
 | key | type | default | required | meaning |
 |---|---|---|---|---|
-| `implementation` | string | — | **yes** | client implementation (e.g. `QBittorrent`, `Sabnzbd`); unknown values raise |
+| `implementation` | string | — | **yes** | client implementation (e.g. `QBittorrent`, `Sabnzbd`); missing or unknown raises locally (the engine validates before any write, so an omitted value fails fast instead of yielding an opaque server 422) |
 | `enable` | bool | `true` | no | |
 | `priority` | int | `1` | no | |
 | `tags` | list | `[]` | no | |
@@ -273,7 +273,7 @@ A map keyed by connection name.
 
 | key | type | default | required | meaning |
 |---|---|---|---|---|
-| `implementation` | string | — | **yes** | notification implementation; unknown values raise |
+| `implementation` | string | — | **yes** | notification implementation; missing or unknown raises locally (validated before any write) |
 | `on_download` | bool | `true` | no | |
 | `on_upgrade` | bool | `true` | no | |
 | `on_rename` | bool | `true` | no | |
@@ -296,7 +296,7 @@ A map keyed by indexer name.
 
 | key | type | default | required | meaning |
 |---|---|---|---|---|
-| `implementation` | string | — | **yes** | indexer implementation; missing raises |
+| `implementation` | string | — | **yes** | indexer implementation; missing or unknown raises locally (validated before any write) |
 | `definition` | string | unset | no | indexer definition/schema name (e.g. the tracker slug); falls back to `implementation` |
 | `enable` | bool | `true` | no | |
 | `priority` | int | `25` | no | |
@@ -311,7 +311,7 @@ A map keyed by application name.
 
 | key | type | default | required | meaning |
 |---|---|---|---|---|
-| `implementation` | string | — | **yes** | application implementation; unknown raises |
+| `implementation` | string | — | **yes** | application implementation; missing or unknown raises locally (validated before any write) |
 | `sync_level` | string | `fullSync` | no | **application-only**; must be a valid `ApplicationSyncLevel` (e.g. `fullSync`, `addOnly`, `disabled`) — an invalid value raises |
 | `tags` | list | `[]` | no | |
 | `settings` | map | `{}` | no | passthrough to the application's schema fields |
@@ -322,7 +322,7 @@ A map keyed by client name.
 
 | key | type | default | required | meaning |
 |---|---|---|---|---|
-| `implementation` | string | — | **yes** | client implementation; unknown raises |
+| `implementation` | string | — | **yes** | client implementation; missing or unknown raises locally (validated before any write) |
 | `enable` | bool | `true` | no | |
 | `priority` | int | `1` | no | |
 | `tags` | list | `[]` | no | |
@@ -439,9 +439,13 @@ Path prefix `sabnzbd.instances.<name>`. Top-level keys (from
 `parse_sabnzbd_instance` + `SabnzbdConfig`): `base_url`, `api_key`, `servers`,
 `categories`, `misc`.
 
-`sync_server` and `sync_category` **always write** (POST to SABnzbd's config API)
-and so report `CREATED`/`UPDATED` — never `UNCHANGED`. `sync_misc_settings`
-reports `UNCHANGED` when none of its keys are present.
+Legacy `sync_server` and `sync_category` write blindly (POST to SABnzbd's
+config API) and so report `CREATED`/`UPDATED` — never `UNCHANGED`. The diffing
+engine (`configarr/diff/`) instead GETs the full config and diffs servers and
+categories client-side, so an instance already matching config reports
+`UNCHANGED`; only genuine changes are written. `sync_misc_settings` (legacy) and
+the engine's `sabnzbd.misc` provider both report `UNCHANGED` when none of the
+managed keys differ.
 
 ### Servers — `servers`
 

@@ -1,6 +1,6 @@
 # Feasibility study: a proper diffing engine for configarr
 
-**Status:** Phase 0 + Radarr custom-format pilot implemented; rollout to other resources/services pending (see Status below)
+**Status:** Phase 0 + all 17 work-list providers implemented across all five services; `--plan`, `--apply`, and opt-in `--prune` (DELETE) all work with round-trip tests (see Status below)
 **Branch:** `diffing-engine`
 **Goal:** Assess whether configarr can be evolved into a tool that configures *every*
 aspect of any *arr app and applies changes with confidence that they "won't break" —
@@ -13,16 +13,22 @@ does **not** change runtime code.
 
 ## Status
 
-Phase 0 (scaffolding) and the Phase 1 Radarr custom-format pilot are **implemented**.
-The implementation lives under `configarr/diff/` — `model`, `normalize`, `engine`,
-`providers/base`, `providers/radarr_custom_formats`, `render`, `runner`.
+Phase 0 (scaffolding), the full provider rollout, and the apply + prune phase are
+**implemented**. The implementation lives under `configarr/diff/` — `model`,
+`normalize`, `engine`, `providers/` (all 17 work-list providers across
+Radarr/Sonarr/Prowlarr/SABnzbd/Bazarr), `registry`, `render`, `runner`.
 
-- A read-only `--plan` CLI flag previews Radarr custom-format changes before applying.
-- Idempotency is confirmed by an apply-then-replan test (second plan is always empty);
-  the full pytest suite runs in CI via `nix/checks/pytest.nix`.
+- A read-only `--plan` CLI flag previews changes for every service before applying;
+  `--apply` executes a plan provider-by-provider in safe registry order.
+- Deletion is opt-in: `--prune` emits `DELETE` for server resources absent from config,
+  gated per provider via a `prunable` flag, so the default path stays additive.
+- Idempotency is confirmed per provider by responses-mocked apply-then-replan tests
+  (second plan is always empty), plus round-trip apply/prune tests; the full pytest
+  suite runs in CI via `nix/checks/pytest.nix`.
+- Review findings A–E (schema-derived secret detection, single current-state fetch,
+  local `implementation` validation, `quality_profiles` language resolution, all-service
+  conformance coverage) are fixed.
 - See the [implementation plan](./diffing-engine-plan.md) for the detailed phase design.
-- Rolling the provider pattern out to the remaining resources and services is tracked as
-  follow-up work (per the plan's "Follow-up plans" section).
 
 ---
 

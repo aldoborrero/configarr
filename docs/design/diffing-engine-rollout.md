@@ -1,11 +1,13 @@
 # Diffing Engine — Rollout Plan (all services) — gnhf-ready
 
-> **Status:** ready to execute. The Phase 0 engine + Radarr custom-format pilot are
-> done (`configarr/diff/`, see [feasibility](./diffing-engine-feasibility.md),
+> **Status:** complete. All 17 work-list providers below are implemented and
+> registered across Radarr, Sonarr, Prowlarr, SABnzbd, and Bazarr, each gated by an
+> idempotency test (`configarr/diff/`, see [feasibility](./diffing-engine-feasibility.md),
 > [pilot plan](./diffing-engine-plan.md), [Radarr API notes](./diffing-engine-radarr-notes.md)).
-> This document drives extending the pilot to **every** resource across Radarr, Sonarr,
-> Prowlarr, SABnzbd, and Bazarr — one provider per iteration, each gated by an
-> idempotency test.
+> Beyond the read-only `--plan` view, `--apply` executes plans in safe registry order
+> and opt-in `--prune` emits `DELETE` for unmanaged resources (additive by default).
+> Review findings A–E are fixed. The work-list below is retained as the per-provider
+> recipe and an index of what shipped.
 
 This plan is written to be executed either by **subagent-driven-development** (one
 provider per task) or autonomously by **[gnhf](https://github.com/kunchenguid/gnhf)**
