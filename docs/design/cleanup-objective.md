@@ -11,6 +11,28 @@ test must stay green at every step.
 Read first: `docs/design/diffing-engine-rollout.md`, `docs/design/diffing-engine-radarr-notes.md`,
 `docs/design/cleanup-objective.md` (this file). Template: `configarr/diff/providers/radarr_custom_formats.py`.
 
+## Environment & tooling — READ THIS FIRST (Nix)
+
+This repo is a **Nix flake**. There is **NO system/global `pytest`, `ruff`, `mypy`, or
+project-Python on `$PATH`, and NO direnv / `.envrc`** — dev tools are not auto-loaded. Do
+**not** `pip install`, `npm install`, `poetry`, create a `venv`, or assume a bare `pytest`/
+`ruff`/`mypy`/`python` exists; those commands will fail. Instead:
+
+- **Run every dev tool through the devshell:** `nix develop -c <cmd>` — e.g.
+  `nix develop -c pytest -q`, `nix develop -c ruff check configarr tests`,
+  `nix develop -c mypy --strict configarr/diff`. (You may also enter an interactive
+  `nix develop` shell and run tools there; but in one-shot commands always prefix with
+  `nix develop -c`.) Only `nix` itself is guaranteed on `$PATH`.
+- **Format** with `nix fmt` (treefmt: nixfmt + ruff + yamlfmt). **Full CI gate:**
+  `nix flake check --all-systems`. **Single check:** `nix build .#checks.x86_64-linux.<name>`.
+- **Nix flake gotcha:** flakes only see **git-tracked** files. After creating a NEW file
+  (a provider, a test, a `nix/checks/*.nix`), `git add` it BEFORE running `nix flake check` /
+  `nix build`, or the flake won't see it (the check can appear to pass without it).
+- **Adding a tool** (e.g. a new linter, a mypy stub package): add it to the relevant Nix env
+  — `nix/devshell.nix` and/or the check's `withPackages` in `nix/checks/*.nix` — never via
+  pip/npm. The generated API clients (`radarr`, `sonarr`, …) are nix-only, not on PyPI; do
+  not try to install them (and `configarr/diff/*` must not import them regardless).
+
 Work the phases IN ORDER, one logical change per iteration/commit, TDD throughout
 (behaviour-preserving refactors: rely on the existing tests as the safety net; add tests
 before changing behaviour).
