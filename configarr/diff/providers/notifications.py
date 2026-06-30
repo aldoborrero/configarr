@@ -13,32 +13,17 @@ pass ``forceSave=true`` to skip the live connectivity test the *arr API would ru
 
 from __future__ import annotations
 
-from collections.abc import Hashable
 from typing import Any
 
 from configarr.diff.build import merge_full_replace
-from configarr.diff.model import Op, ResourcePlan
-from configarr.diff.normalize import (
-    coerce_scalar,
-    drop_secret_fields,
-    secret_field_names,
-)
-from configarr.diff.providers.base import Action, HttpProvider
+from configarr.diff.providers.base import Action, FieldProvider
 
 
-class NotificationProvider(HttpProvider):
-    full_replace = True
-
+class NotificationProvider(FieldProvider):
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
-        super().__init__(base_url, api_key)
-        self.kind = kind
+        super().__init__(base_url, api_key, config, kind)
         self.is_sonarr = kind.startswith("sonarr")
-        self.config = config or {}
         self._schema_cache: dict[str, dict[str, Any]] | None = None
-        # ``_secret_names_ready`` makes normalize() self-enforcing: it triggers a
-        # build first if called before build_desired() has populated the set.
-        self._secret_names: set[str] = set()
-        self._secret_names_ready = False
 
     def _schema(self) -> dict[str, dict[str, Any]]:
         if self._schema_cache is None:
@@ -48,25 +33,9 @@ class NotificationProvider(HttpProvider):
             }
         return self._schema_cache
 
-    def match_key(self, resource: dict[str, Any]) -> Hashable:
-        return resource.get("name")
-
     def _load_current(self) -> list[dict[str, Any]]:
         data: list[dict[str, Any]] = self._get("/api/v3/notification").json()
         return data
-
-    def _overlay_fields(
-        self, base_fields: list[dict[str, Any]], settings: dict[str, Any]
-    ) -> list[dict[str, Any]]:
-        """Overlay configured settings onto a field list, keeping each field's
-        existing value (current on update, schema default on create) when unset."""
-        self._secret_names |= secret_field_names(base_fields)
-        out: list[dict[str, Any]] = []
-        for f in base_fields:
-            name = f["name"]
-            value = settings.get(name, f.get("value"))
-            out.append({"name": name, "value": value})
-        return out
 
     def _event_flags(self, definition: dict[str, Any]) -> dict[str, Any]:
         flags = {
@@ -117,12 +86,6 @@ class NotificationProvider(HttpProvider):
         return desired
 
     def normalize(self, resource: dict[str, Any]) -> dict[str, Any]:
-        if not self._secret_names_ready:
-            self.build_desired()
-        fields = {
-            f["name"]: coerce_scalar(f.get("value")) for f in resource.get("fields", [])
-        }
-        fields = drop_secret_fields(fields, self._secret_names)
         out = {
             "implementation": resource.get("implementation"),
             "configContract": resource.get("configContract"),
@@ -130,35 +93,11 @@ class NotificationProvider(HttpProvider):
             "onUpgrade": bool(resource.get("onUpgrade", True)),
             "onRename": bool(resource.get("onRename", True)),
             "tags": sorted(resource.get("tags") or []),
-            "fields": fields,
+            "fields": self._normalized_fields(resource),
         }
         if self.is_sonarr:
             out["onImportComplete"] = bool(resource.get("onImportComplete", True))
         return out
 
-    def to_action(
-        self,
-        plan: ResourcePlan,
-        current: dict[str, Any] | None,
-        desired: dict[str, Any] | None,
-    ) -> Action:
-        assert plan.op in (Op.CREATE, Op.UPDATE), (
-            f"to_action: unexpected op {plan.op!r}"
-        )
-        if plan.op is Op.CREATE:
-            payload = {k: v for k, v in (desired or {}).items() if k != "id"}
-            return Action(op=plan.op, key=plan.key, payload=payload)
-        payload = {**(desired or {}), "id": (current or {})["id"]}
-        return Action(op=plan.op, key=plan.key, payload=payload)
-
     def apply(self, action: Action) -> None:
-        if action.op is Op.CREATE:
-            self._post("/api/v3/notification?forceSave=true", json=action.payload)
-        elif action.op is Op.UPDATE:
-            n_id = action.payload["id"]
-            self._put(
-                f"/api/v3/notification/{n_id}?forceSave=true", json=action.payload
-            )
-        else:
-            raise NotImplementedError(f"apply: unsupported op {action.op!r}")
-        self.invalidate_current()
+        self._apply_force_save("/api/v3/notification", action)

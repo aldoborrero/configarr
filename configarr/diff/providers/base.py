@@ -9,6 +9,11 @@ from typing import Any, Protocol, runtime_checkable
 import requests
 
 from configarr.diff.model import Op, ResourcePlan
+from configarr.diff.normalize import (
+    coerce_scalar,
+    drop_secret_fields,
+    secret_field_names,
+)
 
 
 @dataclass
@@ -107,3 +112,96 @@ class HttpProvider(CurrentStateCache):
         resp = self._session.delete(self._url(path))
         resp.raise_for_status()
         return resp
+
+
+class FieldProvider(HttpProvider):
+    """Base for the provider-Field *arr resources (rollout work-list #7-#11):
+    download clients, notifications, indexers, and applications.
+
+    These resources carry a schema-driven ``fields`` list and share the same
+    machinery, which lives here so each provider is a thin specialization:
+
+    - masked-secret tracking — schema ``privacy`` marks apiKey/password/token-style
+      fields whose values the server echoes masked, so they are dropped from both
+      sides of the diff by name (``_overlay_fields`` records them, and
+      ``_normalized_fields`` drops them; ``_secret_names_ready`` keeps that
+      self-enforcing regardless of call order — see finding I2);
+    - ``coerce_scalar`` + secret-drop field normalization;
+    - the CREATE/UPDATE ``to_action`` boilerplate (CREATE strips ``id``, UPDATE carries
+      the matched ``current`` id; full-replace, additive — no DELETE);
+    - ``forceSave=true`` writes that skip the *arr live-connectivity test.
+
+    Subclasses supply the resource-specific schema fetch+cache, the override map in
+    ``build_desired()``, ``normalize()`` field selection, and the endpoint path passed
+    to ``_apply_force_save``.
+    """
+
+    full_replace = True
+
+    def __init__(self, base_url: str, api_key: str, config: Any, kind: str) -> None:
+        super().__init__(base_url, api_key)
+        self.kind = kind
+        self.config = config or {}
+        self._secret_names: set[str] = set()
+        self._secret_names_ready = False
+
+    def match_key(self, resource: dict[str, Any]) -> Hashable:
+        return resource.get("name")
+
+    def _overlay_fields(
+        self, base_fields: list[dict[str, Any]], settings: dict[str, Any]
+    ) -> list[dict[str, Any]]:
+        """Overlay configured settings onto a field list, keeping each field's
+        existing value (current on update, schema default on create) when unset."""
+        self._secret_names |= secret_field_names(base_fields)
+        out: list[dict[str, Any]] = []
+        for f in base_fields:
+            name = f["name"]
+            value = settings.get(name, f.get("value"))
+            out.append({"name": name, "value": value})
+        return out
+
+    def _normalized_fields(self, resource: dict[str, Any]) -> dict[str, Any]:
+        """Coerce the resource's ``fields`` to a name->value dict and drop secrets.
+
+        Triggers ``build_desired()`` first when the secret-name set has not been
+        populated yet, so ``normalize()`` is correct even if called before
+        ``build_desired()`` (finding I2). No extra HTTP: schema/current are cached.
+        """
+        if not self._secret_names_ready:
+            self.build_desired()
+        fields = {
+            f["name"]: coerce_scalar(f.get("value")) for f in resource.get("fields", [])
+        }
+        return drop_secret_fields(fields, self._secret_names)
+
+    def build_desired(self) -> list[dict[str, Any]]:
+        raise NotImplementedError
+
+    def to_action(
+        self,
+        plan: ResourcePlan,
+        current: dict[str, Any] | None,
+        desired: dict[str, Any] | None,
+    ) -> Action:
+        assert plan.op in (Op.CREATE, Op.UPDATE), (
+            f"to_action: unexpected op {plan.op!r}"
+        )
+        if plan.op is Op.CREATE:
+            payload = {k: v for k, v in (desired or {}).items() if k != "id"}
+            return Action(op=plan.op, key=plan.key, payload=payload)
+        payload = {**(desired or {}), "id": (current or {})["id"]}
+        return Action(op=plan.op, key=plan.key, payload=payload)
+
+    def _apply_force_save(self, endpoint: str, action: Action) -> None:
+        """POST (create) or PUT (update) the payload with ``forceSave=true`` and
+        invalidate the current-state cache. ``endpoint`` is the collection path,
+        e.g. ``/api/v3/downloadclient``."""
+        if action.op is Op.CREATE:
+            self._post(f"{endpoint}?forceSave=true", json=action.payload)
+        elif action.op is Op.UPDATE:
+            rid = action.payload["id"]
+            self._put(f"{endpoint}/{rid}?forceSave=true", json=action.payload)
+        else:
+            raise NotImplementedError(f"apply: unsupported op {action.op!r}")
+        self.invalidate_current()

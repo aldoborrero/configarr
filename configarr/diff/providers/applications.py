@@ -17,35 +17,20 @@ to skip the live connectivity test.
 
 from __future__ import annotations
 
-from collections.abc import Hashable
 from typing import Any
 
 from configarr.diff.build import merge_full_replace
-from configarr.diff.model import Op, ResourcePlan
-from configarr.diff.normalize import (
-    coerce_scalar,
-    drop_secret_fields,
-    secret_field_names,
-)
-from configarr.diff.providers.base import Action, HttpProvider
+from configarr.diff.providers.base import Action, FieldProvider
 
 # Valid ApplicationSyncLevel values (mirrors the generated client enum, kept local
 # so configarr/diff stays free of generated-client imports).
 SYNC_LEVELS = frozenset({"disabled", "addOnly", "fullSync"})
 
 
-class ApplicationProvider(HttpProvider):
-    full_replace = True
-
+class ApplicationProvider(FieldProvider):
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
-        super().__init__(base_url, api_key)
-        self.kind = kind
-        self.config = config or {}
+        super().__init__(base_url, api_key, config, kind)
         self._schema_cache: dict[str, dict[str, Any]] | None = None
-        # ``_secret_names_ready`` makes normalize() self-enforcing: it triggers a
-        # build first if called before build_desired() has populated the set.
-        self._secret_names: set[str] = set()
-        self._secret_names_ready = False
 
     def _schemas(self) -> dict[str, dict[str, Any]]:
         if self._schema_cache is None:
@@ -57,25 +42,9 @@ class ApplicationProvider(HttpProvider):
             self._schema_cache = by_impl
         return self._schema_cache
 
-    def match_key(self, resource: dict[str, Any]) -> Hashable:
-        return resource.get("name")
-
     def _load_current(self) -> list[dict[str, Any]]:
         data: list[dict[str, Any]] = self._get("/api/v1/applications").json()
         return data
-
-    def _overlay_fields(
-        self, base_fields: list[dict[str, Any]], settings: dict[str, Any]
-    ) -> list[dict[str, Any]]:
-        """Overlay configured settings onto a field list, keeping each field's
-        existing value (current on update, schema default on create) when unset."""
-        self._secret_names |= secret_field_names(base_fields)
-        out: list[dict[str, Any]] = []
-        for f in base_fields:
-            name = f["name"]
-            value = settings.get(name, f.get("value"))
-            out.append({"name": name, "value": value})
-        return out
 
     @staticmethod
     def _sync_level(definition: dict[str, Any]) -> str:
@@ -123,43 +92,13 @@ class ApplicationProvider(HttpProvider):
         return desired
 
     def normalize(self, resource: dict[str, Any]) -> dict[str, Any]:
-        if not self._secret_names_ready:
-            self.build_desired()
-        fields = {
-            f["name"]: coerce_scalar(f.get("value")) for f in resource.get("fields", [])
-        }
-        fields = drop_secret_fields(fields, self._secret_names)
         return {
             "syncLevel": resource.get("syncLevel", "fullSync"),
             "implementation": resource.get("implementation"),
             "configContract": resource.get("configContract"),
             "tags": sorted(resource.get("tags") or []),
-            "fields": fields,
+            "fields": self._normalized_fields(resource),
         }
 
-    def to_action(
-        self,
-        plan: ResourcePlan,
-        current: dict[str, Any] | None,
-        desired: dict[str, Any] | None,
-    ) -> Action:
-        assert plan.op in (Op.CREATE, Op.UPDATE), (
-            f"to_action: unexpected op {plan.op!r}"
-        )
-        if plan.op is Op.CREATE:
-            payload = {k: v for k, v in (desired or {}).items() if k != "id"}
-            return Action(op=plan.op, key=plan.key, payload=payload)
-        payload = {**(desired or {}), "id": (current or {})["id"]}
-        return Action(op=plan.op, key=plan.key, payload=payload)
-
     def apply(self, action: Action) -> None:
-        if action.op is Op.CREATE:
-            self._post("/api/v1/applications?forceSave=true", json=action.payload)
-        elif action.op is Op.UPDATE:
-            app_id = action.payload["id"]
-            self._put(
-                f"/api/v1/applications/{app_id}?forceSave=true", json=action.payload
-            )
-        else:
-            raise NotImplementedError(f"apply: unsupported op {action.op!r}")
-        self.invalidate_current()
+        self._apply_force_save("/api/v1/applications", action)

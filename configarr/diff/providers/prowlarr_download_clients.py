@@ -26,27 +26,14 @@ from collections.abc import Hashable
 from typing import Any
 
 from configarr.diff.build import merge_full_replace
-from configarr.diff.model import Op, ResourcePlan
-from configarr.diff.normalize import (
-    coerce_scalar,
-    drop_secret_fields,
-    secret_field_names,
-)
-from configarr.diff.providers.base import Action, HttpProvider
+from configarr.diff.normalize import coerce_scalar, secret_field_names
+from configarr.diff.providers.base import Action, FieldProvider
 
 
-class ProwlarrDownloadClientProvider(HttpProvider):
-    full_replace = True
-
+class ProwlarrDownloadClientProvider(FieldProvider):
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
-        super().__init__(base_url, api_key)
-        self.kind = kind
-        self.config = config or {}
+        super().__init__(base_url, api_key, config, kind)
         self._schema_cache: dict[str, dict[str, Any]] | None = None
-        # ``_secret_names_ready`` makes normalize() self-enforcing: it triggers a
-        # build first if called before build_desired() has populated the set.
-        self._secret_names: set[str] = set()
-        self._secret_names_ready = False
 
     def _schema(self) -> dict[str, dict[str, Any]]:
         if self._schema_cache is None:
@@ -124,12 +111,6 @@ class ProwlarrDownloadClientProvider(HttpProvider):
         return desired
 
     def normalize(self, resource: dict[str, Any]) -> dict[str, Any]:
-        if not self._secret_names_ready:
-            self.build_desired()
-        fields = {
-            f["name"]: coerce_scalar(f.get("value")) for f in resource.get("fields", [])
-        }
-        fields = drop_secret_fields(fields, self._secret_names)
         return {
             "enable": bool(resource.get("enable", True)),
             "priority": coerce_scalar(resource.get("priority", 1)),
@@ -138,32 +119,8 @@ class ProwlarrDownloadClientProvider(HttpProvider):
             "protocol": resource.get("protocol"),
             "categories": sorted(resource.get("categories") or []),
             "tags": sorted(resource.get("tags") or []),
-            "fields": fields,
+            "fields": self._normalized_fields(resource),
         }
 
-    def to_action(
-        self,
-        plan: ResourcePlan,
-        current: dict[str, Any] | None,
-        desired: dict[str, Any] | None,
-    ) -> Action:
-        assert plan.op in (Op.CREATE, Op.UPDATE), (
-            f"to_action: unexpected op {plan.op!r}"
-        )
-        if plan.op is Op.CREATE:
-            payload = {k: v for k, v in (desired or {}).items() if k != "id"}
-            return Action(op=plan.op, key=plan.key, payload=payload)
-        payload = {**(desired or {}), "id": (current or {})["id"]}
-        return Action(op=plan.op, key=plan.key, payload=payload)
-
     def apply(self, action: Action) -> None:
-        if action.op is Op.CREATE:
-            self._post("/api/v1/downloadclient?forceSave=true", json=action.payload)
-        elif action.op is Op.UPDATE:
-            dc_id = action.payload["id"]
-            self._put(
-                f"/api/v1/downloadclient/{dc_id}?forceSave=true", json=action.payload
-            )
-        else:
-            raise NotImplementedError(f"apply: unsupported op {action.op!r}")
-        self.invalidate_current()
+        self._apply_force_save("/api/v1/downloadclient", action)
