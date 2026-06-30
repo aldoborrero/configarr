@@ -1,14 +1,39 @@
-# Dry-Run & Scoping
+# Plan, Apply & Scoping
 
-Before configarr writes to a live setup, it helps to know exactly how much a run
-can touch — and how to limit it.
+configarr diffs your `configarr.yml` against each service and applies **only what
+changed**. You can preview that diff before anything is written, limit which part
+of your config a run touches, and opt in to deleting resources the config no
+longer declares.
+
+## Plan vs. apply
+
+```bash
+# Preview the diff — reads only, writes nothing
+configarr --config configarr.yml --plan
+
+# Apply it — creates/updates only what differs
+configarr --config configarr.yml
+```
+
+- `--plan` (alias `--dry-run`) computes the diff against every service and prints
+  it, then exits **without writing**. This is a true, universal preview — it works
+  for Radarr, Sonarr, Prowlarr, Bazarr, and SABnzbd alike.
+- With no flag, configarr **applies** the plan: it writes only the resources that
+  actually differ, so re-running an unchanged config is a no-op.
+
+> [!TIP]
+> **Preview, then apply**
+>
+> `--plan` is the safe way to see exactly what a run will change. Because the
+> engine is idempotent, applying a plan and immediately re-planning yields an empty
+> plan.
 
 ## Scoping a run
 
 Two flags restrict which part of your config is processed:
 
 ```bash
-configarr --config configarr.yml --service radarr
+configarr --config configarr.yml --plan --service radarr
 configarr --config configarr.yml --service radarr --instance uhd
 ```
 
@@ -17,51 +42,66 @@ configarr --config configarr.yml --service radarr --instance uhd
 - `--instance <name>` limits to one instance by its label. Combine with
   `--service` to disambiguate when the same label exists under multiple services.
 
-> [!TIP]
-> **Scoping is your main blast-radius control**
->
-> For Radarr, Sonarr, Prowlarr, and SABnzbd there is **no true dry-run** (see
-> below). `--service` / `--instance` are the practical way to limit what a run can
-> change — iterate on one instance at a time.
-
 A typo is caught rather than silently ignored: if you pass a `--service` with no
 configured instances, or an `--instance` name that doesn't exist in scope,
 configarr exits with status `2` instead of doing nothing and exiting `0`.
 
-## Dry-run is Bazarr-only
+## Pruning unmanaged resources
 
-> [!CAUTION]
-> **--dry-run only simulates Bazarr**
->
-> `--dry-run` simulates **Bazarr only**. Under `--dry-run`, Radarr, Sonarr,
-> Prowlarr, and SABnzbd are **skipped entirely** — they are not dry-run-aware and
-> running them would write to the live API. There is no way to preview changes for
-> those four services.
+By default sync is **additive** — it never deletes anything. To make the config a
+source of truth, opt in with `--prune`:
 
-So `--dry-run` answers "what would Bazarr do?" and nothing else. For the other
-services, the safe pattern is: scope to one instance, run it, and read the
-`CREATED` / `UPDATED` / `UNCHANGED` results.
+```bash
+# Preview what would be deleted (plus the usual creates/updates)
+configarr --config configarr.yml --plan --prune
 
-Note that even under `--dry-run`, Bazarr provider and language-profile sync still
-issue **read** (GET) requests to fetch current state; only the mutating writes are
-skipped.
+# Apply, including deletions
+configarr --config configarr.yml --prune
+```
 
-## Verbose and debug output
+`--prune` emits `DELETE` for resources present on the server but absent from your
+config, for the providers that support deletion. Always preview it with `--plan`
+first. Pruning respects `--service` / `--instance`, so you can scope deletions to
+one instance.
 
-- `--verbose` logs full request payloads — **Bazarr-only**, like `--dry-run`.
-- `--debug` enables verbose logging for the whole run. It does **not** prevent
-  mutations; it only adds detail.
+## Machine-readable plan (`--output json`)
 
-> [!WARNING]
-> Neither `--debug` nor `--verbose` makes a run safe. Only `--dry-run` skips writes,
-> and only for Bazarr.
+For CI / GitOps drift gating, render the plan as JSON:
 
-## A safe first-run checklist
+```bash
+configarr --config configarr.yml --plan --output json
+```
 
-1. Start with `--service <one>` and `--instance <one>` to limit scope.
-2. Read every result line. `CREATED`/`UPDATED` mean a write happened.
-3. Re-run the same scope; healthy idempotent resources flip to `UNCHANGED`.
-4. Widen scope once you trust the output.
+stdout is pure JSON (the human chrome is suppressed in this mode):
+
+```json
+{
+  "has_changes": true,
+  "providers": [
+    {
+      "service": "radarr",
+      "instance": "main",
+      "kind": "radarr.custom_format",
+      "label": "custom formats",
+      "resources": [
+        { "key": "x265", "op": "create", "field_diffs": [] }
+      ]
+    }
+  ]
+}
+```
+
+A pipeline can fail on drift by checking `has_changes`:
+
+```bash
+configarr --config configarr.yml --plan --output json \
+  | jq -e '.has_changes | not' > /dev/null
+```
+
+## Debug output
+
+`--debug` enables verbose logging for the whole run. It adds detail; it does
+**not** make a run safe — only `--plan` avoids writes.
 
 See [Command Line](../reference/cli.md) for the full flag reference and exit
 codes.
