@@ -105,6 +105,10 @@ class ApplicationProvider(CurrentStateCache):
             current = current_by_key.get(name)
             if current is None:
                 impl = definition.get("implementation")
+                if not impl:
+                    raise ValueError(
+                        f"Missing 'implementation' for application: {name}"
+                    )
                 schema = self._schemas().get(impl, {})
                 desired.append(
                     {

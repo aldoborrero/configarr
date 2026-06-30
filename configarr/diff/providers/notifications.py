@@ -96,6 +96,10 @@ class NotificationProvider(CurrentStateCache):
             current = current_by_key.get(name)
             if current is None:
                 impl = definition.get("implementation")
+                if not impl:
+                    raise ValueError(
+                        f"Missing 'implementation' for notification: {name}"
+                    )
                 schema = self._schema().get(impl, {})
                 desired.append(
                     {

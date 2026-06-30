@@ -1,3 +1,4 @@
+import pytest
 import responses
 
 from configarr.diff.model import Op
@@ -140,6 +141,16 @@ def test_update_merges_over_current():
     # Configured override applied; other current field values kept.
     assert fields["baseUrl"] == "http://news2"
     assert fields["apiPath"] == "/api"
+
+
+@responses.activate
+def test_missing_implementation_raises(plan_provider):
+    # Omitting `implementation` on a new indexer would send None to the server
+    # (opaque 422); validate locally with a message naming the resource.
+    responses.get(f"{PROWLARR}/api/v1/indexer", json=[])
+    cfg = {"NoImpl": {"settings": {"baseUrl": "http://news"}}}
+    with pytest.raises(ValueError, match="indexer: NoImpl"):
+        _prowlarr(cfg).build_desired()
 
 
 @responses.activate

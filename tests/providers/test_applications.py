@@ -144,6 +144,16 @@ def test_update_merges_over_current():
 
 
 @responses.activate
+def test_missing_implementation_raises(plan_provider):
+    # Omitting `implementation` on a new application would send None to the server
+    # (opaque 422); validate locally with a message naming the resource.
+    responses.get(f"{PROWLARR}/api/v1/applications", json=[])
+    cfg = {"NoImpl": {"settings": {"baseUrl": "http://sonarr"}}}
+    with pytest.raises(ValueError, match="application: NoImpl"):
+        _prowlarr(cfg).build_desired()
+
+
+@responses.activate
 def test_no_config_plans_nothing(plan_provider):
     responses.get(f"{PROWLARR}/api/v1/applications", json=[EXISTING])
     plan = plan_provider(_prowlarr(None))

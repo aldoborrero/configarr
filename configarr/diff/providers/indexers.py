@@ -107,6 +107,8 @@ class IndexerProvider(CurrentStateCache):
             current = current_by_key.get(name)
             if current is None:
                 impl = definition.get("implementation")
+                if not impl:
+                    raise ValueError(f"Missing 'implementation' for indexer: {name}")
                 schema = self._schema_for(impl, definition.get("definition"))
                 desired.append(
                     {

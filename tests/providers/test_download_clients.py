@@ -1,3 +1,4 @@
+import pytest
 import responses
 
 from configarr.diff.model import Op
@@ -112,6 +113,16 @@ def test_plan_fetches_current_once(plan_provider):
     current = responses.get(f"{RADARR}/api/v3/downloadclient", json=[EXISTING])
     plan_provider(_radarr(CONFIG))
     assert current.call_count == 1
+
+
+@responses.activate
+def test_missing_implementation_raises(plan_provider):
+    # Omitting `implementation` on a new client would otherwise send None to the
+    # server (opaque 422); validate locally with a message naming the resource.
+    responses.get(f"{RADARR}/api/v3/downloadclient", json=[])
+    cfg = {"NoImpl": {"settings": {"host": "h"}}}
+    with pytest.raises(ValueError, match="download client: NoImpl"):
+        _radarr(cfg).build_desired()
 
 
 @responses.activate

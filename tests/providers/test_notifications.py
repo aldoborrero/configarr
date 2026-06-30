@@ -1,3 +1,4 @@
+import pytest
 import responses
 
 from configarr.diff.model import Op
@@ -126,6 +127,16 @@ def test_update_merges_over_current():
     # Configured override applied; other current field values kept.
     assert fields["url"] == "http://hook2"
     assert fields["method"] == 1
+
+
+@responses.activate
+def test_missing_implementation_raises(plan_provider):
+    # Omitting `implementation` on a new notification would send None to the server
+    # (opaque 422); validate locally with a message naming the resource.
+    responses.get(f"{RADARR}/api/v3/notification", json=[])
+    cfg = {"NoImpl": {"settings": {"url": "http://hook"}}}
+    with pytest.raises(ValueError, match="notification: NoImpl"):
+        _radarr(cfg).build_desired()
 
 
 @responses.activate

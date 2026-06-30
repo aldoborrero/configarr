@@ -1,3 +1,4 @@
+import pytest
 import responses
 
 from configarr.diff.model import Op
@@ -104,6 +105,16 @@ def test_update_merges_over_current():
     fields = {f["name"]: f["value"] for f in desired["fields"]}
     assert fields["port"] == 9092
     assert fields["host"] == "localhost"
+
+
+@responses.activate
+def test_missing_implementation_raises(plan_provider):
+    # Omitting `implementation` on a new client would send None to the server
+    # (opaque 422); validate locally with a message naming the resource.
+    responses.get(f"{PROWLARR}/api/v1/downloadclient", json=[])
+    cfg = {"NoImpl": {"settings": {"host": "localhost"}}}
+    with pytest.raises(ValueError, match="download client: NoImpl"):
+        _prowlarr(cfg).build_desired()
 
 
 @responses.activate

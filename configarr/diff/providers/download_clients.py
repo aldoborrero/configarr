@@ -88,6 +88,10 @@ class DownloadClientProvider(CurrentStateCache):
             current = current_by_key.get(name)
             if current is None:
                 impl = definition.get("implementation")
+                if not impl:
+                    raise ValueError(
+                        f"Missing 'implementation' for download client: {name}"
+                    )
                 schema = self._schema().get(impl, {})
                 desired.append(
                     {
