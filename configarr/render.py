@@ -6,7 +6,7 @@ from typing import TypedDict
 
 from rich.console import Console
 
-from configarr.diff.model import Op, Plan
+from configarr.model import Op, Plan
 
 
 class FieldDiffJson(TypedDict):

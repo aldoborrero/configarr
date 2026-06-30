@@ -1,4 +1,4 @@
-from configarr.diff.normalize import MASK, coerce_scalar, drop_secret_fields
+from configarr.normalize import MASK, coerce_scalar, drop_secret_fields
 
 
 def test_coerce_numeric_strings():

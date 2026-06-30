@@ -1,7 +1,7 @@
 import responses
 
-from configarr.diff.model import Op
-from configarr.diff.providers.root_folders import RootFolderProvider
+from configarr.model import Op
+from configarr.providers.root_folders import RootFolderProvider
 
 RADARR = "http://radarr.test"
 SONARR = "http://sonarr.test"

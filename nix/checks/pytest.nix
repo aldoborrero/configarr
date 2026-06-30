@@ -3,7 +3,7 @@
   inputs,
   ...
 }:
-# Run the pytest suite in CI. The diff-engine tests import only configarr.diff.*
+# Run the pytest suite in CI. The tests import only configarr.*
 # and configarr.config/models (client-free), so the nix-only generated API
 # clients are not needed here.
 let

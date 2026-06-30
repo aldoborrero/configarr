@@ -11,7 +11,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 from configarr.config import parse_config
-from configarr.diff.runner import run_apply, run_plan
+from configarr.runner import run_apply, run_plan
 
 console = Console()
 log = logging.getLogger("configarr")
@@ -90,7 +90,8 @@ def main(
         console.print(
             Panel.fit(
                 "[bold cyan]Configarr[/bold cyan]\n"
-                "Configuration manager for Radarr, Sonarr, Prowlarr, Bazarr, and SABnzbd",
+                "Configuration manager for Radarr, Sonarr, Prowlarr, "
+                "Bazarr, and SABnzbd",
                 border_style="cyan",
             )
         )

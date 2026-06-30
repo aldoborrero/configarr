@@ -15,10 +15,10 @@ from __future__ import annotations
 from collections.abc import Hashable
 from typing import Any
 
-from configarr.diff.build import merge_full_replace
-from configarr.diff.model import Op, ResourcePlan
-from configarr.diff.normalize import coerce_scalar
-from configarr.diff.providers.base import Action, HttpProvider
+from configarr.build import merge_full_replace
+from configarr.model import Op, ResourcePlan
+from configarr.normalize import coerce_scalar
+from configarr.providers.base import Action, HttpProvider
 
 # config key -> API field
 _SIZE_FIELDS = {"min": "minSize", "max": "maxSize", "preferred": "preferredSize"}

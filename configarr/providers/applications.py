@@ -19,11 +19,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from configarr.diff.build import merge_full_replace
-from configarr.diff.providers.base import Action, FieldProvider
+from configarr.build import merge_full_replace
+from configarr.providers.base import Action, FieldProvider
 
 # Valid ApplicationSyncLevel values (mirrors the generated client enum, kept local
-# so configarr/diff stays free of generated-client imports).
+# so configarr stays free of generated-client imports).
 SYNC_LEVELS = frozenset({"disabled", "addOnly", "fullSync"})
 
 

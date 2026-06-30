@@ -1,7 +1,7 @@
 import responses
 
-from configarr.diff.model import Op
-from configarr.diff.providers.naming import NamingProvider
+from configarr.model import Op
+from configarr.providers.naming import NamingProvider
 
 RADARR = "http://radarr.test"
 SONARR = "http://sonarr.test"

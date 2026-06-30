@@ -9,7 +9,7 @@
 let
   inherit (pkgs) python313;
 
-  # Runtime libraries the diff engine imports (configarr.config / configarr.diff).
+  # Runtime libraries configarr imports (config parsing + the engine).
   # The nix-only generated API clients are deliberately excluded — the diff layer
   # is client-free, and so are its tests.
   runtimeLibs =

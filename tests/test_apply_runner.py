@@ -1,11 +1,11 @@
 import responses
 
+from configarr import runner
 from configarr.config import parse_config
-from configarr.diff import runner
-from configarr.diff.model import Op
-from configarr.diff.providers.base import Action
-from configarr.diff.registry import PlannedProvider
-from configarr.diff.runner import run_apply, run_plan
+from configarr.model import Op
+from configarr.providers.base import Action
+from configarr.registry import PlannedProvider
+from configarr.runner import run_apply, run_plan
 
 BASE = "http://radarr.test"
 SCHEMA = [

@@ -1,8 +1,8 @@
 import responses
 from responses import matchers
 
-from configarr.diff.model import Op
-from configarr.diff.providers.sabnzbd_categories import SabnzbdCategoryProvider
+from configarr.model import Op
+from configarr.providers.sabnzbd_categories import SabnzbdCategoryProvider
 
 SAB = "http://sab.test"
 

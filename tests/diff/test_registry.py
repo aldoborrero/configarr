@@ -1,4 +1,3 @@
-from configarr.diff.registry import providers_for
 from configarr.models import (
     ArrServiceConfig,
     BazarrConfig,
@@ -6,6 +5,7 @@ from configarr.models import (
     ProwlarrConfig,
     SabnzbdConfig,
 )
+from configarr.registry import providers_for
 
 
 def _radarr(name: str) -> ArrServiceConfig:

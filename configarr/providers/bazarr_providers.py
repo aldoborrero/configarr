@@ -31,9 +31,9 @@ from typing import Any
 
 import requests
 
-from configarr.diff.model import Op, ResourcePlan
-from configarr.diff.normalize import coerce_scalar, drop_secret_fields
-from configarr.diff.providers.base import Action, CurrentStateCache
+from configarr.model import Op, ResourcePlan
+from configarr.normalize import coerce_scalar, drop_secret_fields
+from configarr.providers.base import Action, CurrentStateCache
 
 # The only config-name → Bazarr-name rename; all other names are used verbatim.
 PROVIDER_NAME_MAP = {"submate": "whisperai"}

@@ -3,8 +3,8 @@ import json
 import pytest
 import responses
 
-from configarr.diff.model import Op
-from configarr.diff.providers.download_clients import DownloadClientProvider
+from configarr.model import Op
+from configarr.providers.download_clients import DownloadClientProvider
 
 RADARR = "http://radarr.test"
 

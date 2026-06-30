@@ -1,7 +1,7 @@
 import responses
 
-from configarr.diff.model import Op
-from configarr.diff.providers.bazarr_providers import BazarrProviderProvider
+from configarr.model import Op
+from configarr.providers.bazarr_providers import BazarrProviderProvider
 
 BAZARR = "http://bazarr.test"
 

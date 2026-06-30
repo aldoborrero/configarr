@@ -1,8 +1,8 @@
 import pytest
 import responses
 
-from configarr.diff.model import Op, ResourcePlan
-from configarr.diff.providers.radarr_custom_formats import RadarrCustomFormatProvider
+from configarr.model import Op, ResourcePlan
+from configarr.providers.radarr_custom_formats import RadarrCustomFormatProvider
 
 BASE = "http://radarr.test"
 

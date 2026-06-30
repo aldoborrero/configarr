@@ -8,6 +8,7 @@ let
       responses
       mypy
       types-requests
+      types-pyyaml
       pip
     ]
   );

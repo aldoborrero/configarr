@@ -6,12 +6,12 @@ from __future__ import annotations
 import json
 from typing import Any, TypedDict
 
-from configarr.diff.engine import diff
-from configarr.diff.model import Plan
-from configarr.diff.providers.base import ResourceProvider
-from configarr.diff.registry import PlannedProvider, providers_for
-from configarr.diff.render import ResourceJson, plan_resources_json, render_plan
+from configarr.engine import diff
+from configarr.model import Plan
 from configarr.models import ConfigarrConfig
+from configarr.providers.base import ResourceProvider
+from configarr.registry import PlannedProvider, providers_for
+from configarr.render import ResourceJson, plan_resources_json, render_plan
 
 
 class ProviderJson(TypedDict):

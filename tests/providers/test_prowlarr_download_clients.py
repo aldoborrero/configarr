@@ -1,8 +1,8 @@
 import pytest
 import responses
 
-from configarr.diff.model import Op
-from configarr.diff.providers.prowlarr_download_clients import (
+from configarr.model import Op
+from configarr.providers.prowlarr_download_clients import (
     ProwlarrDownloadClientProvider,
 )
 

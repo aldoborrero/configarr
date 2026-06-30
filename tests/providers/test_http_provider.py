@@ -9,7 +9,7 @@ import pytest
 import requests
 import responses
 
-from configarr.diff.providers.base import HttpProvider
+from configarr.providers.base import HttpProvider
 
 BASE = "http://svc.test"
 

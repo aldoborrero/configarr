@@ -23,9 +23,9 @@ from typing import Any
 
 import requests
 
-from configarr.diff.model import Op, ResourcePlan
-from configarr.diff.normalize import coerce_scalar
-from configarr.diff.providers.base import Action, CurrentStateCache
+from configarr.model import Op, ResourcePlan
+from configarr.normalize import coerce_scalar
+from configarr.providers.base import Action, CurrentStateCache
 
 # Documented defaults for a brand-new server (mirrors the legacy sync_server).
 # host has no default — it is required and identifies the upstream.

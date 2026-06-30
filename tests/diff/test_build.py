@@ -1,4 +1,4 @@
-from configarr.diff.build import merge_full_replace
+from configarr.build import merge_full_replace
 
 
 def test_overlays_desired_over_current_over_defaults():

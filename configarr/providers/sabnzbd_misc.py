@@ -23,9 +23,9 @@ from typing import Any
 
 import requests
 
-from configarr.diff.model import Op, ResourcePlan
-from configarr.diff.normalize import coerce_scalar
-from configarr.diff.providers.base import Action, CurrentStateCache
+from configarr.model import Op, ResourcePlan
+from configarr.normalize import coerce_scalar
+from configarr.providers.base import Action, CurrentStateCache
 
 # The allow-listed misc keys this provider manages (mirrors the legacy
 # sync_misc_settings key_map, which maps config keys 1:1 to SABnzbd API keys).

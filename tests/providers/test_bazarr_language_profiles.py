@@ -2,8 +2,8 @@ import json
 
 import responses
 
-from configarr.diff.model import Op
-from configarr.diff.providers.bazarr_language_profiles import (
+from configarr.model import Op
+from configarr.providers.bazarr_language_profiles import (
     BazarrLanguageProfileProvider,
 )
 

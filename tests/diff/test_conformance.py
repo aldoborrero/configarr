@@ -7,8 +7,6 @@ The fixture carries one instance of every service so all registered providers ar
 instantiated and checked — a radarr-only config would silently skip the 18
 sonarr/prowlarr/sabnzbd/bazarr providers."""
 
-from configarr.diff.providers.base import ResourceProvider
-from configarr.diff.registry import REGISTRY, providers_for
 from configarr.models import (
     ArrServiceConfig,
     BazarrConfig,
@@ -16,6 +14,8 @@ from configarr.models import (
     ProwlarrConfig,
     SabnzbdConfig,
 )
+from configarr.providers.base import ResourceProvider
+from configarr.registry import REGISTRY, providers_for
 
 
 def _full_config() -> ConfigarrConfig:

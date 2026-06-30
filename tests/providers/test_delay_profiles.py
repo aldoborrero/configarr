@@ -1,7 +1,7 @@
 import responses
 
-from configarr.diff.model import Op
-from configarr.diff.providers.delay_profiles import DelayProfileProvider
+from configarr.model import Op
+from configarr.providers.delay_profiles import DelayProfileProvider
 
 RADARR = "http://radarr.test"
 SONARR = "http://sonarr.test"

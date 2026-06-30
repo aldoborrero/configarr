@@ -1,5 +1,5 @@
-from configarr.diff.model import FieldDiff, Op, Plan, ResourcePlan
-from configarr.diff.render import render_plan
+from configarr.model import FieldDiff, Op, Plan, ResourcePlan
+from configarr.render import render_plan
 
 
 def test_render_shows_changes():

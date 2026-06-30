@@ -13,5 +13,5 @@ in
 helpers.srcCheck {
   name = "ruff-check";
   src = inputs.self;
-  command = "${pkgs.ruff}/bin/ruff check configarr/diff tests";
+  command = "${pkgs.ruff}/bin/ruff check configarr tests";
 }

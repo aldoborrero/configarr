@@ -14,9 +14,9 @@ import copy
 from collections.abc import Hashable
 from typing import Any
 
-from configarr.diff.build import merge_full_replace
-from configarr.diff.model import Op, ResourcePlan
-from configarr.diff.providers.base import Action, HttpProvider
+from configarr.build import merge_full_replace
+from configarr.model import Op, ResourcePlan
+from configarr.providers.base import Action, HttpProvider
 
 
 class QualityProfileProvider(HttpProvider):

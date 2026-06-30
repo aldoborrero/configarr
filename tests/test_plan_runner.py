@@ -3,7 +3,7 @@ import json
 import responses
 
 from configarr.config import parse_config
-from configarr.diff.runner import run_plan
+from configarr.runner import run_plan
 
 BASE = "http://radarr.test"
 SCHEMA = [

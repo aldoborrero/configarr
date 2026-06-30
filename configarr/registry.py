@@ -8,30 +8,30 @@ from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from typing import Any
 
-from configarr.diff.providers.applications import ApplicationProvider
-from configarr.diff.providers.base import ResourceProvider
-from configarr.diff.providers.bazarr_language_profiles import (
+from configarr.models import ConfigarrConfig
+from configarr.providers.applications import ApplicationProvider
+from configarr.providers.base import ResourceProvider
+from configarr.providers.bazarr_language_profiles import (
     BazarrLanguageProfileProvider,
 )
-from configarr.diff.providers.bazarr_providers import BazarrProviderProvider
-from configarr.diff.providers.bazarr_settings import BazarrSettingsProvider
-from configarr.diff.providers.delay_profiles import DelayProfileProvider
-from configarr.diff.providers.download_clients import DownloadClientProvider
-from configarr.diff.providers.indexers import IndexerProvider
-from configarr.diff.providers.naming import NamingProvider
-from configarr.diff.providers.notifications import NotificationProvider
-from configarr.diff.providers.prowlarr_download_clients import (
+from configarr.providers.bazarr_providers import BazarrProviderProvider
+from configarr.providers.bazarr_settings import BazarrSettingsProvider
+from configarr.providers.delay_profiles import DelayProfileProvider
+from configarr.providers.download_clients import DownloadClientProvider
+from configarr.providers.indexers import IndexerProvider
+from configarr.providers.naming import NamingProvider
+from configarr.providers.notifications import NotificationProvider
+from configarr.providers.prowlarr_download_clients import (
     ProwlarrDownloadClientProvider,
 )
-from configarr.diff.providers.quality_definitions import QualityDefinitionProvider
-from configarr.diff.providers.quality_profiles import QualityProfileProvider
-from configarr.diff.providers.radarr_custom_formats import RadarrCustomFormatProvider
-from configarr.diff.providers.release_profiles import ReleaseProfileProvider
-from configarr.diff.providers.root_folders import RootFolderProvider
-from configarr.diff.providers.sabnzbd_categories import SabnzbdCategoryProvider
-from configarr.diff.providers.sabnzbd_misc import SabnzbdMiscProvider
-from configarr.diff.providers.sabnzbd_servers import SabnzbdServerProvider
-from configarr.models import ConfigarrConfig
+from configarr.providers.quality_definitions import QualityDefinitionProvider
+from configarr.providers.quality_profiles import QualityProfileProvider
+from configarr.providers.radarr_custom_formats import RadarrCustomFormatProvider
+from configarr.providers.release_profiles import ReleaseProfileProvider
+from configarr.providers.root_folders import RootFolderProvider
+from configarr.providers.sabnzbd_categories import SabnzbdCategoryProvider
+from configarr.providers.sabnzbd_misc import SabnzbdMiscProvider
+from configarr.providers.sabnzbd_servers import SabnzbdServerProvider
 
 
 @dataclass(frozen=True)

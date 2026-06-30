@@ -22,9 +22,9 @@ from typing import Any
 
 import requests
 
-from configarr.diff.model import Op, ResourcePlan
-from configarr.diff.normalize import coerce_scalar
-from configarr.diff.providers.base import Action, CurrentStateCache
+from configarr.model import Op, ResourcePlan
+from configarr.normalize import coerce_scalar
+from configarr.providers.base import Action, CurrentStateCache
 
 
 def _form_value(value: Any) -> str:

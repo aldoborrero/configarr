@@ -1,8 +1,8 @@
 import pytest
 import responses
 
-from configarr.diff.model import Op
-from configarr.diff.providers.notifications import NotificationProvider
+from configarr.model import Op
+from configarr.providers.notifications import NotificationProvider
 
 RADARR = "http://radarr.test"
 SONARR = "http://sonarr.test"

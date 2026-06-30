@@ -8,8 +8,8 @@ from typing import Any, Protocol, runtime_checkable
 
 import requests
 
-from configarr.diff.model import Op, ResourcePlan
-from configarr.diff.normalize import (
+from configarr.model import Op, ResourcePlan
+from configarr.normalize import (
     coerce_scalar,
     drop_secret_fields,
     secret_field_names,

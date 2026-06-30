@@ -1,7 +1,7 @@
 import responses
 
-from configarr.diff.model import Op
-from configarr.diff.providers.quality_definitions import QualityDefinitionProvider
+from configarr.model import Op
+from configarr.providers.quality_definitions import QualityDefinitionProvider
 
 BASE = "http://radarr.test"
 

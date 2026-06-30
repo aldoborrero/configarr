@@ -1,8 +1,8 @@
 import pytest
 import responses
 
-from configarr.diff.model import Op
-from configarr.diff.providers.applications import ApplicationProvider
+from configarr.model import Op
+from configarr.providers.applications import ApplicationProvider
 
 PROWLARR = "http://prowlarr.test"
 

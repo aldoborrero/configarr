@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from configarr.diff.engine import diff
+from configarr.engine import diff
 
 
 def _plan_provider(provider, prune=False):

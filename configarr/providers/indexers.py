@@ -18,9 +18,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from configarr.diff.build import merge_full_replace
-from configarr.diff.normalize import coerce_scalar
-from configarr.diff.providers.base import Action, FieldProvider
+from configarr.build import merge_full_replace
+from configarr.normalize import coerce_scalar
+from configarr.providers.base import Action, FieldProvider
 
 
 class IndexerProvider(FieldProvider):

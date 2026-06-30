@@ -5,8 +5,8 @@ plan helper must mirror the runner's diff invocation (including full_replace) an
 the apply helper must drive to_action/apply for changed resources.
 """
 
-from configarr.diff.model import Op
-from configarr.diff.providers.base import Action
+from configarr.model import Op
+from configarr.providers.base import Action
 
 
 class _FakeProvider:

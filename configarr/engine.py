@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Hashable
 from typing import Any
 
-from configarr.diff.model import FieldDiff, Op, Plan, ResourcePlan
+from configarr.model import FieldDiff, Op, Plan, ResourcePlan
 
 
 def _field_diffs(before: dict[str, Any], after: dict[str, Any]) -> list[FieldDiff]:

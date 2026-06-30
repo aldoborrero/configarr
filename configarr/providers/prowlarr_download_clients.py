@@ -25,9 +25,9 @@ from __future__ import annotations
 from collections.abc import Hashable
 from typing import Any
 
-from configarr.diff.build import merge_full_replace
-from configarr.diff.normalize import coerce_scalar, secret_field_names
-from configarr.diff.providers.base import Action, FieldProvider
+from configarr.build import merge_full_replace
+from configarr.normalize import coerce_scalar, secret_field_names
+from configarr.providers.base import Action, FieldProvider
 
 
 class ProwlarrDownloadClientProvider(FieldProvider):

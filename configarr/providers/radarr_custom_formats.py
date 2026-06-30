@@ -5,9 +5,9 @@ from __future__ import annotations
 from collections.abc import Hashable
 from typing import Any
 
-from configarr.diff.model import Op, ResourcePlan
-from configarr.diff.normalize import coerce_scalar, drop_secret_fields
-from configarr.diff.providers.base import Action, HttpProvider
+from configarr.model import Op, ResourcePlan
+from configarr.normalize import coerce_scalar, drop_secret_fields
+from configarr.providers.base import Action, HttpProvider
 
 
 class RadarrCustomFormatProvider(HttpProvider):

@@ -24,10 +24,10 @@ from typing import Any
 
 import requests
 
-from configarr.diff.build import merge_full_replace
-from configarr.diff.model import Op, ResourcePlan
-from configarr.diff.normalize import coerce_scalar
-from configarr.diff.providers.base import Action, CurrentStateCache
+from configarr.build import merge_full_replace
+from configarr.model import Op, ResourcePlan
+from configarr.normalize import coerce_scalar
+from configarr.providers.base import Action, CurrentStateCache
 
 # Common language name → ISO code, consulted before the server's language list so a
 # plan resolves the everyday languages without a second fetch (mirrors the legacy

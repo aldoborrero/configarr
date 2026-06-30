@@ -14,8 +14,8 @@ from __future__ import annotations
 from collections.abc import Hashable
 from typing import Any
 
-from configarr.diff.model import Op, ResourcePlan
-from configarr.diff.providers.base import Action, HttpProvider
+from configarr.model import Op, ResourcePlan
+from configarr.providers.base import Action, HttpProvider
 
 
 class RootFolderProvider(HttpProvider):
