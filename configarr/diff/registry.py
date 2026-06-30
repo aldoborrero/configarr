@@ -9,6 +9,9 @@ from typing import Any, Callable, Iterator
 
 from configarr.diff.providers.applications import ApplicationProvider
 from configarr.diff.providers.base import ResourceProvider
+from configarr.diff.providers.bazarr_language_profiles import (
+    BazarrLanguageProfileProvider,
+)
 from configarr.diff.providers.bazarr_providers import BazarrProviderProvider
 from configarr.diff.providers.bazarr_settings import BazarrSettingsProvider
 from configarr.diff.providers.delay_profiles import DelayProfileProvider
@@ -284,6 +287,20 @@ REGISTRY: list[Registration] = [
         label="subtitle providers",
         factory=lambda inst: BazarrProviderProvider(
             inst.base_url, inst.api_key, inst.providers, "bazarr.provider"
+        ),
+    ),
+    # Bazarr language profiles: rebuilt from config and written via the batch
+    # languages-profiles form-POST; server-only profiles are preserved (work-list
+    # #17).
+    Registration(
+        kind="bazarr.language_profile",
+        service="bazarr",
+        label="language profiles",
+        factory=lambda inst: BazarrLanguageProfileProvider(
+            inst.base_url,
+            inst.api_key,
+            inst.language_profiles,
+            "bazarr.language_profile",
         ),
     ),
 ]
