@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "configarr"
 version = "0.1.0"
-description = "Configuration manager for Radarr, Sonarr, and Prowlarr"
+description = "Configuration manager for Radarr, Sonarr, Prowlarr, Bazarr, and SABnzbd"
 requires-python = ">=3.12"
 dependencies = [
     "click>=8.0",
