@@ -8,6 +8,15 @@
 > and opt-in `--prune` emits `DELETE` for unmanaged resources (additive by default).
 > Review findings A–E are fixed. The work-list below is retained as the per-provider
 > recipe and an index of what shipped.
+>
+> **Quality pass (complete).** A behaviour-preserving hardening pass followed the feature
+> work: `mypy --strict configarr/diff` and a real ruff lint ruleset
+> (`E,F,I,UP,B,SIM,RUF,PTH,RET,C4`) are enforced as CI flake checks; the open review
+> findings (lazy `_secret_names`, fleet-wide single-GET dedupe tests, the unchanged-secret
+> mask-sentinel PUT, single-`build_desired` apply, the DELETE `to_action` guard) are fixed
+> with tests; adversarial probes across the engine and provider families are recorded with
+> no open bugs; and provider duplication is cut via shared `HttpProvider`/`FieldProvider`
+> bases. See [cleanup-objective.md](./cleanup-objective.md).
 
 This plan is written to be executed either by **subagent-driven-development** (one
 provider per task) or autonomously by **[gnhf](https://github.com/kunchenguid/gnhf)**
