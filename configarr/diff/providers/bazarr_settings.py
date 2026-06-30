@@ -36,6 +36,8 @@ def _form_value(value: Any) -> str:
 
 
 class BazarrSettingsProvider(CurrentStateCache):
+    """Diffs a single Bazarr settings section (singleton keyed by section name)."""
+
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
         self.kind = kind
         # kind is "bazarr.<section>"; the section is the trailing segment.

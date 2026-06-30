@@ -43,6 +43,8 @@ _CREATE_DEFAULTS: dict[str, Any] = {
 
 
 class ReleaseProfileProvider(HttpProvider):
+    """Diffs Sonarr release profiles by name (full-replace)."""
+
     full_replace = True
 
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str):

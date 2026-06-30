@@ -20,6 +20,8 @@ from configarr.diff.providers.base import Action, FieldProvider
 
 
 class NotificationProvider(FieldProvider):
+    """Diffs Radarr/Sonarr notification connections by name (provider-Field)."""
+
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
         super().__init__(base_url, api_key, config, kind)
         self.is_sonarr = kind.startswith("sonarr")

@@ -19,6 +19,8 @@ from configarr.diff.providers.base import Action, HttpProvider
 
 
 class RootFolderProvider(HttpProvider):
+    """Diffs Radarr/Sonarr root folders by filesystem path; create-only (no update)."""
+
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
         super().__init__(base_url, api_key)
         self.kind = kind

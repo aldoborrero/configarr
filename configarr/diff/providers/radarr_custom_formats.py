@@ -11,6 +11,9 @@ from configarr.diff.providers.base import Action, HttpProvider
 
 
 class RadarrCustomFormatProvider(HttpProvider):
+    """Diffs Radarr custom formats by name; additive with opt-in prune (the only
+    DELETE-capable provider)."""
+
     kind = "radarr.custom_format"
     prunable = True
 

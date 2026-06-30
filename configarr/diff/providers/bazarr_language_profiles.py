@@ -71,6 +71,8 @@ def _canonicalize(value: Any) -> Any:
 
 
 class BazarrLanguageProfileProvider(CurrentStateCache):
+    """Diffs Bazarr language profiles by name (full-replace)."""
+
     # The batch POST replaces the whole profile, so a re-plan must surface any server
     # key the built payload would drop; merge_full_replace keeps those keys quiet for
     # an existing profile.

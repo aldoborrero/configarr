@@ -20,6 +20,8 @@ from configarr.diff.providers.base import Action, FieldProvider
 
 
 class DownloadClientProvider(FieldProvider):
+    """Diffs Radarr/Sonarr download clients by name (provider-Field resource)."""
+
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
         super().__init__(base_url, api_key, config, kind)
         self._schema_cache: dict[str, dict[str, Any]] | None = None

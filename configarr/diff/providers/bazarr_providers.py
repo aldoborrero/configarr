@@ -54,6 +54,8 @@ def _form_value(value: Any) -> str:
 
 
 class BazarrProviderProvider(CurrentStateCache):
+    """Diffs Bazarr subtitle providers by name."""
+
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
         self.kind = kind
         self.base_url = base_url.rstrip("/")

@@ -25,6 +25,8 @@ _SIZE_FIELDS = {"min": "minSize", "max": "maxSize", "preferred": "preferredSize"
 
 
 class QualityDefinitionProvider(HttpProvider):
+    """Diffs Radarr/Sonarr quality definitions by quality name (update-only)."""
+
     full_replace = True
 
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str):

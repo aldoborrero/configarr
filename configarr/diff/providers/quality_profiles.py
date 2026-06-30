@@ -20,6 +20,8 @@ from configarr.diff.providers.base import Action, HttpProvider
 
 
 class QualityProfileProvider(HttpProvider):
+    """Diffs Radarr/Sonarr quality profiles by name (full-replace)."""
+
     full_replace = True
 
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str):

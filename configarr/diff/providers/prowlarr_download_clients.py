@@ -31,6 +31,8 @@ from configarr.diff.providers.base import Action, FieldProvider
 
 
 class ProwlarrDownloadClientProvider(FieldProvider):
+    """Diffs Prowlarr download clients by case-insensitive name (provider-Field)."""
+
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
         super().__init__(base_url, api_key, config, kind)
         self._schema_cache: dict[str, dict[str, Any]] | None = None

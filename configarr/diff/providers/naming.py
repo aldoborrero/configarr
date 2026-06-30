@@ -71,6 +71,8 @@ _SERVICE_FIELDS: dict[str, dict[str, tuple[str, dict[str, Any] | None]]] = {
 
 
 class NamingProvider(HttpProvider):
+    """Diffs the Radarr/Sonarr naming/media-management singleton (full-replace)."""
+
     full_replace = True
 
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str):

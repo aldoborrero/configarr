@@ -18,6 +18,8 @@ from configarr.diff.normalize import (
 
 @dataclass
 class Action:
+    """A write the engine emits: an op plus the full object to POST/PUT/DELETE."""
+
     op: Op
     key: Hashable
     payload: dict[str, Any]  # full object to POST/PUT
@@ -25,6 +27,10 @@ class Action:
 
 @runtime_checkable
 class ResourceProvider(Protocol):
+    """Structural interface every provider satisfies: resource identity
+    (``match_key``), current/desired state, ``normalize`` for comparison, and the
+    ``to_action``/``apply`` write path."""
+
     kind: str
     # Providers that expose a per-resource DELETE endpoint set this True so the
     # engine may prune unmanaged resources under --prune. Singletons and

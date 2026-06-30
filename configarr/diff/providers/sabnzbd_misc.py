@@ -63,6 +63,8 @@ def _encode(value: Any) -> Any:
 
 
 class SabnzbdMiscProvider(CurrentStateCache):
+    """Diffs the SABnzbd misc-settings singleton."""
+
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
         self.kind = kind
         self.base_url = base_url.rstrip("/")
