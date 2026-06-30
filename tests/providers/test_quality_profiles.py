@@ -65,10 +65,49 @@ EXISTING = {
 }
 
 
-def _provider(config):
-    return QualityProfileProvider(
-        base_url=BASE, api_key="k", config=config, kind="radarr.quality_profile"
-    )
+# GET /api/v3/language: Radarr's language list (negative ids for the synthetic
+# "Any"/"Original" entries, positive for real languages).
+LANGUAGES = [
+    {"id": -1, "name": "Any"},
+    {"id": -2, "name": "Original"},
+    {"id": 1, "name": "English"},
+]
+
+
+def _provider(config, kind="radarr.quality_profile"):
+    return QualityProfileProvider(base_url=BASE, api_key="k", config=config, kind=kind)
+
+
+@responses.activate
+def test_language_resolved_in_desired():
+    responses.get(f"{BASE}/api/v3/qualityprofile", json=[])
+    responses.get(f"{BASE}/api/v3/qualityprofile/schema", json=SCHEMA)
+    responses.get(f"{BASE}/api/v3/language", json=LANGUAGES)
+    config = [{**CONFIG[0], "language": "Original"}]
+    [desired] = _provider(config).build_desired()
+    assert desired["language"] == {"id": -2, "name": "Original"}
+
+
+@responses.activate
+def test_language_unknown_leaves_profile_language_untouched():
+    responses.get(f"{BASE}/api/v3/qualityprofile", json=[])
+    responses.get(f"{BASE}/api/v3/qualityprofile/schema", json=SCHEMA)
+    responses.get(f"{BASE}/api/v3/language", json=LANGUAGES)
+    config = [{**CONFIG[0], "language": "Klingon"}]
+    [desired] = _provider(config).build_desired()
+    # Unresolved name falls back to the schema/current language (Any).
+    assert desired["language"] == {"id": 1, "name": "Any"}
+
+
+@responses.activate
+def test_language_ignored_for_sonarr():
+    # Sonarr quality profiles carry no language filter; the /language endpoint
+    # must never be hit even when config supplies a language key.
+    responses.get(f"{BASE}/api/v3/qualityprofile", json=[])
+    responses.get(f"{BASE}/api/v3/qualityprofile/schema", json=SCHEMA)
+    config = [{**CONFIG[0], "language": "Original"}]
+    [desired] = _provider(config, kind="sonarr.quality_profile").build_desired()
+    assert desired["language"] == {"id": 1, "name": "Any"}
 
 
 @responses.activate

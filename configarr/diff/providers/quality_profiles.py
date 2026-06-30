@@ -30,6 +30,7 @@ class QualityProfileProvider(CurrentStateCache):
         self._session = requests.Session()
         self._session.headers["X-Api-Key"] = api_key
         self._schema_cache: dict[str, Any] | None = None
+        self._language_cache: list[dict[str, Any]] | None = None
 
     def _url(self, path: str) -> str:
         return f"{self.base_url}{path}"
@@ -40,6 +41,22 @@ class QualityProfileProvider(CurrentStateCache):
             resp.raise_for_status()
             self._schema_cache = resp.json()
         return self._schema_cache
+
+    def _resolve_language(self, name: str) -> dict[str, Any] | None:
+        """Resolve a language name (e.g. 'Original', 'Any', 'English') to a
+        ``{id, name}`` object via ``/api/v3/language``. Returns None when the
+        name cannot be matched, in which case the caller leaves the profile's
+        language untouched (falling back to current/schema).
+        """
+        if self._language_cache is None:
+            resp = self._session.get(self._url("/api/v3/language"))
+            resp.raise_for_status()
+            self._language_cache = resp.json()
+        for lang in self._language_cache:
+            lang_name = lang.get("name")
+            if lang_name and lang_name.lower() == name.lower():
+                return {"id": lang["id"], "name": lang_name}
+        return None
 
     def match_key(self, resource: dict[str, Any]) -> Hashable:
         return resource["name"]
@@ -125,6 +142,16 @@ class QualityProfileProvider(CurrentStateCache):
             "minUpgradeFormatScore": 1,
             "formatItems": format_items,
         }
+        # Radarr quality profiles carry a language filter (Sonarr's do not).
+        # When unset Radarr rejects every release with "<blank> is wanted, but
+        # found <lang>"; resolve the configured name and include it so the diff
+        # reflects the user's intent. An unresolved name leaves it to fall back
+        # to the current/schema language via merge_full_replace.
+        language_name = profile.get("language")
+        if language_name and self.kind.startswith("radarr"):
+            language = self._resolve_language(language_name)
+            if language is not None:
+                built["language"] = language
         return merge_full_replace(schema, current, built)
 
     def build_desired(self) -> list[dict[str, Any]]:
