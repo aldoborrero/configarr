@@ -1,6 +1,5 @@
 {
   pkgs,
-  perSystem,
   ...
 }:
 with pkgs;
@@ -22,20 +21,18 @@ python313.pkgs.buildPythonApplication rec {
     setuptools
   ];
 
+  # The diffing engine talks to each service's HTTP API directly via requests,
+  # so the generated *-py API clients are no longer needed.
   dependencies = with python313.pkgs; [
     click
     pydantic
     pyyaml
     requests
     rich
-    perSystem.self.bazarr-py
-    perSystem.self.prowlarr-py
-    perSystem.self.radarr-py
-    perSystem.self.sonarr-py
   ];
 
   meta = with lib; {
-    description = "Configuration manager for Radarr, Sonarr, Prowlarr, and Bazarr";
+    description = "Configuration manager for Radarr, Sonarr, Prowlarr, Bazarr, and SABnzbd";
     homepage = "https://github.com/aldoborrero/configarr";
     license = licenses.asl20;
     maintainers = [ ];
