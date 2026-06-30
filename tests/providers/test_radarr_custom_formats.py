@@ -1,6 +1,7 @@
+import pytest
 import responses
 
-from configarr.diff.model import Op
+from configarr.diff.model import Op, ResourcePlan
 from configarr.diff.providers.radarr_custom_formats import RadarrCustomFormatProvider
 
 BASE = "http://radarr.test"
@@ -152,6 +153,13 @@ def test_prune_deletes_unmanaged_and_keeps_managed(plan_provider, apply_changes)
     responses.get(f"{BASE}/api/v3/customformat", json=[existing[0]])
     plan2 = plan_provider(p, prune=True)
     assert not plan2.has_changes, plan2.resources
+
+
+def test_to_action_delete_without_current_raises_clear_error():
+    p = _provider({})
+    plan = ResourcePlan(kind=p.kind, key="stale", op=Op.DELETE)
+    with pytest.raises(AssertionError, match="requires the current resource"):
+        p.to_action(plan, current=None, desired=None)
 
 
 @responses.activate

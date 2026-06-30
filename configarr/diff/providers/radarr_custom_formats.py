@@ -108,9 +108,11 @@ class RadarrCustomFormatProvider(CurrentStateCache):
             return Action(op=plan.op, key=plan.key, payload=dict(desired or {}))
         if plan.op is Op.DELETE:
             # Prune only carries the current object; we just need its id to delete.
-            return Action(
-                op=plan.op, key=plan.key, payload={"id": (current or {})["id"]}
+            assert current is not None, (
+                f"to_action: DELETE for {plan.key!r} requires the current "
+                "resource to read its id, got None"
             )
+            return Action(op=plan.op, key=plan.key, payload={"id": current["id"]})
         payload = {**(desired or {}), "id": (current or {})["id"]}
         return Action(op=plan.op, key=plan.key, payload=payload)
 
