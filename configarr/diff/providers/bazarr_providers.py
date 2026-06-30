@@ -15,6 +15,13 @@ only the keys the user set plus a synthetic ``enabled`` marker, and the engine
 compares those keys against the current section. ``enabled_providers`` is
 force-managed additively: apply re-reads the current list and adds this provider,
 never removing others.
+
+Secret handling differs from the *arr providers: Bazarr's ``GET /api/system/settings``
+returns secrets in CLEARTEXT and uses no mask sentinel (verified against Bazarr's
+``app/config.get_settings``, which only strips ``flask_secret_key``). Idempotency for
+password/apikey fields therefore works by direct value comparison, so the
+``drop_masked_secrets`` call in ``normalize`` is purely defensive against a literal
+``"********"`` value and is a no-op against real Bazarr output.
 """
 
 from __future__ import annotations

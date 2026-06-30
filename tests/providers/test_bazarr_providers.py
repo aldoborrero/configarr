@@ -93,6 +93,29 @@ def test_change_only_set_field(plan_provider):
 
 
 @responses.activate
+def test_matching_cleartext_secret_is_noop(plan_provider):
+    # Bazarr's GET /api/system/settings returns secrets in CLEARTEXT (no "********"
+    # mask, unlike *arr — verified against bazarr/app/config.get_settings, which only
+    # strips flask_secret_key). So a configured password that equals the stored value
+    # is idempotent purely by direct comparison; the provider does not depend on any
+    # mask sentinel to avoid a perpetual diff.
+    _mock_get_settings()
+    plan = plan_provider(_provider({"opensubtitlescom": {"password": "pw"}}))
+    assert not plan.has_changes, plan.resources
+
+
+@responses.activate
+def test_changed_secret_surfaces_update(plan_provider):
+    # The flip side of cleartext handling: a real secret change must NOT be hidden.
+    # Secrets are never dropped by name here, so a differing password surfaces.
+    _mock_get_settings()
+    plan = plan_provider(_provider({"opensubtitlescom": {"password": "changed"}}))
+    assert plan.resources[0].op is Op.UPDATE
+    paths = {d.path for d in plan.resources[0].field_diffs}
+    assert "password" in paths
+
+
+@responses.activate
 def test_no_config_plans_nothing(plan_provider):
     _mock_get_settings()
     plan = plan_provider(_provider({}))
