@@ -1,6 +1,10 @@
 import responses
 
 from configarr.config import parse_config
+from configarr.diff import runner
+from configarr.diff.model import Op
+from configarr.diff.providers.base import Action
+from configarr.diff.registry import PlannedProvider
 from configarr.diff.runner import run_apply, run_plan
 
 BASE = "http://radarr.test"
@@ -56,6 +60,56 @@ def _register_radarr_reads(custom_formats):
     responses.get(f"{BASE}/api/v3/delayprofile", json=[])
     responses.get(f"{BASE}/api/v3/downloadclient", json=[])
     responses.get(f"{BASE}/api/v3/notification", json=[])
+
+
+class _CountingProvider:
+    """Minimal provider that counts build_desired/fetch_current calls so the apply
+    path's single-build guarantee can be asserted directly."""
+
+    kind = "fake"
+    full_replace = False
+    prunable = False
+
+    def __init__(self):
+        self.build_calls = 0
+        self.fetch_calls = 0
+        self.applied: list[Action] = []
+
+    def fetch_current(self):
+        self.fetch_calls += 1
+        return []
+
+    def build_desired(self):
+        self.build_calls += 1
+        return [{"name": "x"}]
+
+    def match_key(self, resource):
+        return resource.get("name")
+
+    def normalize(self, resource):
+        return resource
+
+    def to_action(self, plan, current, desired):
+        return Action(op=plan.op, key=plan.key, payload=desired or {})
+
+    def apply(self, action):
+        self.applied.append(action)
+
+
+def test_run_apply_builds_desired_once(monkeypatch):
+    # The apply path must compute desired ONCE and derive both the plan and the
+    # action payloads from it; a second build_desired() could observe drifted state
+    # (TOCTOU) between planning and applying.
+    provider = _CountingProvider()
+    planned = PlannedProvider(
+        service="radarr", instance="main", label="fake", provider=provider
+    )
+    monkeypatch.setattr(runner, "providers_for", lambda *a, **k: [planned])
+
+    run_apply(config=None)
+
+    assert provider.build_calls == 1
+    assert [a.op for a in provider.applied] == [Op.CREATE]
 
 
 def test_run_apply_no_changes(tmp_path):

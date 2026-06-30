@@ -3,6 +3,8 @@ imports."""
 
 from __future__ import annotations
 
+from typing import Any
+
 from configarr.diff.engine import diff
 from configarr.diff.model import Plan
 from configarr.diff.providers.base import ResourceProvider
@@ -11,14 +13,20 @@ from configarr.diff.render import render_plan
 from configarr.models import ConfigarrConfig
 
 
-def _plan_provider(provider: ResourceProvider, prune: bool = False) -> Plan:
-    """Diff a single provider exactly as the runner does, honoring the opt-in
-    full_replace flag so plan and apply never diverge on diff semantics. ``prune``
-    enables opt-in deletion of unmanaged resources (default additive)."""
+def _diff_provider(
+    provider: ResourceProvider,
+    current: list[dict[str, Any]],
+    desired: list[dict[str, Any]],
+    prune: bool = False,
+) -> Plan:
+    """Diff a provider's already-fetched current/desired exactly as the runner does,
+    honoring the opt-in full_replace flag so plan and apply never diverge on diff
+    semantics. ``prune`` enables opt-in deletion of unmanaged resources (default
+    additive)."""
     return diff(
         provider.kind,
-        provider.fetch_current(),
-        provider.build_desired(),
+        current,
+        desired,
         match_key=provider.match_key,
         normalize=provider.normalize,
         # Full-replace providers opt in so the engine surfaces current-only keys;
@@ -27,6 +35,13 @@ def _plan_provider(provider: ResourceProvider, prune: bool = False) -> Plan:
         # Only providers that expose deletion participate in --prune; singletons
         # and set-only/config providers stay additive even when prune is asked for.
         prune=prune and getattr(provider, "prunable", False),
+    )
+
+
+def _plan_provider(provider: ResourceProvider, prune: bool = False) -> Plan:
+    """Diff a single provider exactly as the runner does (read-only plan path)."""
+    return _diff_provider(
+        provider, provider.fetch_current(), provider.build_desired(), prune=prune
     )
 
 
@@ -60,11 +75,16 @@ def run_apply(
     sections: list[str] = []
     for planned in providers_for(config, service, instance):
         provider = planned.provider
-        plan = _plan_provider(provider, prune=prune)
-        # fetch_current() is memoized, so threading the matched current/desired
-        # objects for to_action issues no extra GETs.
-        current_by_key = {provider.match_key(c): c for c in provider.fetch_current()}
-        desired_by_key = {provider.match_key(d): d for d in provider.build_desired()}
+        # Build current and desired exactly once, then diff and derive the apply
+        # payloads from the SAME objects. This closes a TOCTOU gap: re-calling
+        # build_desired() for the action payloads could observe state that diverged
+        # from what the plan was computed against. fetch_current() is memoized, so
+        # threading these issues no extra GETs either.
+        current = provider.fetch_current()
+        desired = provider.build_desired()
+        plan = _diff_provider(provider, current, desired, prune=prune)
+        current_by_key = {provider.match_key(c): c for c in current}
+        desired_by_key = {provider.match_key(d): d for d in desired}
         applied = 0
         for resource in plan.resources:
             if not resource.changed:

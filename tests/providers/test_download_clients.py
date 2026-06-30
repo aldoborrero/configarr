@@ -1,3 +1,5 @@
+import json
+
 import pytest
 import responses
 
@@ -225,6 +227,40 @@ def test_normalize_drops_secret_before_build_desired():
     }
     norm = p.normalize(desired_like)
     assert "apiKey" not in norm["fields"]
+
+
+@responses.activate
+def test_update_unchanged_secret_puts_mask_sentinel(plan_provider, apply_changes):
+    # Highest-risk apply path: an UPDATE forced by a NON-secret change, with the
+    # secret left unconfigured. build_desired overlays the current masked value, so
+    # the PUT body must carry "********" — the server's "keep existing secret"
+    # protocol. Sending "" or omitting the field would wipe the stored credential.
+    existing = {
+        **EXISTING,
+        "name": "Sab",
+        "implementation": "Sabnzbd",
+        "fields": [
+            {"name": "host", "value": "localhost", "privacy": "normal"},
+            {"name": "apiKey", "value": "********", "privacy": "apiKey"},
+        ],
+    }
+    responses.get(f"{RADARR}/api/v3/downloadclient", json=[existing])
+    put = responses.put(f"{RADARR}/api/v3/downloadclient/1", json=existing)
+    cfg = {
+        "Sab": {
+            "implementation": "Sabnzbd",
+            # apiKey intentionally unset; only the non-secret host changes.
+            "settings": {"host": "remote"},
+        }
+    }
+    p = _radarr(cfg)
+    plan = plan_provider(p)
+    assert plan.resources[0].op is Op.UPDATE
+    apply_changes(p, plan)
+    body = json.loads(put.calls[0].request.body)
+    fields = {f["name"]: f["value"] for f in body["fields"]}
+    assert fields["apiKey"] == "********"
+    assert fields["host"] == "remote"
 
 
 @responses.activate
