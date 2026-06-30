@@ -189,6 +189,45 @@ def test_schema_privacy_secret_does_not_perpetually_diff(plan_provider):
 
 
 @responses.activate
+def test_normalize_drops_secret_before_build_desired():
+    # normalize() reads _secret_names, populated lazily while building desired. A
+    # caller that normalizes before building must still get the secret dropped —
+    # otherwise the real configured value would phantom-diff against the mask. The
+    # secret-name set must be self-enforcing, not order-dependent.
+    existing = {
+        **EXISTING,
+        "name": "Sab",
+        "implementation": "Sabnzbd",
+        "fields": [
+            {"name": "host", "value": "localhost", "privacy": "normal"},
+            {"name": "apiKey", "value": "********", "privacy": "apiKey"},
+        ],
+    }
+    responses.get(f"{RADARR}/api/v3/downloadclient", json=[existing])
+    cfg = {
+        "Sab": {
+            "implementation": "Sabnzbd",
+            "settings": {"host": "localhost", "apiKey": "real-secret"},
+        }
+    }
+    p = _radarr(cfg)
+    desired_like = {
+        "enable": True,
+        "priority": 1,
+        "implementation": "Sabnzbd",
+        "configContract": "TransmissionSettings",
+        "protocol": "torrent",
+        "tags": [],
+        "fields": [
+            {"name": "host", "value": "localhost"},
+            {"name": "apiKey", "value": "real-secret"},
+        ],
+    }
+    norm = p.normalize(desired_like)
+    assert "apiKey" not in norm["fields"]
+
+
+@responses.activate
 def test_apply_then_replan_is_noop(plan_provider, apply_changes):
     responses.get(f"{RADARR}/api/v3/downloadclient", json=[])
     responses.get(f"{RADARR}/api/v3/downloadclient/schema", json=SCHEMA)

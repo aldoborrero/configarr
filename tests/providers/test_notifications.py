@@ -154,6 +154,37 @@ def test_idempotent_when_current_matches(plan_provider):
 
 
 @responses.activate
+def test_normalize_drops_secret_before_build_desired():
+    # normalize() must drop secrets even if called before build_desired() populates
+    # the secret-name set — the set has to be self-enforcing, not order-dependent.
+    existing = {
+        **EXISTING,
+        "name": "Telegram",
+        "implementation": "Telegram",
+        "fields": [
+            {"name": "chatId", "value": "123", "privacy": "normal"},
+            {"name": "apiKey", "value": "********", "privacy": "apiKey"},
+        ],
+    }
+    responses.get(f"{RADARR}/api/v3/notification", json=[existing])
+    cfg = {
+        "Telegram": {
+            "implementation": "Telegram",
+            "settings": {"chatId": "123", "apiKey": "real-secret"},
+        }
+    }
+    p = _radarr(cfg)
+    desired_like = {
+        "implementation": "Telegram",
+        "fields": [
+            {"name": "chatId", "value": "123"},
+            {"name": "apiKey", "value": "real-secret"},
+        ],
+    }
+    assert "apiKey" not in p.normalize(desired_like)["fields"]
+
+
+@responses.activate
 def test_configured_secret_does_not_perpetually_diff(plan_provider):
     # Secrets (apiKey/token) come back masked, so a configured secret must be
     # skipped from the comparison or every plan would report a phantom UPDATE.

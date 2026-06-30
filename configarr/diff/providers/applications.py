@@ -46,7 +46,10 @@ class ApplicationProvider(CurrentStateCache):
         self._session = requests.Session()
         self._session.headers["X-Api-Key"] = api_key
         self._schema_cache: dict[str, dict[str, Any]] | None = None
+        # ``_secret_names_ready`` makes normalize() self-enforcing: it triggers a
+        # build first if called before build_desired() has populated the set.
         self._secret_names: set[str] = set()
+        self._secret_names_ready = False
 
     def _url(self, path: str) -> str:
         return f"{self.base_url}{path}"
@@ -93,6 +96,7 @@ class ApplicationProvider(CurrentStateCache):
         return level
 
     def build_desired(self) -> list[dict[str, Any]]:
+        self._secret_names_ready = True
         if not self.config:
             return []
         current_by_key = {self.match_key(c): c for c in self.fetch_current()}
@@ -130,6 +134,8 @@ class ApplicationProvider(CurrentStateCache):
         return desired
 
     def normalize(self, resource: dict[str, Any]) -> dict[str, Any]:
+        if not self._secret_names_ready:
+            self.build_desired()
         fields = {
             f["name"]: coerce_scalar(f.get("value")) for f in resource.get("fields", [])
         }

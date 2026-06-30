@@ -40,7 +40,10 @@ class DownloadClientProvider(CurrentStateCache):
         # Secret field names (schema privacy=apiKey/password) seen while building
         # desired; consulted by normalize so a configured secret is skipped on both
         # sides of the diff. Populated from schema (create) or current (update) fields.
+        # ``_secret_names_ready`` makes normalize() self-enforcing: if it runs before
+        # build_desired(), it triggers a build first so the set is always populated.
         self._secret_names: set[str] = set()
+        self._secret_names_ready = False
 
     def _url(self, path: str) -> str:
         return f"{self.base_url}{path}"
@@ -75,6 +78,7 @@ class DownloadClientProvider(CurrentStateCache):
         return out
 
     def build_desired(self) -> list[dict[str, Any]]:
+        self._secret_names_ready = True
         if not self.config:
             return []
         current_by_key = {self.match_key(c): c for c in self.fetch_current()}
@@ -114,6 +118,8 @@ class DownloadClientProvider(CurrentStateCache):
         return desired
 
     def normalize(self, resource: dict[str, Any]) -> dict[str, Any]:
+        if not self._secret_names_ready:
+            self.build_desired()
         fields = {
             f["name"]: coerce_scalar(f.get("value")) for f in resource.get("fields", [])
         }

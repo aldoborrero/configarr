@@ -132,6 +132,36 @@ def test_idempotent_when_current_matches(plan_provider):
 
 
 @responses.activate
+def test_normalize_drops_secret_before_build_desired():
+    # normalize() must drop secrets even if called before build_desired() populates
+    # the secret-name set — the set has to be self-enforcing, not order-dependent.
+    existing = {
+        **EXISTING,
+        "name": "Sab",
+        "implementation": "Sabnzbd",
+        "fields": [
+            {"name": "host", "value": "localhost", "privacy": "normal"},
+            {"name": "apiKey", "value": "********", "privacy": "apiKey"},
+        ],
+    }
+    responses.get(f"{PROWLARR}/api/v1/downloadclient", json=[existing])
+    cfg = {
+        "Sab": {
+            "implementation": "Sabnzbd",
+            "settings": {"host": "localhost", "apiKey": "real-secret"},
+        }
+    }
+    p = _prowlarr(cfg)
+    desired_like = {
+        "fields": [
+            {"name": "host", "value": "localhost"},
+            {"name": "apiKey", "value": "real-secret"},
+        ],
+    }
+    assert "apiKey" not in p.normalize(desired_like)["fields"]
+
+
+@responses.activate
 def test_configured_secret_does_not_perpetually_diff(plan_provider):
     existing = {
         **EXISTING,
