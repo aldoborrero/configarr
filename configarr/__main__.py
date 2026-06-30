@@ -55,6 +55,12 @@ log = logging.getLogger("configarr")
     is_flag=True,
     help="Enable debug logging",
 )
+@click.option(
+    "--output",
+    type=click.Choice(["text", "json"]),
+    default="text",
+    help="Output format for --plan: 'json' emits a machine-readable diff for CI.",
+)
 def main(
     config_path: Path,
     service: str | None,
@@ -62,6 +68,7 @@ def main(
     plan_only: bool,
     prune: bool,
     debug: bool,
+    output: str,
 ) -> None:
     """
     Configarr - declaratively manage Radarr, Sonarr, Prowlarr, Bazarr, and SABnzbd.
@@ -77,15 +84,18 @@ def main(
         )
         log.debug("Debug logging enabled")
 
-    console.print(
-        Panel.fit(
-            "[bold cyan]Configarr[/bold cyan]\n"
-            "Configuration manager for Radarr, Sonarr, Prowlarr, Bazarr, and SABnzbd",
-            border_style="cyan",
+    # In JSON plan mode, stdout must be pure JSON — suppress the decorative chrome.
+    json_mode = plan_only and output == "json"
+    if not json_mode:
+        console.print(
+            Panel.fit(
+                "[bold cyan]Configarr[/bold cyan]\n"
+                "Configuration manager for Radarr, Sonarr, Prowlarr, Bazarr, and SABnzbd",
+                border_style="cyan",
+            )
         )
-    )
-    console.print()
-    console.print(f"[dim]Configuration file:[/dim] {config_path}\n")
+        console.print()
+        console.print(f"[dim]Configuration file:[/dim] {config_path}\n")
 
     try:
         config = parse_config(config_path)
@@ -123,15 +133,23 @@ def main(
             )
             sys.exit(2)
 
-    runner = run_plan if plan_only else run_apply
     try:
-        output = runner(config, service=service, instance=instance, prune=prune)
+        if plan_only:
+            result = run_plan(
+                config,
+                service=service,
+                instance=instance,
+                prune=prune,
+                output=output,
+            )
+        else:
+            result = run_apply(config, service=service, instance=instance, prune=prune)
     except Exception as e:
         action = "Plan" if plan_only else "Apply"
         console.print(f"[bold red]{action} failed:[/bold red] {e}")
         sys.exit(1)
 
-    click.echo(output)
+    click.echo(result)
 
 
 if __name__ == "__main__":

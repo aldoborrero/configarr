@@ -2,9 +2,23 @@
 
 from __future__ import annotations
 
+from typing import TypedDict
+
 from rich.console import Console
 
 from configarr.diff.model import Op, Plan
+
+
+class FieldDiffJson(TypedDict):
+    path: str
+    before: object
+    after: object
+
+
+class ResourceJson(TypedDict):
+    key: object
+    op: str
+    field_diffs: list[FieldDiffJson]
 
 
 def render_plan(plan: Plan) -> str:
@@ -25,3 +39,19 @@ def render_plan(plan: Plan) -> str:
                 for d in r.field_diffs:
                     console.print(f"    {d.path}: {d.before!r} -> {d.after!r}")
     return console.export_text()
+
+
+def plan_resources_json(plan: Plan) -> list[ResourceJson]:
+    """Changed resources of a plan as JSON-serializable dicts (for --output json)."""
+    return [
+        ResourceJson(
+            key=r.key,
+            op=r.op.value,
+            field_diffs=[
+                FieldDiffJson(path=d.path, before=d.before, after=d.after)
+                for d in r.field_diffs
+            ],
+        )
+        for r in plan.resources
+        if r.changed
+    ]

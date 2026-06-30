@@ -3,14 +3,28 @@ imports."""
 
 from __future__ import annotations
 
-from typing import Any
+import json
+from typing import Any, TypedDict
 
 from configarr.diff.engine import diff
 from configarr.diff.model import Plan
 from configarr.diff.providers.base import ResourceProvider
-from configarr.diff.registry import providers_for
-from configarr.diff.render import render_plan
+from configarr.diff.registry import PlannedProvider, providers_for
+from configarr.diff.render import ResourceJson, plan_resources_json, render_plan
 from configarr.models import ConfigarrConfig
+
+
+class ProviderJson(TypedDict):
+    service: str
+    instance: str
+    kind: str
+    label: str
+    resources: list[ResourceJson]
+
+
+class PlanDocument(TypedDict):
+    has_changes: bool
+    providers: list[ProviderJson]
 
 
 def _diff_provider(
@@ -50,15 +64,44 @@ def run_plan(
     service: str | None = None,
     instance: str | None = None,
     prune: bool = False,
+    output: str = "text",
 ) -> str:
+    """Render a read-only plan. ``output`` is "text" (human) or "json" (a stable,
+    machine-readable document for CI/automation drift gating)."""
+    planned_plans: list[tuple[PlannedProvider, Plan]] = [
+        (planned, _plan_provider(planned.provider, prune=prune))
+        for planned in providers_for(config, service, instance)
+    ]
+    if output == "json":
+        return _plan_json(planned_plans)
+
     sections: list[str] = []
-    for planned in providers_for(config, service, instance):
-        plan = _plan_provider(planned.provider, prune=prune)
+    for planned, plan in planned_plans:
         sections.append(f"{planned.service}/{planned.instance} — {planned.label}")
         sections.append(render_plan(plan))
     if not sections:
         return "No supported resources configured for --plan."
     return "\n".join(sections)
+
+
+def _plan_json(planned_plans: list[tuple[PlannedProvider, Plan]]) -> str:
+    providers: list[ProviderJson] = [
+        ProviderJson(
+            service=planned.service,
+            instance=planned.instance,
+            kind=planned.provider.kind,
+            label=planned.label,
+            resources=plan_resources_json(plan),
+        )
+        for planned, plan in planned_plans
+    ]
+    document: PlanDocument = {
+        "has_changes": any(p["resources"] for p in providers),
+        "providers": providers,
+    }
+    # default=str keeps non-JSON-native diff values (e.g. a tuple match key)
+    # serializable rather than raising.
+    return json.dumps(document, indent=2, default=str)
 
 
 def run_apply(

@@ -1,3 +1,5 @@
+import json
+
 import responses
 
 from configarr.config import parse_config
@@ -119,4 +121,30 @@ def test_run_plan_reports_create_and_writes_nothing(tmp_path):
     out = run_plan(config)
 
     assert "x265" in out and "create" in out.lower()
+    assert all(c.request.method == "GET" for c in responses.calls)  # read-only
+
+
+@responses.activate
+def test_run_plan_json_output_is_valid_and_read_only(tmp_path):
+    cfg = tmp_path / "configarr.yml"
+    cfg.write_text(CONFIG_YAML)
+    config = parse_config(cfg)
+    responses.get(f"{BASE}/api/v3/customformat", json=[])
+    responses.get(f"{BASE}/api/v3/customformat/schema", json=SCHEMA)
+    responses.get(f"{BASE}/api/v3/qualityprofile", json=[])
+    responses.get(f"{BASE}/api/v3/qualitydefinition", json=[])
+    responses.get(f"{BASE}/api/v3/config/naming", json={"id": 1})
+    responses.get(f"{BASE}/api/v3/rootfolder", json=[])
+    responses.get(f"{BASE}/api/v3/delayprofile", json=[])
+    responses.get(f"{BASE}/api/v3/downloadclient", json=[])
+    responses.get(f"{BASE}/api/v3/notification", json=[])
+
+    doc = json.loads(run_plan(config, output="json"))  # must be valid JSON
+
+    assert doc["has_changes"] is True
+    cf = next(p for p in doc["providers"] if p["kind"] == "radarr.custom_format")
+    assert cf["service"] == "radarr"
+    assert cf["instance"] == "main"
+    assert {r["key"] for r in cf["resources"]} == {"x265"}
+    assert {r["op"] for r in cf["resources"]} == {"create"}
     assert all(c.request.method == "GET" for c in responses.calls)  # read-only
