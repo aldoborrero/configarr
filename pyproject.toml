@@ -25,6 +25,15 @@ test = ["pytest>=8.0", "responses>=0.25"]
 where = ["."]
 include = ["configarr*"]
 
+[tool.ruff]
+target-version = "py312"
+
+[tool.ruff.lint]
+# Strong default ruleset enforced by the CI lint gate (nix/checks/ruff.nix).
+# pycodestyle/pyflakes baseline plus import sorting, pyupgrade, bugbear,
+# simplify, ruff-specific, pathlib, return, and comprehension lints.
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "PTH", "RET", "C4"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"

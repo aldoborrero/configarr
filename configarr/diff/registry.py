@@ -4,8 +4,9 @@ filters. Stays client-free (no generated-client imports)."""
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
-from typing import Any, Callable, Iterator
+from typing import Any
 
 from configarr.diff.providers.applications import ApplicationProvider
 from configarr.diff.providers.base import ResourceProvider

@@ -13,7 +13,8 @@ pass ``forceSave=true`` to skip the live connectivity test the *arr API would ru
 
 from __future__ import annotations
 
-from typing import Any, Hashable
+from collections.abc import Hashable
+from typing import Any
 
 import requests
 

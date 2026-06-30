@@ -11,7 +11,8 @@ be exactly complete — building from it keeps both invariants for free.
 from __future__ import annotations
 
 import copy
-from typing import Any, Hashable
+from collections.abc import Hashable
+from typing import Any
 
 import requests
 

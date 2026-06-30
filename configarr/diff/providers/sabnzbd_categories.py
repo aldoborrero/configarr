@@ -18,7 +18,8 @@ keeps it out of the diff; the over-current merge carries it through).
 
 from __future__ import annotations
 
-from typing import Any, Hashable
+from collections.abc import Hashable
+from typing import Any
 
 import requests
 

@@ -17,7 +17,8 @@ diffs the desired keys.
 
 from __future__ import annotations
 
-from typing import Any, Hashable
+from collections.abc import Hashable
+from typing import Any
 
 import requests
 

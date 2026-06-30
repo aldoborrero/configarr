@@ -12,7 +12,8 @@ to skip the live connectivity test the *arr API would otherwise run.
 
 from __future__ import annotations
 
-from typing import Any, Hashable
+from collections.abc import Hashable
+from typing import Any
 
 import requests
 

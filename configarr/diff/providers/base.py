@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Hashable
 from dataclasses import dataclass
-from typing import Any, Hashable, Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from configarr.diff.model import Op, ResourcePlan
 

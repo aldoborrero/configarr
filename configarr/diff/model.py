@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Hashable
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any, Hashable
+from typing import Any
 
 
 class Op(StrEnum):

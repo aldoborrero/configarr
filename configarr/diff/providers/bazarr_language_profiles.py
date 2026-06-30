@@ -19,7 +19,8 @@ profile overwrites its server copy while unmanaged profiles stay intact.
 from __future__ import annotations
 
 import json
-from typing import Any, Hashable
+from collections.abc import Hashable
+from typing import Any
 
 import requests
 
@@ -209,7 +210,7 @@ class BazarrLanguageProfileProvider(CurrentStateCache):
         # Re-read the live profiles so unmanaged profiles (and profiles written by
         # earlier actions) survive; replace only the one this action manages.
         others = [p for p in self._get_profiles() if p.get("name") != action.key]
-        all_profiles = others + [dict(action.payload)]
+        all_profiles = [*others, dict(action.payload)]
         files = {"languages-profiles": (None, json.dumps(all_profiles))}
         resp = self._session.post(
             self._settings_url(), params={"apikey": self.api_key}, files=files

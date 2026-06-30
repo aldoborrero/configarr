@@ -16,7 +16,8 @@ real value). PUT/POST pass ``forceSave=true`` to skip the live connectivity test
 
 from __future__ import annotations
 
-from typing import Any, Hashable
+from collections.abc import Hashable
+from typing import Any
 
 import requests
 

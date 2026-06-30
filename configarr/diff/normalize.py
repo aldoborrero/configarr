@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Collection, Iterable
+from collections.abc import Collection, Iterable
+from typing import Any
 
 MASK = "********"  # Radarr/Sonarr return ApiKey/Password fields masked
 

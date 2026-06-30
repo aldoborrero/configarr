@@ -18,7 +18,8 @@ as ``1``/``0`` to match SABnzbd's wire shape. Unmanaged server keys (e.g. the ec
 
 from __future__ import annotations
 
-from typing import Any, Hashable
+from collections.abc import Hashable
+from typing import Any
 
 import requests
 

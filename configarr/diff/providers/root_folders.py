@@ -11,7 +11,8 @@ work-list #4). Not a full-replace resource: nothing is merged over current.
 
 from __future__ import annotations
 
-from typing import Any, Hashable
+from collections.abc import Hashable
+from typing import Any
 
 import requests
 
