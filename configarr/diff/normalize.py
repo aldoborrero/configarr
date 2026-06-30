@@ -36,19 +36,16 @@ def coerce_scalar(value: Any) -> Any:
     return value
 
 
-def drop_masked_secrets(fields: dict[str, Any]) -> dict[str, Any]:
-    """Remove fields whose value is the secret mask; their real value is unknown."""
-    return {k: v for k, v in fields.items() if v != MASK}
-
-
 def secret_field_names(fields: Iterable[dict[str, Any]]) -> set[str]:
     """Names of provider-Field entries whose schema privacy marks them secret."""
     return {f["name"] for f in fields if f.get("privacy") in SECRET_PRIVACY}
 
 
 def drop_secret_fields(
-    fields: dict[str, Any], secret_names: Collection[str]
+    fields: dict[str, Any], secret_names: Collection[str] = ()
 ) -> dict[str, Any]:
-    """Remove privacy-secret fields so a configured secret never diffs against the
-    masked server value (provider-Field resources). Also drops mask-valued fields."""
+    """Remove fields that can't be compared against the server's response: those whose
+    name is a known schema-privacy secret (the server echoes them masked) and those
+    whose value is literally the mask. Pass ``secret_names`` for provider-Field
+    resources; omit it when only mask-valued fields must be dropped."""
     return {k: v for k, v in fields.items() if k not in secret_names and v != MASK}

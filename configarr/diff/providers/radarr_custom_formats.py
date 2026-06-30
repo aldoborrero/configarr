@@ -6,7 +6,7 @@ from collections.abc import Hashable
 from typing import Any
 
 from configarr.diff.model import Op, ResourcePlan
-from configarr.diff.normalize import coerce_scalar, drop_masked_secrets
+from configarr.diff.normalize import coerce_scalar, drop_secret_fields
 from configarr.diff.providers.base import Action, HttpProvider
 
 
@@ -69,7 +69,7 @@ class RadarrCustomFormatProvider(HttpProvider):
             fields = {
                 f["name"]: coerce_scalar(f.get("value")) for f in spec.get("fields", [])
             }
-            fields = drop_masked_secrets(fields)
+            fields = drop_secret_fields(fields)
             specs.append(
                 {
                     "name": spec.get("name"),

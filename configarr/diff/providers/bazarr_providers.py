@@ -20,7 +20,7 @@ Secret handling differs from the *arr providers: Bazarr's ``GET /api/system/sett
 returns secrets in CLEARTEXT and uses no mask sentinel (verified against Bazarr's
 ``app/config.get_settings``, which only strips ``flask_secret_key``). Idempotency for
 password/apikey fields therefore works by direct value comparison, so the
-``drop_masked_secrets`` call in ``normalize`` is purely defensive against a literal
+``drop_secret_fields`` call in ``normalize`` is purely defensive against a literal
 ``"********"`` value and is a no-op against real Bazarr output.
 """
 
@@ -32,7 +32,7 @@ from typing import Any
 import requests
 
 from configarr.diff.model import Op, ResourcePlan
-from configarr.diff.normalize import coerce_scalar, drop_masked_secrets
+from configarr.diff.normalize import coerce_scalar, drop_secret_fields
 from configarr.diff.providers.base import Action, CurrentStateCache
 
 # The only config-name → Bazarr-name rename; all other names are used verbatim.
@@ -115,7 +115,7 @@ class BazarrProviderProvider(CurrentStateCache):
         return desired
 
     def normalize(self, resource: dict[str, Any]) -> dict[str, Any]:
-        cleaned = drop_masked_secrets(resource)
+        cleaned = drop_secret_fields(resource)
         return {key: coerce_scalar(value) for key, value in cleaned.items()}
 
     def to_action(
