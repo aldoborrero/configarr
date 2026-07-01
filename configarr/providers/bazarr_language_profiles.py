@@ -153,6 +153,9 @@ class BazarrLanguageProfileProvider(CurrentStateCache):
                     "audio_exclude": str(flags.get("audio_exclude", False)),
                     "hi": str(flags.get("hi", False)),
                     "forced": str(flags.get("forced", False)),
+                    # Bazarr stores this on every item; emit it (default False) so
+                    # the full-replace write doesn't drop it and diff forever.
+                    "audio_only_include": str(flags.get("audio_only_include", False)),
                 }
             )
             # The cutoff must name one of the listed languages; record its item id.

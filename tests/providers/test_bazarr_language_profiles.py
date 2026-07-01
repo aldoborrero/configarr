@@ -17,8 +17,10 @@ LANGUAGES = [
     {"name": "Klingon", "code2": "tlh", "code3": "tlh"},
 ]
 
-# A profile the server already stores, in the exact shape the provider builds (so a
-# config that mirrors it re-plans clean).
+# A profile the server already stores, in the shape Bazarr actually returns — note
+# every item carries audio_only_include, a key the config never sets. The built
+# profile must emit it too, or the full-replace list swap drops it and the profile
+# diffs forever.
 DEFAULT_PROFILE = {
     "profileId": 1,
     "name": "Default",
@@ -29,6 +31,7 @@ DEFAULT_PROFILE = {
             "audio_exclude": "False",
             "hi": "False",
             "forced": "False",
+            "audio_only_include": "False",
         },
         {
             "id": 2,
@@ -36,6 +39,7 @@ DEFAULT_PROFILE = {
             "audio_exclude": "False",
             "hi": "False",
             "forced": "False",
+            "audio_only_include": "False",
         },
     ],
     "cutoff": 1,
@@ -55,6 +59,7 @@ SERVER_ONLY_PROFILE = {
             "audio_exclude": "False",
             "hi": "False",
             "forced": "False",
+            "audio_only_include": "False",
         }
     ],
     "cutoff": 1,
@@ -197,6 +202,7 @@ def test_apply_then_replan_is_noop(plan_provider, apply_changes):
                 "audio_exclude": "False",
                 "hi": "False",
                 "forced": "False",
+                "audio_only_include": "False",
             }
         ],
         "cutoff": 1,
@@ -217,7 +223,14 @@ def test_dict_language_carries_flags(plan_provider):
         [
             {
                 "name": "New",
-                "languages": [{"name": "english", "hi": True, "forced": True}],
+                "languages": [
+                    {
+                        "name": "english",
+                        "hi": True,
+                        "forced": True,
+                        "audio_only_include": True,
+                    }
+                ],
                 "cutoff": "english",
             }
         ]
@@ -227,6 +240,7 @@ def test_dict_language_carries_flags(plan_provider):
     assert item["language"] == "en"
     assert item["hi"] == "True"
     assert item["forced"] == "True"
+    assert item["audio_only_include"] == "True"
 
 
 @responses.activate
