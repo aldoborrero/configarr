@@ -2,7 +2,7 @@ import pytest
 import responses
 
 from configarr.model import Op, ResourcePlan
-from configarr.providers.radarr_custom_formats import RadarrCustomFormatProvider
+from configarr.providers.custom_formats import CustomFormatProvider
 
 BASE = "http://radarr.test"
 
@@ -17,8 +17,8 @@ SCHEMA = [
 ]
 
 
-def _provider(config):
-    return RadarrCustomFormatProvider(base_url=BASE, api_key="k", config=config)
+def _provider(config, kind="radarr.custom_format"):
+    return CustomFormatProvider(base_url=BASE, api_key="k", config=config, kind=kind)
 
 
 @responses.activate
@@ -38,6 +38,29 @@ def test_create_when_absent(plan_provider):
     }
     plan = plan_provider(_provider(config))
     assert len(plan.resources) == 1
+    assert plan.resources[0].op is Op.CREATE
+
+
+@responses.activate
+def test_serves_sonarr_via_the_same_v3_api(plan_provider):
+    # Sonarr custom formats use the identical /api/v3/customformat endpoints, so
+    # the same provider serves them — only the kind differs.
+    responses.get(f"{BASE}/api/v3/customformat", json=[])
+    responses.get(f"{BASE}/api/v3/customformat/schema", json=SCHEMA)
+    config = {
+        "x265": {
+            "specifications": [
+                {
+                    "name": "x265",
+                    "implementation": "ReleaseTitleSpecification",
+                    "fields": {"value": "(x|h)265"},
+                }
+            ]
+        }
+    }
+    provider = _provider(config, kind="sonarr.custom_format")
+    assert provider.kind == "sonarr.custom_format"
+    plan = plan_provider(provider)
     assert plan.resources[0].op is Op.CREATE
 
 

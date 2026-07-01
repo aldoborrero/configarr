@@ -16,6 +16,7 @@ from configarr.providers.bazarr_language_profiles import (
 )
 from configarr.providers.bazarr_providers import BazarrProviderProvider
 from configarr.providers.bazarr_settings import BazarrSettingsProvider
+from configarr.providers.custom_formats import CustomFormatProvider
 from configarr.providers.delay_profiles import DelayProfileProvider
 from configarr.providers.download_clients import DownloadClientProvider
 from configarr.providers.indexers import IndexerProvider
@@ -26,7 +27,6 @@ from configarr.providers.prowlarr_download_clients import (
 )
 from configarr.providers.quality_definitions import QualityDefinitionProvider
 from configarr.providers.quality_profiles import QualityProfileProvider
-from configarr.providers.radarr_custom_formats import RadarrCustomFormatProvider
 from configarr.providers.release_profiles import ReleaseProfileProvider
 from configarr.providers.root_folders import RootFolderProvider
 from configarr.providers.sabnzbd_categories import SabnzbdCategoryProvider
@@ -60,8 +60,8 @@ REGISTRY: list[Registration] = [
         kind="radarr.custom_format",
         service="radarr",
         label="custom formats",
-        factory=lambda inst: RadarrCustomFormatProvider(
-            inst.base_url, inst.api_key, inst.custom_formats
+        factory=lambda inst: CustomFormatProvider(
+            inst.base_url, inst.api_key, inst.custom_formats, "radarr.custom_format"
         ),
     ),
     # Quality profiles after custom formats: FormatItems must reference every CF
@@ -74,6 +74,15 @@ REGISTRY: list[Registration] = [
             inst.base_url, inst.api_key, inst.quality_profiles, "radarr.quality_profile"
         ),
     ),
+    Registration(
+        kind="sonarr.custom_format",
+        service="sonarr",
+        label="custom formats",
+        factory=lambda inst: CustomFormatProvider(
+            inst.base_url, inst.api_key, inst.custom_formats, "sonarr.custom_format"
+        ),
+    ),
+    # Quality profiles after custom formats (see the radarr note above).
     Registration(
         kind="sonarr.quality_profile",
         service="sonarr",

@@ -1,4 +1,8 @@
-"""Radarr custom-format provider. Client-free: talks HTTP via requests."""
+"""Custom-format provider. Client-free: talks HTTP via requests.
+
+Radarr and Sonarr share the same `/api/v3/customformat` API, so one provider
+serves both — the service is selected by the `kind` passed at construction.
+"""
 
 from __future__ import annotations
 
@@ -10,15 +14,15 @@ from configarr.normalize import coerce_scalar, drop_secret_fields
 from configarr.providers.base import Action, HttpProvider
 
 
-class RadarrCustomFormatProvider(HttpProvider):
-    """Diffs Radarr custom formats by name; additive with opt-in prune (the only
-    DELETE-capable provider)."""
+class CustomFormatProvider(HttpProvider):
+    """Diffs custom formats by name; additive with opt-in prune (one of the few
+    DELETE-capable providers)."""
 
-    kind = "radarr.custom_format"
     prunable = True
 
-    def __init__(self, base_url: str, api_key: str, config: dict[str, Any]):
+    def __init__(self, base_url: str, api_key: str, config: dict[str, Any], kind: str):
         super().__init__(base_url, api_key)
+        self.kind = kind
         self.config = config or {}
         self._schema_cache: dict[str, dict[str, Any]] | None = None
 

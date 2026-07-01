@@ -54,6 +54,23 @@ def test_release_profile_is_sonarr_only():
     assert _instances_for_kind(planned, "radarr.release_profile") == []
 
 
+def test_custom_format_provider_covers_both_radarr_and_sonarr():
+    # Sonarr supports custom formats via the same /api/v3/customformat API, so a
+    # sonarr instance that declares custom_formats must get a provider too.
+    sonarr_cf = ArrServiceConfig(
+        name="tv",
+        base_url="http://tv.test",
+        api_key="k",
+        custom_formats={"x265": {"specifications": []}},
+    )
+    config = ConfigarrConfig(radarr=[_radarr("hd")], sonarr=[sonarr_cf])
+
+    planned = list(providers_for(config))
+
+    assert _instances_for_kind(planned, "radarr.custom_format") == ["hd"]
+    assert _instances_for_kind(planned, "sonarr.custom_format") == ["tv"]
+
+
 def _prowlarr(name: str) -> ProwlarrConfig:
     return ProwlarrConfig(
         name=name,
