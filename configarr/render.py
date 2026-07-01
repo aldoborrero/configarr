@@ -8,6 +8,21 @@ from rich.console import Console
 
 from configarr.model import Op, Plan
 
+_REDACTED = "***"
+# Substrings marking a field name as secret. This output-layer redaction is a
+# backstop: providers normally drop secrets from the diff (see normalize.MASK /
+# drop_secret_fields), but Bazarr echoes provider passwords in clear text, so a real
+# value can still reach a FieldDiff. Rendering must never trust that upstream dropped
+# it — a leaked secret in `--plan` output is the bug this guards against.
+_SECRET_HINTS = ("password", "passkey", "apikey", "token", "secret")
+
+
+def _redact(path: str, value: object) -> object:
+    leaf = path.rsplit(".", 1)[-1].replace("_", "").lower()
+    if any(hint in leaf for hint in _SECRET_HINTS):
+        return _REDACTED
+    return value
+
 
 class FieldDiffJson(TypedDict):
     path: str
@@ -37,7 +52,9 @@ def render_plan(plan: Plan) -> str:
             # all before=None noise; DELETE has nothing to show).
             if r.op is Op.UPDATE:
                 for d in r.field_diffs:
-                    console.print(f"    {d.path}: {d.before!r} -> {d.after!r}")
+                    before = _redact(d.path, d.before)
+                    after = _redact(d.path, d.after)
+                    console.print(f"    {d.path}: {before!r} -> {after!r}")
     return console.export_text()
 
 
@@ -48,7 +65,11 @@ def plan_resources_json(plan: Plan) -> list[ResourceJson]:
             key=r.key,
             op=r.op.value,
             field_diffs=[
-                FieldDiffJson(path=d.path, before=d.before, after=d.after)
+                FieldDiffJson(
+                    path=d.path,
+                    before=_redact(d.path, d.before),
+                    after=_redact(d.path, d.after),
+                )
                 for d in r.field_diffs
             ],
         )
