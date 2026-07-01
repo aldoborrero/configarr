@@ -1,8 +1,8 @@
-{ pkgs, ... }:
+{ pkgs, flake, ... }:
 let
   # Same runtime libs the CI checks use, plus the dev tooling. mypy lives inside
-  # the python env so it resolves pydantic/requests stubs (matching the mypy gate).
-  python = (import ./lib { inherit pkgs; }).pyWith (
+  # the python env so it resolves pydantic/requests/yaml stubs (matching the gate).
+  python = flake.lib.pyWith pkgs (
     ps: with ps; [
       pytest
       responses

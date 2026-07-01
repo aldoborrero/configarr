@@ -1,21 +1,20 @@
 {
   pkgs,
   inputs,
+  flake,
   ...
 }:
-# Run the pytest suite in CI. The tests import only configarr.*
-# and configarr.config/models (client-free), so the nix-only generated API
-# clients are not needed here.
+# Run the pytest suite in CI. The tests import only configarr.* (client-free), so
+# the nix-only generated API clients are not needed here.
 let
-  helpers = import ../lib { inherit pkgs; };
-  py = helpers.pyWith (
+  py = flake.lib.pyWith pkgs (
     ps: with ps; [
       pytest
       responses
     ]
   );
 in
-helpers.srcCheck {
+flake.lib.srcCheck pkgs {
   name = "pytest-check";
   src = inputs.self;
   command = "${py}/bin/pytest -q";

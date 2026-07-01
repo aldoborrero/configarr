@@ -1,17 +1,11 @@
-# Shared helpers for the flake's checks/devshell. Exposed by blueprint as
-# `lib`, but also imported directly by the checks via `import ../lib {inherit pkgs;}`.
-# `pkgs` defaults to null so blueprint can evaluate this without a system context —
-# the helpers (functions) are only forced when a check actually calls them with pkgs.
-{
-  pkgs ? null,
-  ...
-}:
+# Shared flake helpers. Blueprint imports this as `flake.lib` (system-independent),
+# so the functions take `pkgs` explicitly — the per-system checks/devshell pass
+# their own `pkgs` from blueprint's scope (`flake.lib.pyWith pkgs …`).
+_:
 let
-  inherit (pkgs) python313;
-
-  # Runtime libraries configarr imports (config parsing + the engine).
-  # The nix-only generated API clients are deliberately excluded — the diff layer
-  # is client-free, and so are its tests.
+  # Runtime libraries configarr imports (config parsing + the engine). The
+  # nix-only generated API clients are deliberately excluded — configarr talks to
+  # each HTTP API directly, so it and its tests are client-free.
   runtimeLibs =
     ps: with ps; [
       click
@@ -22,12 +16,13 @@ let
     ];
 in
 {
-  # A python313 carrying the runtime libs plus the given extra tool selector.
-  pyWith = extra: python313.withPackages (ps: runtimeLibs ps ++ extra ps);
+  # A python313 (from the given pkgs) carrying the runtime libs plus extra tools.
+  pyWith = pkgs: extra: pkgs.python313.withPackages (ps: runtimeLibs ps ++ extra ps);
 
   # A check that runs `command` against a writable copy of the flake source and
   # succeeds when it exits 0. `src` is normally inputs.self.
   srcCheck =
+    pkgs:
     {
       name,
       src,
