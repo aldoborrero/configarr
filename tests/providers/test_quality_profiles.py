@@ -216,6 +216,33 @@ def test_custom_group_is_idempotent(plan_provider):
 
 
 @responses.activate
+def test_custom_group_build_is_self_consistent(plan_provider):
+    # Strongest offline idempotency proof: build once against the empty server
+    # (source = schema, flat), have Radarr "echo back" exactly what we PUT, then a
+    # fresh plan against that echo (source = current, grouped) must be a no-op.
+    config = [
+        {
+            **CONFIG[0],
+            "qualities": [
+                {"name": "1080p", "qualities": ["WEBDL-1080p", "Bluray-1080p"]}
+            ],
+            "upgrade": {**CONFIG[0]["upgrade"], "until_quality": "1080p"},
+        }
+    ]
+    responses.get(f"{BASE}/api/v3/qualityprofile", json=[])
+    responses.get(f"{BASE}/api/v3/qualityprofile/schema", json=SCHEMA)
+    [built] = _provider(config).build_desired()
+
+    # Radarr stores exactly what it received, assigning a profile id.
+    server_profile = {**built, "id": 7}
+    responses.reset()
+    responses.get(f"{BASE}/api/v3/qualityprofile", json=[server_profile])
+    responses.get(f"{BASE}/api/v3/qualityprofile/schema", json=SCHEMA)
+    plan = plan_provider(_provider(config))
+    assert not plan.has_changes, plan.resources
+
+
+@responses.activate
 def test_idempotent_when_current_equals_desired(plan_provider):
     responses.get(f"{BASE}/api/v3/qualityprofile", json=[EXISTING])
     responses.get(f"{BASE}/api/v3/qualityprofile/schema", json=SCHEMA)
