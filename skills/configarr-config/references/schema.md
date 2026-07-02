@@ -287,9 +287,11 @@ Each entry under `assign_scores_to`:
 | `score_set` | string | `default` | which of the CF's `trash_scores` sets to use |
 | `score` | int | unset | explicit score, overriding the guide's score set |
 
-Score precedence is `score` > the CF's `trash_scores[score_set]` > `0` (a missing
-score set logs a warning and scores 0). An unknown `trash_id` is a hard error; a
-missing target `profile` logs a warning and still imports the CF (unscored).
+Score precedence is `score` > the CF's `trash_scores[score_set]` (matched
+case-insensitively) > the CF's `trash_scores.default` > `0`; each fallback logs a
+warning. An unknown `trash_id` is a hard error. Scoring into a `profile` that isn't
+defined under `profiles.quality_profiles.definitions` logs a warning and is dropped
+(the CF is still imported) — define the profile yourself first.
 
 > [!NOTE]
 > Full quality-*profile* import (a whole guide profile with its custom quality

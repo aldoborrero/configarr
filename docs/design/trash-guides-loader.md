@@ -136,7 +136,8 @@ The resolver turns the above into the shapes the providers already read:
 3. **trash_id identity + dedup** — index by `trash_id`; last file wins on collision
    (`GroupBy(trash_id).Last()`). Quality sizes dedup by `type`, case-insensitive.
 4. **Score sets** — resolve `assign_scores_to` / `score_set` against
-   `trash_scores[<set>]`, default set `"default"`, missing → 0.
+   `trash_scores[<set>]`, matched case-insensitively; a missing named set falls
+   back to `"default"`, then 0 (matches recyclarr's `DetermineScore`).
 5. **Quality groups** — profile `items` nest child qualities; map straight onto the
    grouped structure `QualityProfileProvider` already builds.
 6. **Name conflicts** — a user-authored CF/profile with the same name as a resolved

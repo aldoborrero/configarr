@@ -56,3 +56,16 @@ def test_quality_definition_mapping(radarr_catalog):
 def test_unknown_quality_type_raises(radarr_catalog):
     with pytest.raises(TrashError, match="type not found"):
         radarr_catalog.quality_definition("tv")
+
+
+def test_malformed_guide_file_raises_clean_error(tmp_path):
+    # A non-object JSON file in a resource dir raises TrashError, not AttributeError.
+    (tmp_path / "metadata.json").write_text(
+        '{"json_paths": {"radarr": {"custom_formats": ["cf"]}}}'
+    )
+    cf_dir = tmp_path / "cf"
+    cf_dir.mkdir()
+    (cf_dir / "bad.json").write_text('["not", "an", "object"]')
+    catalog = Catalog(tmp_path, load_metadata(tmp_path).json_paths.radarr)
+    with pytest.raises(TrashError, match="expected a JSON object"):
+        catalog.custom_formats()

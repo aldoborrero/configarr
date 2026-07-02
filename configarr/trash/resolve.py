@@ -23,7 +23,7 @@ from configarr.models import (
     TrashScoreTarget,
 )
 from configarr.trash.catalog import Catalog, TrashCustomFormat
-from configarr.trash.metadata import ServicePaths, load_metadata
+from configarr.trash.metadata import load_metadata
 from configarr.trash.source import resolve_source
 
 log = logging.getLogger("configarr.trash")
@@ -31,19 +31,32 @@ log = logging.getLogger("configarr.trash")
 DEFAULT_SCORE_SET = "default"
 
 
-def resolve_trash(config: ConfigarrConfig, base_dir: Path) -> None:
-    """Resolve every Radarr/Sonarr instance that declares a ``trash:`` block."""
-    for service in ("radarr", "sonarr"):
-        for instance in getattr(config, service):
-            if instance.trash is not None:
-                _resolve_instance(service, instance, base_dir)
+def resolve_trash(
+    config: ConfigarrConfig,
+    base_dir: Path,
+    service: str | None = None,
+    instance: str | None = None,
+) -> None:
+    """Resolve every in-scope Radarr/Sonarr instance that declares a ``trash:``
+    block. ``service``/``instance`` mirror the CLI filters so an out-of-scope
+    instance's guide is never read."""
+    svc_filter = service.lower() if service else None
+    for svc, instances in (("radarr", config.radarr), ("sonarr", config.sonarr)):
+        if svc_filter and svc != svc_filter:
+            continue
+        for inst in instances:
+            if instance and inst.name != instance:
+                continue
+            if inst.trash is not None:
+                _resolve_instance(svc, inst, base_dir)
 
 
 def _resolve_instance(service: str, instance: ArrServiceConfig, base_dir: Path) -> None:
     trash = instance.trash
     assert trash is not None  # guarded by the caller
     root = resolve_source(trash, base_dir)
-    paths: ServicePaths = getattr(load_metadata(root).json_paths, service)
+    json_paths = load_metadata(root).json_paths
+    paths = json_paths.radarr if service == "radarr" else json_paths.sonarr
     catalog = Catalog(root, paths)
 
     for group in trash.custom_formats:
@@ -99,16 +112,26 @@ def _assign_score(
 def _score_for(cf: TrashCustomFormat, target: TrashScoreTarget) -> int:
     if target.score is not None:
         return target.score
-    score_set = target.score_set or DEFAULT_SCORE_SET
-    scores = cf["trash_scores"]
-    if score_set not in scores:
+    requested = target.score_set or DEFAULT_SCORE_SET
+    # Score sets are matched case-insensitively, and a missing named set falls back
+    # to "default" before giving up — both match recyclarr's DetermineScore.
+    scores = {k.lower(): v for k, v in cf["trash_scores"].items()}
+    if requested.lower() in scores:
+        return scores[requested.lower()]
+    if requested.lower() != DEFAULT_SCORE_SET and DEFAULT_SCORE_SET in scores:
         log.warning(
-            "trash: custom format %r has no score set %r; scoring 0 into profile %r",
+            "trash: custom format %r has no score set %r; using 'default'",
             cf["name"],
-            score_set,
-            target.profile,
+            requested,
         )
-    return scores.get(score_set, 0)
+        return scores[DEFAULT_SCORE_SET]
+    log.warning(
+        "trash: custom format %r has no score set %r; scoring 0 into profile %r",
+        cf["name"],
+        requested,
+        target.profile,
+    )
+    return 0
 
 
 def _find_profile(profiles: list[dict[str, Any]], name: str) -> dict[str, Any] | None:

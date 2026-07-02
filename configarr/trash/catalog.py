@@ -70,7 +70,10 @@ class Catalog:
                 continue
             for path in sorted(directory.rglob("*.json")):
                 with path.open() as f:
-                    yield json.load(f)
+                    data = json.load(f)
+                if not isinstance(data, dict):
+                    raise TrashError(f"expected a JSON object in guide file: {path}")
+                yield data
 
     def custom_formats(self) -> dict[str, TrashCustomFormat]:
         if self._custom_formats is None:

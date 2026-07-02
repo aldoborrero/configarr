@@ -113,14 +113,6 @@ def main(
         console.print(f"[bold red]Configuration error:[/bold red] {e}")
         sys.exit(1)
 
-    # Expand any TRaSH-Guides imports into each instance's own custom formats /
-    # quality definitions. Separate from parse_config so parsing stays pure.
-    try:
-        resolve_trash(config, config_path.parent)
-    except TrashError as e:
-        console.print(f"[bold red]TRaSH import error:[/bold red] {e}")
-        sys.exit(1)
-
     # Validate --service / --instance against what's configured so a typo doesn't
     # silently no-op and still exit 0.
     available = {
@@ -142,6 +134,15 @@ def main(
                 f"[bold red]No instance named '{instance}' found in {scope}.[/bold red]"
             )
             sys.exit(2)
+
+    # Expand any TRaSH-Guides imports into each in-scope instance's own custom
+    # formats / quality definitions. Separate from parse_config so parsing stays
+    # pure; scoped to --service/--instance so an out-of-scope guide is never read.
+    try:
+        resolve_trash(config, config_path.parent, service=service, instance=instance)
+    except TrashError as e:
+        console.print(f"[bold red]TRaSH import error:[/bold red] {e}")
+        sys.exit(1)
 
     try:
         if plan_only:
