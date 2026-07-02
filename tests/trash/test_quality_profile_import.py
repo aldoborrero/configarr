@@ -93,14 +93,28 @@ def test_score_set_override(guide_root):
     assert scores["HDR10"] == 100  # aaa111 has no french-multi -> default 100
 
 
-def test_user_defined_profile_wins(guide_root):
+def test_merges_into_user_defined_profile(guide_root):
+    # A same-named profile you define keeps its structure and its own scores, and
+    # the guide's custom formats + scores are layered in (recyclarr include+override).
     inst = _instance(guide_root, quality_profiles=[{"trash_id": "qp-hd-web"}])
-    inst.quality_profiles.append({"name": "HD WEB", "qualities": ["Bluray-1080p"]})
+    inst.quality_profiles.append(
+        {
+            "name": "HD WEB",
+            "qualities": ["Bluray-1080p"],
+            "custom_format_scores": {"HDR10": 999},  # your score
+        }
+    )
     _resolve(guide_root, inst)
-    # Only the user's profile remains; the guide import was skipped.
+
     hd = [p for p in inst.quality_profiles if p["name"] == "HD WEB"]
     assert len(hd) == 1
-    assert hd[0]["qualities"] == ["Bluray-1080p"]
+    assert hd[0]["qualities"] == ["Bluray-1080p"]  # structure untouched
+    # Your HDR10 score wins; the guide's other CF (Dual Audio) is merged in.
+    assert hd[0]["custom_format_scores"]["HDR10"] == 999
+    assert hd[0]["custom_format_scores"]["Dual Audio"] == 0
+    # ...and the guide's custom formats were imported.
+    assert "HDR10" in inst.custom_formats
+    assert "Dual Audio" in inst.custom_formats
 
 
 # ---- end-to-end through the real provider -----------------------------------

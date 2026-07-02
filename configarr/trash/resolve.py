@@ -152,12 +152,6 @@ def _import_quality_profile(
 ) -> None:
     guide = catalog.quality_profile(spec.trash_id)
     name = spec.name or guide["name"]
-    if _find_profile(instance.quality_profiles, name) is not None:
-        log.debug(
-            "trash: quality profile %r already defined in config; skipping import",
-            name,
-        )
-        return
 
     # Import every custom format the profile scores, and build its scores from the
     # profile's score set (score by the imported CF's real name, not the guide key).
@@ -175,6 +169,20 @@ def _import_quality_profile(
             continue
         _add_custom_format(instance, cf)
         scores[cf["name"]] = _score_from_set(cf, score_set, f" for profile {name!r}")
+
+    existing = _find_profile(instance.quality_profiles, name)
+    if existing is not None:
+        # Merge into the profile you defined: layer in the guide's CF scores, but
+        # your own scores and the profile's structure (qualities, upgrade, language)
+        # win. This is recyclarr's include-then-override, and it's how you get a
+        # TRaSH-scored profile that stays tuned to your own custom formats.
+        target = existing.setdefault("custom_format_scores", {})
+        for cf_name, score in scores.items():
+            target.setdefault(cf_name, score)
+        log.debug(
+            "trash: merged %d custom-format scores into profile %r", len(scores), name
+        )
+        return
 
     instance.quality_profiles.append(
         {

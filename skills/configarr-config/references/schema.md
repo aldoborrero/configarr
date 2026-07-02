@@ -311,9 +311,12 @@ its quality grouping/order, upgrade settings, and **every custom format it score
 | `score_set` | string | the profile's `trash_score_set` | which `trash_scores` set to score its CFs from |
 
 The profile becomes a normal entry under `profiles.quality_profiles.definitions`
-(custom groups and all), so it diffs and applies like a hand-written one. If you
-already define a profile with the same name, **your** definition wins and the import
-is skipped entirely.
+(custom groups and all), so it diffs and applies like a hand-written one. If you set
+`name` (or the guide name) to a profile **you already define**, the guide's custom
+formats and scores are **merged into your profile** instead — your structure
+(`qualities`, `upgrade`, `language`) and any scores you set win, and the guide's
+remaining CF scores layer in. That's recyclarr's include-then-override: keep a
+profile tuned to your own custom formats while pulling in a whole TRaSH score set.
 
 ```yaml
 radarr:
