@@ -20,6 +20,15 @@ radarr:
         path: ./Guides
         # A guide quality-size set (its "type"), imported as quality definitions.
         quality_definition: movie
+
+        # Import a WHOLE guide quality profile by trash_id: its custom quality
+        # grouping, upgrade settings, and every custom format it scores (pulled
+        # automatically from the profile and scored via its score set). It lands
+        # under profiles.quality_profiles.definitions as if hand-written.
+        quality_profiles:
+          - trash_id: 9c0fb2ba1b6d9d1c01a1d5c5a8c8d1f0 # example: an SQP profile
+            score_set: sqp-1-web-1080p
+
         custom_formats:
           - trash_ids:
               - 570bc9e4ff7cf7ff2c0d1b5e3f5a3b0c # HDR10 (example id)

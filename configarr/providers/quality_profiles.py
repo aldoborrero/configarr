@@ -3,20 +3,74 @@ HTTP via requests.
 
 Full-replace resource: a PUT replaces the whole object, so build_desired merges
 the config-derived profile over current over the ``/qualityprofile/schema``
-defaults. The schema lists every quality (in semantic priority order) and one
-FormatItem per existing custom format, which the server's validators require to
-be exactly complete — building from it keeps both invariants for free.
+defaults.
+
+Quality *items* are built from the config's ``qualities`` list, which drives both
+the enabled set and the **priority order** (top = highest) and may define custom
+quality **groups** (`{name, qualities: [...]}`). Qualities the config doesn't list
+are appended disabled at the bottom, so the server's completeness validator is
+satisfied. This mirrors recyclarr's ``QualityItemOrganizer`` (see
+``.scratch/recyclarr``); building from the *current* profile when it exists keeps
+server-assigned group ids stable across re-plans.
 """
 
 from __future__ import annotations
 
 import copy
-from collections.abc import Hashable
+import logging
+from collections.abc import Hashable, Iterator
 from typing import Any
 
 from configarr.build import merge_full_replace
 from configarr.model import Op, ResourcePlan
 from configarr.providers.base import Action, HttpProvider
+
+log = logging.getLogger("configarr.quality_profile")
+
+
+def _normalize_config_quality(quality: Any) -> dict[str, Any]:
+    """A config `qualities` entry (a bare name or `{name, qualities, enabled}`)
+    in a uniform shape."""
+    if isinstance(quality, str):
+        return {"name": quality, "qualities": [], "enabled": True}
+    return {
+        "name": quality["name"],
+        "qualities": list(quality.get("qualities") or []),
+        "enabled": quality.get("enabled", True),
+    }
+
+
+def _flatten(items: list[dict[str, Any]]) -> Iterator[dict[str, Any]]:
+    for item in items:
+        yield item
+        yield from _flatten(item.get("items") or [])
+
+
+def _find_quality(source: list[dict[str, Any]], name: str) -> dict[str, Any] | None:
+    low = name.lower()
+    for item in _flatten(source):
+        quality = item.get("quality")
+        if quality is not None and (quality.get("name") or "").lower() == low:
+            return item
+    return None
+
+
+def _find_group(source: list[dict[str, Any]], name: str) -> dict[str, Any] | None:
+    low = name.lower()
+    for item in _flatten(source):
+        if item.get("quality") is None and (item.get("name") or "").lower() == low:
+            return item
+    return None
+
+
+def _new_item_id(items: list[dict[str, Any]]) -> int:
+    # Mirrors Radarr's frontend: group ids start at 1001 (max(1000, max id) + 1).
+    ids = [int(i["id"]) for i in _flatten(items) if i.get("id") is not None]
+    return max([1000, *ids]) + 1
+
+
+def _quality_name(item: dict[str, Any]) -> str:
+    return ((item.get("quality") or {}).get("name") or "").lower()
 
 
 class QualityProfileProvider(HttpProvider):
@@ -58,63 +112,149 @@ class QualityProfileProvider(HttpProvider):
         data: list[dict[str, Any]] = self._get("/api/v3/qualityprofile").json()
         return data
 
-    @staticmethod
-    def _enabled_names(profile: dict[str, Any]) -> set[str]:
-        enabled: set[str] = set()
-        for q in profile.get("qualities", []):
-            if not isinstance(q, dict):
-                enabled.add(q)
-                continue
-            if not q.get("enabled", True):
-                continue
-            enabled.add(q["name"])
-            for nested in q.get("qualities", []):
-                enabled.add(nested)
-        return enabled
+    def _wanted_items(
+        self, source: list[dict[str, Any]], config_qualities: list[Any]
+    ) -> tuple[list[dict[str, Any]], set[str], set[str]]:
+        """Build the enabled items in config (priority) order, resolving names and
+        group members against ``source``. Returns the items plus the sets of
+        wanted quality/group names (lower-cased) for the unwanted pass."""
+        wanted: list[dict[str, Any]] = []
+        wanted_qualities: set[str] = set()
+        wanted_groups: set[str] = set()
+        invalid: list[str] = []
 
-    def _build_items(
-        self, schema_items: list[dict[str, Any]], enabled: set[str]
+        for cq in (_normalize_config_quality(q) for q in config_qualities):
+            enabled = cq["enabled"]
+            if cq["qualities"]:  # a quality group
+                members: list[dict[str, Any]] = []
+                for child in cq["qualities"]:
+                    leaf = _find_quality(source, child)
+                    if leaf is None:
+                        invalid.append(child)
+                        continue
+                    members.append({**leaf, "allowed": enabled})
+                    wanted_qualities.add(child.lower())
+                group: dict[str, Any] = {
+                    "name": cq["name"],
+                    "allowed": enabled,
+                    "items": members,
+                }
+                existing = _find_group(source, cq["name"])
+                if existing is not None and existing.get("id") is not None:
+                    group["id"] = existing["id"]  # reuse the server's group id
+                wanted.append(group)
+                wanted_groups.add(cq["name"].lower())
+            else:  # a single quality
+                leaf = _find_quality(source, cq["name"])
+                if leaf is None:
+                    invalid.append(cq["name"])
+                    continue
+                wanted.append({**leaf, "allowed": enabled})
+                wanted_qualities.add(cq["name"].lower())
+
+        if invalid:
+            log.warning(
+                "quality profile: qualities not offered by %s, ignored: %s",
+                self.kind,
+                ", ".join(invalid),
+            )
+        return wanted, wanted_qualities, wanted_groups
+
+    @staticmethod
+    def _unwanted_items(
+        source: list[dict[str, Any]],
+        wanted_qualities: set[str],
+        wanted_groups: set[str],
     ) -> list[dict[str, Any]]:
-        # Preserve the schema's order (semantic priority); only flip `allowed`.
-        out: list[dict[str, Any]] = []
-        for item in schema_items:
-            quality = item.get("quality")
-            if quality is not None:
-                out.append({**item, "allowed": quality.get("name") in enabled})
+        """Every source quality not already wanted, appended as disabled — kept in
+        its source group unless the group itself was wanted, with singleton groups
+        flattened and empty groups dropped (recyclarr's GetUnwantedItems)."""
+
+        def keep(item: dict[str, Any]) -> list[dict[str, Any]]:
+            if item.get("quality") is not None:  # leaf
+                return [] if _quality_name(item) in wanted_qualities else [item]
+            leftover = [
+                c
+                for c in (item.get("items") or [])
+                if _quality_name(c) not in wanted_qualities
+            ]
+            if (item.get("name") or "").lower() in wanted_groups:
+                return leftover  # group is wanted; float out only its extras
+            return [{**item, "items": leftover}]
+
+        disabled: list[dict[str, Any]] = []
+        for item in source:
+            for kept in keep(item):
+                kept = {**kept, "allowed": False}
+                if kept.get("quality") is None:
+                    kept["items"] = [
+                        {**c, "allowed": False} for c in (kept.get("items") or [])
+                    ]
+                disabled.append(kept)
+
+        result: list[dict[str, Any]] = []
+        for item in disabled:
+            children = item.get("items") or []
+            if item.get("quality") is None and len(children) == 1:
+                result.append(children[0])  # flatten singleton group
+            elif item.get("quality") is None and not children:
+                continue  # drop now-empty group
             else:
-                children = self._build_items(item.get("items", []), enabled)
-                group_allowed = item.get("name") in enabled or any(
-                    c["allowed"] for c in children
-                )
-                out.append({**item, "items": children, "allowed": group_allowed})
+                result.append(item)
+        return result
+
+    @staticmethod
+    def _assign_group_ids(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        next_id = _new_item_id(items)
+        out: list[dict[str, Any]] = []
+        for item in items:
+            if item.get("quality") is None and item.get("id") is None:
+                out.append({**item, "id": next_id})
+                next_id += 1
+            else:
+                out.append(item)
         return out
+
+    def _organize_items(
+        self, source: list[dict[str, Any]], profile: dict[str, Any]
+    ) -> list[dict[str, Any]]:
+        wanted, wanted_q, wanted_g = self._wanted_items(
+            source, profile.get("qualities") or []
+        )
+        unwanted = self._unwanted_items(source, wanted_q, wanted_g)
+        combined = (
+            unwanted + wanted
+            if profile.get("quality_sort") == "bottom"
+            else wanted + unwanted
+        )
+        return self._assign_group_ids(combined)
 
     @staticmethod
     def _resolve_cutoff(
         items: list[dict[str, Any]], cutoff_name: str | None, default: Any
     ) -> Any:
+        """Cutoff resolves to the id of an *allowed* quality or group by name."""
         if cutoff_name is None:
             return default
-        for item in items:
+        low = cutoff_name.lower()
+        for item in _flatten(items):
+            if not item.get("allowed"):
+                continue
             quality = item.get("quality")
             if quality is not None:
-                if quality.get("name") == cutoff_name:
+                if (quality.get("name") or "").lower() == low:
                     return quality.get("id")
-            else:
-                if item.get("name") == cutoff_name:
-                    return item.get("id")
-                for child in item.get("items", []):
-                    cq = child.get("quality")
-                    if cq is not None and cq.get("name") == cutoff_name:
-                        return cq.get("id")
+            elif (item.get("name") or "").lower() == low:
+                return item.get("id")
         return default
 
     def _build_profile(
         self, profile: dict[str, Any], current: dict[str, Any] | None
     ) -> dict[str, Any]:
         schema = copy.deepcopy(self._schema())
-        enabled = self._enabled_names(profile)
-        items = self._build_items(schema.get("items", []), enabled)
+        # Organize against the current profile (stable group ids) or the schema.
+        source = current["items"] if current else schema.get("items", [])
+        items = self._organize_items(source, profile)
         upgrade = profile.get("upgrade") or {}
         cutoff = self._resolve_cutoff(
             items, upgrade.get("until_quality"), schema.get("cutoff")

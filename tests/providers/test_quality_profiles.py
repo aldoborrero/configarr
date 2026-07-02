@@ -43,16 +43,17 @@ CONFIG = [
 ]
 
 # What the instance returns once the "HD" profile exists (build_desired echoed
-# back with a server-assigned id).
+# back with a server-assigned id). Items are in config/priority order — enabled
+# first (WEBDL, Bluray), unwanted appended disabled (SDTV).
 EXISTING = {
     "id": 5,
     "name": "HD",
     "upgradeAllowed": True,
     "cutoff": 3,
     "items": [
-        {"quality": {"id": 1, "name": "SDTV"}, "items": [], "allowed": False},
         {"quality": {"id": 2, "name": "WEBDL-1080p"}, "items": [], "allowed": True},
         {"quality": {"id": 3, "name": "Bluray-1080p"}, "items": [], "allowed": True},
+        {"quality": {"id": 1, "name": "SDTV"}, "items": [], "allowed": False},
     ],
     "minFormatScore": 0,
     "cutoffFormatScore": 10000,
@@ -129,6 +130,89 @@ def test_cutoff_and_scores_resolved_in_desired():
     assert allowed == {"WEBDL-1080p", "Bluray-1080p"}
     scores = {fi["name"]: fi["score"] for fi in desired["formatItems"]}
     assert scores == {"x265": 100, "HDR": 0}  # every CF present (validator)
+
+
+@responses.activate
+def test_items_in_config_priority_order():
+    # qualities order drives priority: enabled first (config order), then the
+    # unwanted quality (SDTV) appended disabled.
+    responses.get(f"{BASE}/api/v3/qualityprofile", json=[])
+    responses.get(f"{BASE}/api/v3/qualityprofile/schema", json=SCHEMA)
+    [desired] = _provider(CONFIG).build_desired()
+    order = [i["quality"]["name"] for i in desired["items"]]
+    assert order == ["WEBDL-1080p", "Bluray-1080p", "SDTV"]
+
+
+@responses.activate
+def test_custom_group_created_from_config():
+    responses.get(f"{BASE}/api/v3/qualityprofile", json=[])
+    responses.get(f"{BASE}/api/v3/qualityprofile/schema", json=SCHEMA)
+    config = [
+        {
+            **CONFIG[0],
+            "qualities": [
+                {"name": "1080p", "qualities": ["WEBDL-1080p", "Bluray-1080p"]}
+            ],
+            "upgrade": {**CONFIG[0]["upgrade"], "until_quality": "1080p"},
+        }
+    ]
+    [desired] = _provider(config).build_desired()
+    group = desired["items"][0]
+    assert group["name"] == "1080p"
+    assert group["allowed"] is True
+    assert group["id"] == 1001  # new group id (max(1000, ...) + 1)
+    assert [c["quality"]["name"] for c in group["items"]] == [
+        "WEBDL-1080p",
+        "Bluray-1080p",
+    ]
+    # SDTV falls through disabled at the bottom; cutoff resolves to the group id.
+    assert desired["items"][-1]["quality"]["name"] == "SDTV"
+    assert desired["cutoff"] == 1001
+
+
+@responses.activate
+def test_custom_group_is_idempotent(plan_provider):
+    # Once the grouped profile exists on the server, a re-plan is a no-op: the
+    # group id is reused from current.
+    existing = {
+        "id": 5,
+        "name": "HD",
+        "upgradeAllowed": True,
+        "cutoff": 1001,
+        "items": [
+            {
+                "id": 1001,
+                "name": "1080p",
+                "allowed": True,
+                "items": [
+                    {"quality": {"id": 2, "name": "WEBDL-1080p"}, "allowed": True},
+                    {"quality": {"id": 3, "name": "Bluray-1080p"}, "allowed": True},
+                ],
+            },
+            {"quality": {"id": 1, "name": "SDTV"}, "items": [], "allowed": False},
+        ],
+        "minFormatScore": 0,
+        "cutoffFormatScore": 10000,
+        "minUpgradeFormatScore": 1,
+        "formatItems": [
+            {"format": 10, "name": "x265", "score": 100},
+            {"format": 11, "name": "HDR", "score": 0},
+        ],
+        "language": {"id": 1, "name": "Any"},
+    }
+    responses.get(f"{BASE}/api/v3/qualityprofile", json=[existing])
+    responses.get(f"{BASE}/api/v3/qualityprofile/schema", json=SCHEMA)
+    config = [
+        {
+            **CONFIG[0],
+            "qualities": [
+                {"name": "1080p", "qualities": ["WEBDL-1080p", "Bluray-1080p"]}
+            ],
+            "upgrade": {**CONFIG[0]["upgrade"], "until_quality": "1080p"},
+        }
+    ]
+    plan = plan_provider(_provider(config))
+    assert not plan.has_changes, plan.resources
 
 
 @responses.activate

@@ -232,9 +232,14 @@ internal names.
 | `custom_format_scores` | map | `{}` | custom-format name → score (CF must already exist) |
 | `language` | string | unset | **Radarr-only** language filter (e.g. `Any`, `Original`); Sonarr never reads it |
 
-For a quality **group**, each member entry under `qualities` may be a map with
-`name`, a nested `qualities` list of quality names, and `enabled` (default
-`true`). A bare string enables that single quality.
+The `qualities` list defines both the **enabled set and the priority order** (first
+= highest). Qualities you don't list are appended **disabled** at the bottom, so the
+profile stays complete. For a quality **group**, a member entry may be a map with
+`name`, a nested `qualities` list of quality names, and `enabled` (default `true`) —
+this **creates a custom group** (e.g. merging `WEBDL-1080p` + `Bluray-1080p` under
+one name), and `upgrade_until_quality` may name that group. A bare string enables a
+single quality. (Group ids are assigned the way Radarr's UI does; reusing the
+server's existing group id keeps re-syncs idempotent.)
 
 ```yaml
 profiles:
@@ -262,8 +267,9 @@ Imports custom formats, their scores, and quality definitions from a local
 [TRaSH-Guides](https://github.com/TRaSH-Guides/Guides) checkout by `trash_id`,
 instead of hand-writing them. It is resolved by a separate pass **after** parsing
 (a pure `parse_config` never touches the filesystem), and merged into this
-instance's own `custom_formats.definitions` and `profiles.quality_definitions`, so
-**user-authored definitions always win** on a name conflict.
+instance's own `custom_formats.definitions`, `profiles.quality_profiles.definitions`,
+and `profiles.quality_definitions`, so **user-authored definitions always win** on a
+name conflict.
 
 | key | type | default | meaning |
 |---|---|---|---|
@@ -271,6 +277,7 @@ instance's own `custom_formats.definitions` and `profiles.quality_definitions`, 
 | `path` | string | — | path to a Guides checkout; **required** for `local`. Relative paths resolve against the config file's directory |
 | `quality_definition` | string | unset | a guide quality-size `type` (e.g. `movie`, `anime`) to import as `profiles.quality_definitions` |
 | `custom_formats` | list | `[]` | groups of custom formats to import and score |
+| `quality_profiles` | list | `[]` | whole guide quality profiles to import by `trash_id` |
 
 Each entry under `custom_formats`:
 
@@ -290,14 +297,23 @@ Each entry under `assign_scores_to`:
 Score precedence is `score` > the CF's `trash_scores[score_set]` (matched
 case-insensitively) > the CF's `trash_scores.default` > `0`; each fallback logs a
 warning. An unknown `trash_id` is a hard error. Scoring into a `profile` that isn't
-defined under `profiles.quality_profiles.definitions` logs a warning and is dropped
-(the CF is still imported) — define the profile yourself first.
+defined (by you or by a `quality_profiles` import) logs a warning and is dropped
+(the CF is still imported).
 
-> [!NOTE]
-> Full quality-*profile* import (a whole guide profile with its custom quality
-> grouping) is not supported yet — the quality-profile provider builds groups from
-> the server schema, not from the guide. Define profiles yourself and use
-> `assign_scores_to` to score imported CFs into them.
+Each entry under `quality_profiles` imports a **whole** guide quality profile —
+its quality grouping/order, upgrade settings, and **every custom format it scores**
+(pulled automatically from the profile's `formatItems`, scored via its score set):
+
+| key | type | default | meaning |
+|---|---|---|---|
+| `trash_id` | string | — | the guide quality profile to import |
+| `name` | string | guide name | rename the imported profile |
+| `score_set` | string | the profile's `trash_score_set` | which `trash_scores` set to score its CFs from |
+
+The profile becomes a normal entry under `profiles.quality_profiles.definitions`
+(custom groups and all), so it diffs and applies like a hand-written one. If you
+already define a profile with the same name, **your** definition wins and the import
+is skipped entirely.
 
 ```yaml
 radarr:
@@ -309,10 +325,14 @@ radarr:
         source: local
         path: ./Guides # a `git clone` of TRaSH-Guides/Guides
         quality_definition: movie
+        # Import a whole guide profile — its grouping + all its custom formats.
+        quality_profiles:
+          - trash_id: 9c0fb2ba1... # e.g. SQP-1 (2160p)
+            score_set: sqp-1-web-2160p
+        # ...and/or import specific CFs and score them into a profile you define.
         custom_formats:
           - trash_ids:
               - 570bc9e4ff7... # HDR10
-              - e7c2fcae07c... # DV HDR10
             assign_scores_to:
               - profile: HD Bluray + WEB
       profiles:

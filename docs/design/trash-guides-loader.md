@@ -1,10 +1,11 @@
 # TRaSH-Guides loader — design note
 
-Status: **implemented (phases 1–3a):** the loader (`configarr/trash/`), the CLI
-resolve pass, and import of custom formats + scores + quality definitions. Still
-open: `source: git` (phase 4) and full quality-*profile* import (phase 3b, needs
-custom quality-group support in the provider). Branch-local engineering note (not
-part of the mdbook build).
+Status: **implemented (phases 1–3b):** the loader (`configarr/trash/`), the CLI
+resolve pass, and import of custom formats + scores, quality definitions, **and full
+quality profiles by trash_id** (custom quality groups + auto-imported CFs + score
+sets; the `quality_profiles` provider now builds groups from config à la recyclarr's
+QualityItemOrganizer). Still open: `source: git` (phase 4). Branch-local engineering
+note (not part of the mdbook build).
 
 **Decisions locked (see "Decisions needed" below):**
 - **Source:** `local` checkout only in phase 1; runtime `git` fetch deferred to a

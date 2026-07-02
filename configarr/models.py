@@ -24,16 +24,27 @@ class TrashCustomFormatGroup(BaseModel):
     assign_scores_to: list[TrashScoreTarget] = []
 
 
+class TrashQualityProfileImport(BaseModel):
+    """A whole TRaSH quality profile to import by ``trash_id`` — its quality
+    grouping, upgrade settings, and every custom format it scores (pulled from the
+    profile's ``score_set``). ``name`` optionally renames it."""
+
+    trash_id: str
+    name: str | None = None
+    score_set: str | None = None
+
+
 class TrashConfig(BaseModel):
     """Per-instance TRaSH-Guides import block. Resolved after parsing into the
-    instance's own ``custom_formats`` / ``quality_definitions`` (see
-    ``configarr.trash``). ``source: local`` reads an existing Guides checkout at
+    instance's own ``custom_formats`` / ``quality_profiles`` / ``quality_definitions``
+    (see ``configarr.trash``). ``source: local`` reads an existing Guides checkout at
     ``path`` (relative paths resolve against the config file's directory)."""
 
     source: Literal["local"] = "local"
     path: str | None = None
     quality_definition: str | None = None
     custom_formats: list[TrashCustomFormatGroup] = []
+    quality_profiles: list[TrashQualityProfileImport] = []
 
 
 class SyncStatus(StrEnum):

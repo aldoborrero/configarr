@@ -36,6 +36,22 @@ class TrashCustomFormat(TypedDict):
     trash_scores: dict[str, int]
 
 
+class TrashQualityProfile(TypedDict):
+    """A guide quality profile: its grouping/order, upgrade settings, chosen score
+    set, and the custom formats it scores (``format_items``: CF name -> trash_id)."""
+
+    trash_id: str
+    name: str
+    score_set: str
+    upgrade_allowed: bool
+    cutoff: str
+    min_format_score: int
+    cutoff_format_score: int
+    language: str
+    items: list[dict[str, Any]]
+    format_items: dict[str, str]
+
+
 def _normalize_fields(fields: Any) -> dict[str, Any]:
     if isinstance(fields, dict):
         return dict(fields)
@@ -62,6 +78,7 @@ class Catalog:
         self._paths = paths
         self._custom_formats: dict[str, TrashCustomFormat] | None = None
         self._quality_sizes: dict[str, dict[str, Any]] | None = None
+        self._quality_profiles: dict[str, TrashQualityProfile] | None = None
 
     def _iter_json(self, rel_dirs: list[str]) -> Iterator[dict[str, Any]]:
         for rel in rel_dirs:
@@ -112,6 +129,34 @@ class Catalog:
                     index[str(qtype)] = data
             self._quality_sizes = index
         return self._quality_sizes
+
+    def quality_profiles(self) -> dict[str, TrashQualityProfile]:
+        if self._quality_profiles is None:
+            index: dict[str, TrashQualityProfile] = {}
+            for data in self._iter_json(self._paths.quality_profiles):
+                trash_id = data.get("trash_id")
+                if not trash_id:
+                    continue
+                index[trash_id] = TrashQualityProfile(
+                    trash_id=trash_id,
+                    name=data.get("name", ""),
+                    score_set=data.get("trash_score_set", ""),
+                    upgrade_allowed=bool(data.get("upgradeAllowed", True)),
+                    cutoff=data.get("cutoff", ""),
+                    min_format_score=int(data.get("minFormatScore", 0)),
+                    cutoff_format_score=int(data.get("cutoffFormatScore", 10000)),
+                    language=data.get("language", ""),
+                    items=list(data.get("items") or []),
+                    format_items=dict(data.get("formatItems") or {}),
+                )
+            self._quality_profiles = index
+        return self._quality_profiles
+
+    def quality_profile(self, trash_id: str) -> TrashQualityProfile:
+        profiles = self.quality_profiles()
+        if trash_id not in profiles:
+            raise TrashError(f"quality profile trash_id not found: {trash_id}")
+        return profiles[trash_id]
 
     def quality_definition(self, type_name: str) -> dict[str, dict[str, Any]]:
         """A guide quality-size set as configarr ``quality_definitions``:
