@@ -1,0 +1,15 @@
+{
+  "trash_id": "aaa111",
+  "trash_scores": { "default": 100 },
+  "name": "HDR10",
+  "includeCustomFormatWhenRenaming": false,
+  "specifications": [
+    {
+      "name": "HDR10",
+      "implementation": "ReleaseTitleSpecification",
+      "negate": false,
+      "required": false,
+      "fields": { "value": "\\bHDR10\\b" }
+    }
+  ]
+}

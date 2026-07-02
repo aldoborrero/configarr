@@ -1,0 +1,15 @@
+{
+  "trash_id": "bbb222",
+  "trash_scores": { "default": 0, "french-multi": 1500 },
+  "name": "Dual Audio",
+  "includeCustomFormatWhenRenaming": true,
+  "specifications": [
+    {
+      "name": "English Language",
+      "implementation": "LanguageSpecification",
+      "negate": false,
+      "required": false,
+      "fields": { "value": 1, "exceptLanguage": false }
+    }
+  ]
+}

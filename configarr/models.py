@@ -1,9 +1,39 @@
 """Pydantic models for configarr configuration."""
 
 from enum import StrEnum
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, field_validator
+
+
+class TrashScoreTarget(BaseModel):
+    """A quality profile that imported custom formats should be scored into.
+
+    ``score`` overrides the guide value; otherwise the score comes from the custom
+    format's ``score_set`` (default ``"default"``)."""
+
+    profile: str
+    score: int | None = None
+    score_set: str | None = None
+
+
+class TrashCustomFormatGroup(BaseModel):
+    """A set of TRaSH custom formats to import, and where to score them."""
+
+    trash_ids: list[str] = []
+    assign_scores_to: list[TrashScoreTarget] = []
+
+
+class TrashConfig(BaseModel):
+    """Per-instance TRaSH-Guides import block. Resolved after parsing into the
+    instance's own ``custom_formats`` / ``quality_definitions`` (see
+    ``configarr.trash``). ``source: local`` reads an existing Guides checkout at
+    ``path`` (relative paths resolve against the config file's directory)."""
+
+    source: Literal["local"] = "local"
+    path: str | None = None
+    quality_definition: str | None = None
+    custom_formats: list[TrashCustomFormatGroup] = []
 
 
 class SyncStatus(StrEnum):
@@ -41,6 +71,7 @@ class ArrServiceConfig(BaseModel):
     root_folders: list[dict[str, Any]] | None = None
     download_clients: dict[str, dict[str, Any]] = {}
     notifications: dict[str, dict[str, Any]] = {}
+    trash: TrashConfig | None = None
 
     @field_validator("base_url")
     @classmethod

@@ -79,6 +79,7 @@ Top-level sections (from `parse_arr_instance` + `ArrServiceConfig`):
 | `custom_formats.definitions` | map | keyed by format name |
 | `download_clients.definitions` | map | keyed by client name |
 | `notifications.definitions` | map | keyed by connection name |
+| `trash` | map | TRaSH-Guides import, resolved into `custom_formats` + `quality_definitions` |
 
 ### Root folders — `settings.root_folders`
 
@@ -254,6 +255,70 @@ profiles:
 Note: configarr always syncs **custom formats before quality profiles** within an
 instance, so `custom_format_scores` referencing a CF defined in the same file
 resolves correctly. A score referencing an unknown CF is skipped with a warning.
+
+### TRaSH-Guides import — `trash`
+
+Imports custom formats, their scores, and quality definitions from a local
+[TRaSH-Guides](https://github.com/TRaSH-Guides/Guides) checkout by `trash_id`,
+instead of hand-writing them. It is resolved by a separate pass **after** parsing
+(a pure `parse_config` never touches the filesystem), and merged into this
+instance's own `custom_formats.definitions` and `profiles.quality_definitions`, so
+**user-authored definitions always win** on a name conflict.
+
+| key | type | default | meaning |
+|---|---|---|---|
+| `source` | string | `local` | only `local` is supported today |
+| `path` | string | — | path to a Guides checkout; **required** for `local`. Relative paths resolve against the config file's directory |
+| `quality_definition` | string | unset | a guide quality-size `type` (e.g. `movie`, `anime`) to import as `profiles.quality_definitions` |
+| `custom_formats` | list | `[]` | groups of custom formats to import and score |
+
+Each entry under `custom_formats`:
+
+| key | type | default | meaning |
+|---|---|---|---|
+| `trash_ids` | list | `[]` | guide `trash_id`s to import as custom formats |
+| `assign_scores_to` | list | `[]` | quality profiles to score these CFs into |
+
+Each entry under `assign_scores_to`:
+
+| key | type | default | meaning |
+|---|---|---|---|
+| `profile` | string | — | name of a profile under `profiles.quality_profiles.definitions` |
+| `score_set` | string | `default` | which of the CF's `trash_scores` sets to use |
+| `score` | int | unset | explicit score, overriding the guide's score set |
+
+Score precedence is `score` > the CF's `trash_scores[score_set]` > `0` (a missing
+score set logs a warning and scores 0). An unknown `trash_id` is a hard error; a
+missing target `profile` logs a warning and still imports the CF (unscored).
+
+> [!NOTE]
+> Full quality-*profile* import (a whole guide profile with its custom quality
+> grouping) is not supported yet — the quality-profile provider builds groups from
+> the server schema, not from the guide. Define profiles yourself and use
+> `assign_scores_to` to score imported CFs into them.
+
+```yaml
+radarr:
+  instances:
+    movies:
+      base_url: ${RADARR_URL}
+      api_key: ${RADARR_API_KEY}
+      trash:
+        source: local
+        path: ./Guides # a `git clone` of TRaSH-Guides/Guides
+        quality_definition: movie
+        custom_formats:
+          - trash_ids:
+              - 570bc9e4ff7... # HDR10
+              - e7c2fcae07c... # DV HDR10
+            assign_scores_to:
+              - profile: HD Bluray + WEB
+      profiles:
+        quality_profiles:
+          definitions:
+            HD Bluray + WEB:
+              qualities: [Bluray-1080p, WEBDL-1080p]
+```
 
 ### Download clients — `download_clients.definitions`
 

@@ -1,0 +1,15 @@
+{
+  "$schema": "metadata.schema.json",
+  "json_paths": {
+    "radarr": {
+      "custom_formats": ["docs/json/radarr/cf"],
+      "qualities": ["docs/json/radarr/quality-size"],
+      "quality_profiles": ["docs/json/radarr/quality-profiles"]
+    },
+    "sonarr": {
+      "custom_formats": ["docs/json/sonarr/cf"],
+      "qualities": ["docs/json/sonarr/quality-size"],
+      "quality_profiles": ["docs/json/sonarr/quality-profiles"]
+    }
+  }
+}

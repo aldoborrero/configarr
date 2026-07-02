@@ -1,0 +1,15 @@
+{
+  "trash_id": "ccc333",
+  "trash_scores": { "sqp": 42 },
+  "name": "Legacy Array Fields",
+  "includeCustomFormatWhenRenaming": false,
+  "specifications": [
+    {
+      "name": "x265",
+      "implementation": "ReleaseTitleSpecification",
+      "negate": false,
+      "required": true,
+      "fields": [{ "name": "value", "value": "(x|h)265" }]
+    }
+  ]
+}

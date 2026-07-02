@@ -12,6 +12,7 @@ from rich.panel import Panel
 
 from configarr.config import parse_config
 from configarr.runner import run_apply, run_plan
+from configarr.trash import TrashError, resolve_trash
 
 console = Console()
 log = logging.getLogger("configarr")
@@ -110,6 +111,14 @@ def main(
         sys.exit(1)
     except Exception as e:
         console.print(f"[bold red]Configuration error:[/bold red] {e}")
+        sys.exit(1)
+
+    # Expand any TRaSH-Guides imports into each instance's own custom formats /
+    # quality definitions. Separate from parse_config so parsing stays pure.
+    try:
+        resolve_trash(config, config_path.parent)
+    except TrashError as e:
+        console.print(f"[bold red]TRaSH import error:[/bold red] {e}")
         sys.exit(1)
 
     # Validate --service / --instance against what's configured so a typo doesn't

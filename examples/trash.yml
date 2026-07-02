@@ -1,0 +1,46 @@
+# TRaSH-Guides import (Radarr).
+#
+# Imports custom formats + quality definitions from a local checkout of
+# https://github.com/TRaSH-Guides/Guides by trash_id, and scores the imported
+# custom formats into a quality profile you define yourself. Clone the guides
+# first, e.g.:
+#
+#   git clone --depth 1 https://github.com/TRaSH-Guides/Guides ./Guides
+#
+# `trash.path` is relative to this config file's directory. Find trash_ids in the
+# guide JSON under docs/json/radarr/cf/*.json.
+radarr:
+  instances:
+    movies:
+      base_url: ${RADARR_URL}
+      api_key: ${RADARR_API_KEY}
+
+      trash:
+        source: local
+        path: ./Guides
+        # A guide quality-size set (its "type"), imported as quality definitions.
+        quality_definition: movie
+        custom_formats:
+          - trash_ids:
+              - 570bc9e4ff7cf7ff2c0d1b5e3f5a3b0c # HDR10 (example id)
+              - e7c2fcae07cbada50b48c754c9c6f0d5 # DV HDR10 (example id)
+            assign_scores_to:
+              - profile: HD Bluray + WEB
+          # Import unwanted formats and score them negative in the same profile.
+          - trash_ids:
+              - dc98083864ea246d0a45d1d6a26f3b4b # BR-DISK (example id)
+            assign_scores_to:
+              - profile: HD Bluray + WEB
+                score: -10000
+
+      # You define the profile; TRaSH supplies its custom-format scores above.
+      profiles:
+        quality_profiles:
+          definitions:
+            HD Bluray + WEB:
+              upgrades_allowed: true
+              upgrade_until_quality: Bluray-1080p
+              qualities:
+                - Bluray-1080p
+                - WEBDL-1080p
+                - WEBRip-1080p
