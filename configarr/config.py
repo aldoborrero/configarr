@@ -19,15 +19,15 @@ from configarr.models import (
 
 # Re-export for backwards compatibility
 __all__ = [
-    "parse_config",
-    "load_env_file",
-    "expand_env_vars",
-    "RadarrConfig",
-    "SonarrConfig",
-    "ProwlarrConfig",
     "BazarrConfig",
-    "SabnzbdConfig",
     "ConfigarrConfig",
+    "ProwlarrConfig",
+    "RadarrConfig",
+    "SabnzbdConfig",
+    "SonarrConfig",
+    "expand_env_vars",
+    "load_env_file",
+    "parse_config",
 ]
 
 
@@ -36,7 +36,7 @@ def load_env_file(env_path: Path) -> None:
     if not env_path.exists():
         return
 
-    with open(env_path, "r") as f:
+    with env_path.open() as f:
         for line in f:
             line = line.strip()
             # Skip empty lines and comments
@@ -69,9 +69,9 @@ def expand_env_vars(value: Any) -> Any:
             return os.environ.get(var_name, match.group(0))
 
         return re.sub(r"\$\{([^}]+)\}", replace_env, value)
-    elif isinstance(value, dict):
+    if isinstance(value, dict):
         return {k: expand_env_vars(v) for k, v in value.items()}
-    elif isinstance(value, list):
+    if isinstance(value, list):
         return [expand_env_vars(item) for item in value]
     return value
 
@@ -129,6 +129,9 @@ def parse_arr_instance(name: str, config: dict[str, Any]) -> ArrServiceConfig:
         root_folders=(config.get("settings") or {}).get("root_folders"),
         download_clients=(config.get("download_clients") or {}).get("definitions", {}),
         notifications=(config.get("notifications") or {}).get("definitions", {}),
+        # Carried through as-is; TRaSH resolution is a separate, IO-performing pass
+        # (configarr.trash.resolve_trash) so parse_config stays pure.
+        trash=config.get("trash"),
     )
 
 
@@ -185,7 +188,7 @@ def parse_config(config_path: Path) -> ConfigarrConfig:
     env_path = config_path.parent / ".env"
     load_env_file(env_path)
 
-    with open(config_path, "r") as f:
+    with config_path.open() as f:
         raw_config = yaml.safe_load(f)
 
     # An empty or comment-only file parses to None; treat it as an empty config.
@@ -200,33 +203,31 @@ def parse_config(config_path: Path) -> ConfigarrConfig:
     # Expand environment variables in all config values
     raw_config = expand_env_vars(raw_config)
 
-    # Parse each service type
-    radarr_instances = []
-    sonarr_instances = []
-    prowlarr_instances = []
-    bazarr_instances = []
-    sabnzbd_instances = []
-
-    # Each service section maps to its target list and per-instance parser. The
-    # `or {}` at each level keeps a present-but-null section (e.g. `radarr:` with no
-    # body, or `instances:` left blank) from crashing instead of being read as
-    # "no instances".
-    service_parsers = (
-        ("radarr", radarr_instances, parse_arr_instance),
-        ("sonarr", sonarr_instances, parse_arr_instance),
-        ("prowlarr", prowlarr_instances, parse_prowlarr_instance),
-        ("bazarr", bazarr_instances, parse_bazarr_instance),
-        ("sabnzbd", sabnzbd_instances, parse_sabnzbd_instance),
-    )
-    for section, target, parser in service_parsers:
-        instances = (raw_config.get(section) or {}).get("instances") or {}
-        for name, instance_config in instances.items():
-            target.append(parser(name, instance_config or {}))
+    # The `or {}` at each level keeps a present-but-null section (e.g. `radarr:`
+    # with no body, or `instances:` left blank) from crashing instead of being
+    # read as "no instances".
+    def instances(section: str) -> dict[str, Any]:
+        return (raw_config.get(section) or {}).get("instances") or {}
 
     return ConfigarrConfig(
-        radarr=radarr_instances,
-        sonarr=sonarr_instances,
-        prowlarr=prowlarr_instances,
-        bazarr=bazarr_instances,
-        sabnzbd=sabnzbd_instances,
+        radarr=[
+            parse_arr_instance(name, cfg or {})
+            for name, cfg in instances("radarr").items()
+        ],
+        sonarr=[
+            parse_arr_instance(name, cfg or {})
+            for name, cfg in instances("sonarr").items()
+        ],
+        prowlarr=[
+            parse_prowlarr_instance(name, cfg or {})
+            for name, cfg in instances("prowlarr").items()
+        ],
+        bazarr=[
+            parse_bazarr_instance(name, cfg or {})
+            for name, cfg in instances("bazarr").items()
+        ],
+        sabnzbd=[
+            parse_sabnzbd_instance(name, cfg or {})
+            for name, cfg in instances("sabnzbd").items()
+        ],
     )

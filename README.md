@@ -12,10 +12,18 @@ Configuration manager for *arr applications and SABnzbd. Declaratively manage yo
 - **SABnzbd**: Servers, categories, misc settings
 - **Multi-instance**: Configure multiple instances of each service
 - **Environment variables**: `${VAR}` substitution in config values
+- **Plan & apply**: preview the diff with `--plan`; sync applies only what changed, with opt-in `--prune` to remove unmanaged resources
 
 ## Usage
 
+configarr diffs your `configarr.yml` against each service and applies only what
+changed. Preview first with `--plan`, then run it for real:
+
 ```bash
+# Preview the diff (no writes)
+nix run github:aldoborrero/configarr -- --config configarr.yml --plan
+
+# Apply the changes
 nix run github:aldoborrero/configarr -- --config configarr.yml
 ```
 
@@ -44,9 +52,10 @@ docker run --rm \
 
 ```
 --config PATH    Path to configarr.yml (default: ./configarr.yml)
---service NAME   Only process specific service (radarr, sonarr, prowlarr, bazarr, sabnzbd)
---instance NAME  Only process specific instance
---dry-run        Show what would be done (Bazarr only)
+--service NAME   Only process a specific service (radarr, sonarr, prowlarr, bazarr, sabnzbd)
+--instance NAME  Only process a specific instance
+--plan           Preview the diff without writing (alias: --dry-run)
+--prune          Also delete unmanaged resources (sync is additive by default)
 --debug          Enable debug logging
 ```
 

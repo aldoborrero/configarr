@@ -1,0 +1,8 @@
+{
+  "trash_id": "ddd444",
+  "type": "movie",
+  "qualities": [
+    { "quality": "SDTV", "min": 2, "preferred": 95, "max": 100 },
+    { "quality": "Bluray-1080p", "min": 5, "preferred": 190, "max": 200 }
+  ]
+}

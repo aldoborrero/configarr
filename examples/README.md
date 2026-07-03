@@ -12,6 +12,7 @@ for the exhaustive, source-verified reference.
 | [`prowlarr.yml`](prowlarr.yml) | Prowlarr: indexers, applications, download clients. |
 | [`bazarr.yml`](bazarr.yml) | Bazarr: Sonarr/Radarr connections, providers, language profiles. |
 | [`sabnzbd.yml`](sabnzbd.yml) | SABnzbd: servers, categories, misc settings. |
+| [`trash.yml`](trash.yml) | Radarr: import custom formats + quality definitions from a TRaSH-Guides checkout by `trash_id`. |
 | [`full.yml`](full.yml) | Every service in one file, including a multi-instance setup. |
 | [`.env.example`](.env.example) | Secrets referenced by the examples via `${VAR}`. |
 

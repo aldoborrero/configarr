@@ -79,6 +79,7 @@ Top-level sections (from `parse_arr_instance` + `ArrServiceConfig`):
 | `custom_formats.definitions` | map | keyed by format name |
 | `download_clients.definitions` | map | keyed by client name |
 | `notifications.definitions` | map | keyed by connection name |
+| `trash` | map | TRaSH-Guides import, resolved into `custom_formats` + `quality_definitions` |
 
 ### Root folders — `settings.root_folders`
 
@@ -231,9 +232,14 @@ internal names.
 | `custom_format_scores` | map | `{}` | custom-format name → score (CF must already exist) |
 | `language` | string | unset | **Radarr-only** language filter (e.g. `Any`, `Original`); Sonarr never reads it |
 
-For a quality **group**, each member entry under `qualities` may be a map with
-`name`, a nested `qualities` list of quality names, and `enabled` (default
-`true`). A bare string enables that single quality.
+The `qualities` list defines both the **enabled set and the priority order** (first
+= highest). Qualities you don't list are appended **disabled** at the bottom, so the
+profile stays complete. For a quality **group**, a member entry may be a map with
+`name`, a nested `qualities` list of quality names, and `enabled` (default `true`) —
+this **creates a custom group** (e.g. merging `WEBDL-1080p` + `Bluray-1080p` under
+one name), and `upgrade_until_quality` may name that group. A bare string enables a
+single quality. (Group ids are assigned the way Radarr's UI does; reusing the
+server's existing group id keeps re-syncs idempotent.)
 
 ```yaml
 profiles:
@@ -255,13 +261,97 @@ Note: configarr always syncs **custom formats before quality profiles** within a
 instance, so `custom_format_scores` referencing a CF defined in the same file
 resolves correctly. A score referencing an unknown CF is skipped with a warning.
 
+### TRaSH-Guides import — `trash`
+
+Imports custom formats, their scores, and quality definitions from a local
+[TRaSH-Guides](https://github.com/TRaSH-Guides/Guides) checkout by `trash_id`,
+instead of hand-writing them. It is resolved by a separate pass **after** parsing
+(a pure `parse_config` never touches the filesystem), and merged into this
+instance's own `custom_formats.definitions`, `profiles.quality_profiles.definitions`,
+and `profiles.quality_definitions`, so **user-authored definitions always win** on a
+name conflict.
+
+| key | type | default | meaning |
+|---|---|---|---|
+| `source` | string | `local` | only `local` is supported today |
+| `path` | string | — | path to a Guides checkout; **required** for `local`. Relative paths resolve against the config file's directory |
+| `quality_definition` | string | unset | a guide quality-size `type` (e.g. `movie`, `anime`) to import as `profiles.quality_definitions` |
+| `custom_formats` | list | `[]` | groups of custom formats to import and score |
+| `quality_profiles` | list | `[]` | whole guide quality profiles to import by `trash_id` |
+
+Each entry under `custom_formats`:
+
+| key | type | default | meaning |
+|---|---|---|---|
+| `trash_ids` | list | `[]` | guide `trash_id`s to import as custom formats |
+| `assign_scores_to` | list | `[]` | quality profiles to score these CFs into |
+
+Each entry under `assign_scores_to`:
+
+| key | type | default | meaning |
+|---|---|---|---|
+| `profile` | string | — | name of a profile under `profiles.quality_profiles.definitions` |
+| `score_set` | string | `default` | which of the CF's `trash_scores` sets to use |
+| `score` | int | unset | explicit score, overriding the guide's score set |
+
+Score precedence is `score` > the CF's `trash_scores[score_set]` (matched
+case-insensitively) > the CF's `trash_scores.default` > `0`; each fallback logs a
+warning. An unknown `trash_id` is a hard error. Scoring into a `profile` that isn't
+defined (by you or by a `quality_profiles` import) logs a warning and is dropped
+(the CF is still imported).
+
+Each entry under `quality_profiles` imports a **whole** guide quality profile —
+its quality grouping/order, upgrade settings, and **every custom format it scores**
+(pulled automatically from the profile's `formatItems`, scored via its score set):
+
+| key | type | default | meaning |
+|---|---|---|---|
+| `trash_id` | string | — | the guide quality profile to import |
+| `name` | string | guide name | rename the imported profile |
+| `score_set` | string | the profile's `trash_score_set` | which `trash_scores` set to score its CFs from |
+
+The profile becomes a normal entry under `profiles.quality_profiles.definitions`
+(custom groups and all), so it diffs and applies like a hand-written one. If you set
+`name` (or the guide name) to a profile **you already define**, the guide's custom
+formats and scores are **merged into your profile** instead — your structure
+(`qualities`, `upgrade`, `language`) and any scores you set win, and the guide's
+remaining CF scores layer in. That's recyclarr's include-then-override: keep a
+profile tuned to your own custom formats while pulling in a whole TRaSH score set.
+
+```yaml
+radarr:
+  instances:
+    movies:
+      base_url: ${RADARR_URL}
+      api_key: ${RADARR_API_KEY}
+      trash:
+        source: local
+        path: ./Guides # a `git clone` of TRaSH-Guides/Guides
+        quality_definition: movie
+        # Import a whole guide profile — its grouping + all its custom formats.
+        quality_profiles:
+          - trash_id: 9c0fb2ba1... # e.g. SQP-1 (2160p)
+            score_set: sqp-1-web-2160p
+        # ...and/or import specific CFs and score them into a profile you define.
+        custom_formats:
+          - trash_ids:
+              - 570bc9e4ff7... # HDR10
+            assign_scores_to:
+              - profile: HD Bluray + WEB
+      profiles:
+        quality_profiles:
+          definitions:
+            HD Bluray + WEB:
+              qualities: [Bluray-1080p, WEBDL-1080p]
+```
+
 ### Download clients — `download_clients.definitions`
 
 A map keyed by client name.
 
 | key | type | default | required | meaning |
 |---|---|---|---|---|
-| `implementation` | string | — | **yes** | client implementation (e.g. `QBittorrent`, `Sabnzbd`); unknown values raise |
+| `implementation` | string | — | **yes** | client implementation (e.g. `QBittorrent`, `Sabnzbd`); missing or unknown raises locally (the engine validates before any write, so an omitted value fails fast instead of yielding an opaque server 422) |
 | `enable` | bool | `true` | no | |
 | `priority` | int | `1` | no | |
 | `tags` | list | `[]` | no | |
@@ -273,7 +363,7 @@ A map keyed by connection name.
 
 | key | type | default | required | meaning |
 |---|---|---|---|---|
-| `implementation` | string | — | **yes** | notification implementation; unknown values raise |
+| `implementation` | string | — | **yes** | notification implementation; missing or unknown raises locally (validated before any write) |
 | `on_download` | bool | `true` | no | |
 | `on_upgrade` | bool | `true` | no | |
 | `on_rename` | bool | `true` | no | |
@@ -296,7 +386,7 @@ A map keyed by indexer name.
 
 | key | type | default | required | meaning |
 |---|---|---|---|---|
-| `implementation` | string | — | **yes** | indexer implementation; missing raises |
+| `implementation` | string | — | **yes** | indexer implementation; missing or unknown raises locally (validated before any write) |
 | `definition` | string | unset | no | indexer definition/schema name (e.g. the tracker slug); falls back to `implementation` |
 | `enable` | bool | `true` | no | |
 | `priority` | int | `25` | no | |
@@ -311,7 +401,7 @@ A map keyed by application name.
 
 | key | type | default | required | meaning |
 |---|---|---|---|---|
-| `implementation` | string | — | **yes** | application implementation; unknown raises |
+| `implementation` | string | — | **yes** | application implementation; missing or unknown raises locally (validated before any write) |
 | `sync_level` | string | `fullSync` | no | **application-only**; must be a valid `ApplicationSyncLevel` (e.g. `fullSync`, `addOnly`, `disabled`) — an invalid value raises |
 | `tags` | list | `[]` | no | |
 | `settings` | map | `{}` | no | passthrough to the application's schema fields |
@@ -322,7 +412,7 @@ A map keyed by client name.
 
 | key | type | default | required | meaning |
 |---|---|---|---|---|
-| `implementation` | string | — | **yes** | client implementation; unknown raises |
+| `implementation` | string | — | **yes** | client implementation; missing or unknown raises locally (validated before any write) |
 | `enable` | bool | `true` | no | |
 | `priority` | int | `1` | no | |
 | `tags` | list | `[]` | no | |
@@ -439,9 +529,13 @@ Path prefix `sabnzbd.instances.<name>`. Top-level keys (from
 `parse_sabnzbd_instance` + `SabnzbdConfig`): `base_url`, `api_key`, `servers`,
 `categories`, `misc`.
 
-`sync_server` and `sync_category` **always write** (POST to SABnzbd's config API)
-and so report `CREATED`/`UPDATED` — never `UNCHANGED`. `sync_misc_settings`
-reports `UNCHANGED` when none of its keys are present.
+Legacy `sync_server` and `sync_category` write blindly (POST to SABnzbd's
+config API) and so report `CREATED`/`UPDATED` — never `UNCHANGED`. The diffing
+engine (`configarr/diff/`) instead GETs the full config and diffs servers and
+categories client-side, so an instance already matching config reports
+`UNCHANGED`; only genuine changes are written. `sync_misc_settings` (legacy) and
+the engine's `sabnzbd.misc` provider both report `UNCHANGED` when none of the
+managed keys differ.
 
 ### Servers — `servers`
 

@@ -12,7 +12,7 @@
 - [Mental Model](concepts/mental-model.md)
 - [Sync Order](concepts/sync-order.md)
 - [Secrets & Environment](concepts/secrets-and-env.md)
-- [Dry-Run & Scoping](concepts/dry-run-and-scoping.md)
+- [Plan, Apply & Scoping](concepts/dry-run-and-scoping.md)
 
 # Service Guides
 
