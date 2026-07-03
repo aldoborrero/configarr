@@ -19,6 +19,25 @@ def test_render_empty_plan():
     assert render_plan(plan) == "No changes."
 
 
+def test_render_redacts_non_password_secret_field_names():
+    # A Pushover userKey / a cookie are secret despite lacking password/apikey in the
+    # name — the name-hint backstop must still catch them (text and JSON).
+    plan = Plan(
+        [
+            ResourcePlan(
+                "radarr.notification",
+                "pushover",
+                Op.UPDATE,
+                [FieldDiff("userKey", "old-user-key", "new-user-key")],
+            )
+        ]
+    )
+    out = render_plan(plan)
+    assert "old-user-key" not in out and "new-user-key" not in out and "***" in out
+    fd = plan_resources_json(plan)[0]["field_diffs"][0]
+    assert fd["before"] == "***" and fd["after"] == "***"
+
+
 def _secret_plan() -> Plan:
     # Bazarr returns provider passwords in clear text, so a real value can reach the
     # diff. The renderer must never print it, whatever the provider did upstream.

@@ -42,3 +42,21 @@ def test_no_trash_block_is_none(tmp_path):
     )
     config = parse_config(cfg)
     assert config.radarr[0].trash is None
+
+
+def test_trash_block_rejects_unknown_keys(tmp_path):
+    # The trash models are strict (extra="forbid") so a typo is a hard error, not a
+    # silently-dropped key like the passthrough sections elsewhere.
+    import pytest
+    from pydantic import ValidationError
+
+    cfg = tmp_path / "configarr.yml"
+    cfg.write_text(
+        "radarr:\n  instances:\n    movies:\n"
+        "      base_url: http://r.test\n      api_key: k\n"
+        "      trash:\n        source: local\n        path: /x\n"
+        "        custom_formats:\n"
+        "          - trash_id: [aaa]\n"  # typo: should be trash_ids
+    )
+    with pytest.raises(ValidationError):
+        parse_config(cfg)

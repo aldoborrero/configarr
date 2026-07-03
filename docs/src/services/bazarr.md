@@ -2,8 +2,7 @@
 
 Bazarr handles subtitles. configarr manages its connections to Sonarr/Radarr, its
 subtitle **providers**, and its **language profiles**. Path prefix:
-`bazarr.instances.<name>`. Bazarr is the **only** service that supports
-`--dry-run`.
+`bazarr.instances.<name>`.
 
 > [!NOTE]
 > Exact keys live in the [Bazarr section of the schema](../reference/schema.md#bazarr).
@@ -100,13 +99,14 @@ Notes on the fields:
 - `must_contain` / `must_not_contain` / `original_format` map to Bazarr's
   `mustContain` / `mustNotContain` / `originalFormat`.
 
-## Dry-run behaviour
+## Previewing changes
 
 > [!TIP]
-> `--dry-run` works for Bazarr (and only Bazarr). Even in a dry run, provider and
-> language-profile sync still issue **read** (GET) requests to fetch current state;
-> only the mutating writes are skipped. `--verbose` (payload logging) is likewise
-> Bazarr-only.
+> `--plan` (alias `--dry-run`) works for Bazarr like every other service: it fetches
+> current state with **read** (GET) requests, diffs it against your config, and
+> prints what would change without writing. Bazarr settings are diffed, so a section
+> whose managed fields already match reports `unchanged` and is not shown. See
+> [Plan, Apply & Scoping](../concepts/dry-run-and-scoping.md).
 
 ## Full example
 

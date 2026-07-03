@@ -23,8 +23,9 @@ SABnzbd + Sonarr + Radarr + Prowlarr, wired together. The pieces that connect:
 - Prowlarr adds **applications** pointing at Sonarr and Radarr, so indexers sync to
   them.
 
-Because configarr always runs [SABnzbd first](../concepts/sync-order.md), the
-categories exist before the download clients reference them — one file, one run.
+An *arr SABnzbd download client just references a category by name, so the whole
+stack wires up from one file in a single run regardless of
+[sync order](../concepts/sync-order.md).
 
 ```yaml
 sabnzbd:
@@ -216,10 +217,11 @@ bazarr:
               forced: true
 ```
 
-Preview it before applying — Bazarr is the one service that supports it:
+Preview it before applying — `--plan` works for every service, so you can scope it
+to Bazarr:
 
 ```bash
-configarr --service bazarr --dry-run
+configarr --service bazarr --plan
 ```
 
 ## More

@@ -129,7 +129,7 @@ def test_run_apply_creates_and_writes(tmp_path):
 
     out = run_apply(config)
 
-    assert "x265" in out or "custom formats" in out
+    assert "custom formats: applied 1 change(s)" in out
     posts = [c for c in responses.calls if c.request.method == "POST"]
     assert len(posts) == 1
     assert posts[0].request.url == f"{BASE}/api/v3/customformat"
@@ -187,3 +187,17 @@ def test_run_apply_then_replan_is_empty(tmp_path):
     out = run_plan(config)
     assert "create" not in out.lower()
     assert "update" not in out.lower()
+
+
+@responses.activate
+def test_run_apply_surfaces_partial_state_on_failure(tmp_path):
+    # A mid-run write failure must not be silent about what was already applied.
+    import pytest
+
+    cfg = tmp_path / "configarr.yml"
+    cfg.write_text(CONFIG_YAML)
+    config = parse_config(cfg)
+    _register_radarr_reads([])
+    responses.post(f"{BASE}/api/v3/customformat", status=500)
+    with pytest.raises(RuntimeError, match="apply aborted"):
+        run_apply(config)

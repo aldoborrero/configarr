@@ -111,13 +111,18 @@ def run_apply(
     prune: bool = False,
 ) -> str:
     """Execute each provider's plan provider-by-provider in registry order, which
-    encodes the safe dependency order (custom formats before quality profiles,
-    SABnzbd categories before *arr apps, etc.). Each changed resource is turned
-    into an Action and written via the provider's apply(). With ``prune`` set, the
-    plan also emits DELETE for unmanaged resources; default stays additive."""
+    orders custom formats before quality profiles so ``custom_format_scores`` resolve.
+    Each changed resource is turned into an Action and written via the provider's
+    apply(). With ``prune`` set, the plan also emits DELETE for unmanaged resources;
+    default stays additive.
+
+    Apply is **not atomic**: providers write in sequence with no rollback. If a write
+    fails mid-run, the changes already made are surfaced in the raised error so the
+    operator knows the partial state, then the error propagates (exit 1)."""
     sections: list[str] = []
     for planned in providers_for(config, service, instance):
         provider = planned.provider
+        label = f"{planned.service}/{planned.instance} — {planned.label}"
         # Build current and desired exactly once, then diff and derive the apply
         # payloads from the SAME objects. This closes a TOCTOU gap: re-calling
         # build_desired() for the action payloads could observe state that diverged
@@ -129,21 +134,28 @@ def run_apply(
         current_by_key = {provider.match_key(c): c for c in current}
         desired_by_key = {provider.match_key(d): d for d in desired}
         applied = 0
-        for resource in plan.resources:
-            if not resource.changed:
-                continue
-            action = provider.to_action(
-                resource,
-                current_by_key.get(resource.key),
-                desired_by_key.get(resource.key),
-            )
-            provider.apply(action)
-            applied += 1
+        try:
+            for resource in plan.resources:
+                if not resource.changed:
+                    continue
+                action = provider.to_action(
+                    resource,
+                    current_by_key.get(resource.key),
+                    desired_by_key.get(resource.key),
+                )
+                provider.apply(action)
+                applied += 1
+        except Exception as exc:
+            # Surface everything already written (completed providers + this one's
+            # partial count) so a mid-run failure isn't silent about the state left.
+            partial = f"{label}: applied {applied} change(s), then FAILED"
+            already = "\n".join([*sections, partial]) or "(nothing)"
+            raise RuntimeError(
+                f"apply aborted at {label}: {exc}\n"
+                f"Applied before the failure:\n{already}"
+            ) from exc
         if applied:
-            sections.append(
-                f"{planned.service}/{planned.instance} — {planned.label}: "
-                f"applied {applied} change(s)"
-            )
+            sections.append(f"{label}: applied {applied} change(s)")
     if not sections:
         return "No changes to apply."
     return "\n".join(sections)

@@ -7,6 +7,7 @@ from pathlib import Path
 
 import click
 import yaml
+from pydantic import ValidationError
 from rich.console import Console
 from rich.panel import Panel
 
@@ -85,6 +86,15 @@ def main(
         )
         log.debug("Debug logging enabled")
 
+    # --output json is a plan-only concern: apply prints a human summary, so a JSON
+    # apply would silently emit un-parseable text. Reject the combination up front.
+    if output == "json" and not plan_only:
+        console.print(
+            "[bold red]--output json requires --plan[/bold red] "
+            "(apply has no JSON output)."
+        )
+        sys.exit(2)
+
     # In JSON plan mode, stdout must be pure JSON — suppress the decorative chrome.
     json_mode = plan_only and output == "json"
     if not json_mode:
@@ -109,7 +119,11 @@ def main(
     except yaml.YAMLError as e:
         console.print(f"[bold red]Invalid YAML syntax:[/bold red] {e}")
         sys.exit(1)
-    except Exception as e:
+    except (ValidationError, ValueError, KeyError) as e:
+        # Known config-shape errors get a friendly message: Pydantic validation,
+        # explicit ValueErrors in the parser, and a missing required key (KeyError
+        # from a `config[...]` access). Anything else (a genuine code defect, e.g.
+        # TypeError/AttributeError) is left to surface as a traceback, not mislabelled.
         console.print(f"[bold red]Configuration error:[/bold red] {e}")
         sys.exit(1)
 

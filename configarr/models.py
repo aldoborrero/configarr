@@ -3,7 +3,13 @@
 from enum import StrEnum
 from typing import Any, Literal
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
+
+# The TRaSH import block is the one part of the config with a tight, fully-modelled
+# contract, so it forbids unknown keys — a typo (`trash_id` vs `trash_ids`,
+# `assign_score_to`) is a hard error instead of being silently dropped like the
+# passthrough sections elsewhere.
+_STRICT = ConfigDict(extra="forbid")
 
 
 class TrashScoreTarget(BaseModel):
@@ -12,6 +18,7 @@ class TrashScoreTarget(BaseModel):
     ``score`` overrides the guide value; otherwise the score comes from the custom
     format's ``score_set`` (default ``"default"``)."""
 
+    model_config = _STRICT
     profile: str
     score: int | None = None
     score_set: str | None = None
@@ -20,6 +27,7 @@ class TrashScoreTarget(BaseModel):
 class TrashCustomFormatGroup(BaseModel):
     """A set of TRaSH custom formats to import, and where to score them."""
 
+    model_config = _STRICT
     trash_ids: list[str] = []
     assign_scores_to: list[TrashScoreTarget] = []
 
@@ -29,6 +37,7 @@ class TrashQualityProfileImport(BaseModel):
     grouping, upgrade settings, and every custom format it scores (pulled from the
     profile's ``score_set``). ``name`` optionally renames it."""
 
+    model_config = _STRICT
     trash_id: str
     name: str | None = None
     score_set: str | None = None
@@ -40,6 +49,7 @@ class TrashConfig(BaseModel):
     (see ``configarr.trash``). ``source: local`` reads an existing Guides checkout at
     ``path`` (relative paths resolve against the config file's directory)."""
 
+    model_config = _STRICT
     source: Literal["local"] = "local"
     path: str | None = None
     quality_definition: str | None = None

@@ -35,7 +35,8 @@ existing Pydantic models.
 Consequence: **no provider changes, no engine changes, no new resource kinds.**
 `CustomFormatProvider`, `QualityProfileProvider`, and `QualityDefinitionProvider`
 never learn that TRaSH exists — they just receive a fuller config. Idempotency,
-`--plan`, `--apply`, `--prune`, secret redaction: all unchanged and already tested.
+`--plan`, apply (the default/no-flag path), `--prune`, secret redaction: all
+unchanged and already tested.
 
 ```
 configarr.yml ──parse_config (pure)──► user dicts ──┐
@@ -57,8 +58,8 @@ before planning; it deep-merges resolved dicts under the user's own definitions
 - **Custom-format JSON**: `{ trash_id, name, includeCustomFormatWhenRenaming,
   trash_scores: {<set>: int}, specifications: [...] }`. Each spec is
   `{ name, implementation, negate, required, fields }` where **`fields` is either an
-  object `{"value": x}` or an array `[{name, value}]`** — must normalize to the array
-  form. Field values are loosely typed (`"5"` vs `5`).
+  object `{"value": x}` or an array `[{name, value}]`** — must normalize to the
+  `{name: value}` **dict** form. Field values are loosely typed (`"5"` vs `5`).
 - **Quality-size JSON** (a.k.a. quality definitions): `{ type, qualities: [{quality,
   min, max, preferred}] }`, decimals.
 - **Quality-profile JSON**: `{ trash_id, name, trash_score_set, upgradeAllowed,
@@ -129,9 +130,9 @@ The resolver turns the above into the shapes the providers already read:
 
 ## Parsing concerns to get right (recyclarr precedent in parentheses)
 
-1. **`fields` object-or-array** — normalize object → `[{name, value}]`
-   (`FieldsArrayJsonConverter`). configarr's `CustomFormatProvider._build_spec`
-   currently assumes the dict form; the loader must hand it the normalized shape.
+1. **`fields` object-or-array** — normalize the array form → `{name: value}` dict
+   (`FieldsArrayJsonConverter`). configarr's `CustomFormatProvider` consumes the
+   `{name: value}` dict form, so the loader must hand it that normalized shape.
 2. **Loose scalars** — `"5"` vs `5`; reuse `normalize.coerce_scalar`
    (recyclarr: `NumberHandling = AllowReadingFromString` + `FieldValue`).
 3. **trash_id identity + dedup** — index by `trash_id`; last file wins on collision
@@ -161,7 +162,7 @@ parser (`docs/*/…-collection-of-custom-formats.md`), media naming.
 
 Nothing new to prove. The resolver only *builds desired state*; the engine's existing
 diff/normalize path decides changes and is already covered by the provider test
-suites. A resolved config must satisfy: resolve → `--apply` → resolve → `--plan` is
+suites. A resolved config must satisfy: resolve → apply → resolve → `--plan` is
 empty. Add one end-to-end test asserting that against a fixture guide.
 
 ## Testing strategy

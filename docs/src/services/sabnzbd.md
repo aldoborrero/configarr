@@ -1,9 +1,8 @@
 # SABnzbd
 
 configarr manages SABnzbd's Usenet **servers**, download **categories**, and a set
-of **misc** settings. Path prefix: `sabnzbd.instances.<name>`. SABnzbd is processed
-**first** in every run so its categories exist before *arr download clients
-reference them (see [Sync Order](../concepts/sync-order.md)).
+of **misc** settings. Path prefix: `sabnzbd.instances.<name>` (see
+[Sync Order](../concepts/sync-order.md) for where SABnzbd falls in a run).
 
 > [!NOTE]
 > Exact keys and defaults: the
@@ -21,9 +20,9 @@ sabnzbd:
 
 ## Servers
 
-A map keyed by server name. `host` is effectively required — if you omit it the
-server is silently dropped (null values are filtered out). Booleans like `ssl` and
-`enable` are coerced to `1`/`0` before sending.
+A map keyed by server name. `host` is **required** — a server entry without one is
+a hard error that aborts the run (exit `1`), not a silent drop. Booleans like `ssl`
+and `enable` are coerced to `1`/`0` before sending.
 
 ```yaml
 servers:
@@ -70,15 +69,15 @@ misc:
   pre_check: true
 ```
 
-## Always-write behaviour
+## Diffing behaviour
 
 > [!NOTE]
-> **Servers and categories never report UNCHANGED**
+> **SABnzbd is diffed like everything else**
 >
-> `sync_server` and `sync_category` always POST to SABnzbd's config API, so they
-> report `CREATED` or `UPDATED` even when the values already match. Only
-> `sync_misc_settings` reports `UNCHANGED`, and only when none of its keys are
-> present.
+> SABnzbd's config API is set-only (no per-object id, no full-document PUT), so
+> configarr GETs the current config and diffs it client-side. Servers, categories,
+> and misc settings that already match report `unchanged` and are skipped —
+> re-running an in-sync config writes nothing.
 
 ## Full example
 
