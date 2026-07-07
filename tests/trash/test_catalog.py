@@ -69,3 +69,19 @@ def test_malformed_guide_file_raises_clean_error(tmp_path):
     catalog = Catalog(tmp_path, load_metadata(tmp_path).json_paths.radarr)
     with pytest.raises(TrashError, match="expected a JSON object"):
         catalog.custom_formats()
+
+
+def test_non_numeric_score_raises_trash_error(tmp_path):
+    # A malformed guide value must surface as TrashError (caught by the CLI), not a
+    # bare ValueError that escapes as a traceback.
+    (tmp_path / "metadata.json").write_text(
+        '{"json_paths": {"radarr": {"custom_formats": ["cf"]}}}'
+    )
+    cf_dir = tmp_path / "cf"
+    cf_dir.mkdir()
+    (cf_dir / "bad.json").write_text(
+        '{"trash_id": "x", "name": "Bad", "trash_scores": {"default": "high"}}'
+    )
+    catalog = Catalog(tmp_path, load_metadata(tmp_path).json_paths.radarr)
+    with pytest.raises(TrashError, match="non-numeric"):
+        catalog.custom_formats()

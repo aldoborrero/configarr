@@ -26,20 +26,21 @@ so this usually surfaces later as an **authentication failure**.
 - Remember process environment variables override `.env`.
 - See [Secrets & Environment](concepts/secrets-and-env.md).
 
-## `FAILED` results
+## The run aborts with an error
 
-A `FAILED` line means the application's API rejected the operation. Common causes:
+There is no per-resource `FAILED` status. When something goes wrong during apply,
+that operation **raises** and the whole run exits `1`. Common causes:
 
-- **Missing `implementation`.** Download clients, notifications, indexers, and
-  applications all require `implementation`; omitting it fails the resource. An
-  unknown implementation value also fails.
+- **Missing `implementation`.** Download clients and indexers require
+  `implementation`; omitting (or misspelling) it raises a `ValueError` when the
+  resource is created, aborting the run.
 - **Bad credentials / unreachable host.** Check `base_url` and `api_key`, and that
   the address is reachable from where configarr runs (see the container note
   below).
 - **Invalid enum value.** For example, a Prowlarr application `sync_level` that
   isn't a valid value raises.
 
-Re-run with `--debug` for more detail.
+Preview with `--plan` first, and re-run with `--debug` for more detail.
 
 ## Config won't load at all
 
@@ -59,27 +60,24 @@ configured instances, or an `--instance` label that doesn't exist in scope. Chec
 the spelling against your file. (This is deliberate — a typo fails loudly instead
 of silently no-opping.)
 
-## `--dry-run` changed something / skipped everything
+## `--dry-run` changed something
 
-`--dry-run` only simulates **Bazarr**. The other four services are **skipped** under
-`--dry-run`, so:
+It can't. `--plan` / `--dry-run` is a **universal, read-only preview** — it fetches
+current state and diffs it against your config for every service, and writes
+nothing. There is no `--verbose` flag. If you want to apply changes, run without
+the flag (apply is the default). To narrow what a run touches, use `--service` /
+`--instance`. See [Plan, Apply & Scoping](concepts/dry-run-and-scoping.md).
 
-- If you expected Radarr/Sonarr/Prowlarr/SABnzbd to be previewed, they weren't —
-  there is no dry-run for them.
-- For those services, scope tightly with `--service` / `--instance` and read the
-  `CREATED`/`UPDATED` results instead. See
-  [Dry-Run & Scoping](concepts/dry-run-and-scoping.md).
+## A SABnzbd server errored out the run
 
-## A SABnzbd server silently disappeared
+A SABnzbd server with no `host` is a **hard error** that aborts the run (exit `1`),
+not a silent drop. Make sure every server entry has a `host`.
 
-A SABnzbd server with no `host` is **dropped** (null values are filtered out before
-sending). Make sure every server entry has a `host`.
+## Re-running SABnzbd keeps writing / never settles
 
-## SABnzbd always says CREATED/UPDATED, never UNCHANGED
-
-That's expected. SABnzbd servers and categories always write, so they never report
-`UNCHANGED` even when nothing changed. Only misc settings can report `UNCHANGED`.
-See [SABnzbd](services/sabnzbd.md#always-write-behaviour).
+It shouldn't — SABnzbd is diffed like every other service. configarr GETs the
+current config and only writes servers, categories, or misc settings that differ;
+an in-sync config is a no-op. See [SABnzbd](services/sabnzbd.md#diffing-behaviour).
 
 ## I can't reach my apps from inside Docker
 

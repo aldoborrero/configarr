@@ -51,17 +51,18 @@ optional. `main` is just a label you choose — name instances however you like.
 configarr --config configarr.yml
 ```
 
-configarr connects to Sonarr, ensures `/tv` exists as a root folder, and prints a
-result for each resource:
+configarr connects to Sonarr, ensures `/tv` exists as a root folder, and prints one
+line per provider that changed:
 
 ```text
-Root Folders
-  /tv ............................... CREATED
+sonarr/main — root folders: applied 1 change(s)
 ```
 
-Run it again and the same line reports `UNCHANGED` — most resources are
-idempotent. The [result vocabulary](../concepts/mental-model.md#idempotency-and-the-result-vocabulary)
-(`CREATED` / `UPDATED` / `UNCHANGED` / `FAILED`) is explained in Core Concepts.
+Run it again and there's nothing to do — most resources are idempotent, so the
+second run prints `No changes to apply.`. Preview a run first with `--plan`, which
+shows the per-resource ops (`create` / `update` / `delete`) without writing. The
+[result vocabulary](../concepts/mental-model.md#idempotency-and-the-result-vocabulary)
+is explained in Core Concepts.
 
 ## 5. Grow the file
 

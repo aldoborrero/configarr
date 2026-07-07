@@ -2,10 +2,18 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Collection, Iterable
 from typing import Any
 
 MASK = "********"  # Radarr/Sonarr return ApiKey/Password fields masked
+
+# Only "clean" numeric strings coerce, so string identity is preserved for values that
+# happen to look numeric: zero-padded ids ("007"), underscore-grouped ("1_000"), and
+# exponent forms ("1e3") stay strings. Python's int()/float() would otherwise silently
+# rewrite them, masking a real string-vs-number drift.
+_INT_RE = re.compile(r"[+-]?(?:0|[1-9][0-9]*)")
+_FLOAT_RE = re.compile(r"[+-]?(?:[0-9]+\.[0-9]*|\.[0-9]+)")
 
 # Provider-Field secrets are never echoed in clear text, so a configured value can
 # never be compared against the masked server value. Which fields are secret comes
@@ -17,22 +25,18 @@ SECRET_PRIVACY = frozenset({"apiKey", "password"})
 
 
 def coerce_scalar(value: Any) -> Any:
-    """Coerce numeric/bool strings so '5' == 5 and 'true' == True."""
+    """Coerce clean numeric/bool strings so '5' == 5 and 'true' == True. Values that
+    only look numeric (leading zeros, underscores, exponents, inf/nan) are left as-is
+    so their string identity is preserved."""
     if isinstance(value, str):
-        low = value.strip().lower()
+        s = value.strip()
+        low = s.lower()
         if low in {"true", "false"}:
             return low == "true"
-        try:
-            return int(value)
-        except ValueError:
-            pass
-        # Guard so free-text fields don't coerce to inf/nan via float().
-        if low in {"inf", "+inf", "-inf", "infinity", "+infinity", "-infinity", "nan"}:
-            return value
-        try:
-            return float(value)
-        except ValueError:
-            pass
+        if _INT_RE.fullmatch(s):
+            return int(s)
+        if _FLOAT_RE.fullmatch(s):
+            return float(s)
     return value
 
 

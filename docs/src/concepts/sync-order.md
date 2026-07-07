@@ -1,20 +1,17 @@
 # Sync Order
 
 configarr processes services and resources in a **fixed order that you cannot
-change from the YAML**. The order exists so that resources which depend on each
-other are created in the right sequence — for example, a SABnzbd category exists
-before a Sonarr download client points at it.
+change from the YAML**. The order comes from an internal provider registry. It
+exists so that one load-bearing dependency is always satisfied: within an *arr
+instance, **custom formats are synced before quality profiles**, so a profile's
+`custom_format_scores` can reference a format defined in the same file.
 
 ## Order across services
 
 ```mermaid
 flowchart LR
-    A[SABnzbd] --> B[Radarr] --> C[Sonarr] --> D[Prowlarr] --> E[Bazarr]
+    A[Radarr] --> B[Sonarr] --> C[Prowlarr] --> D[SABnzbd] --> E[Bazarr]
 ```
-
-SABnzbd runs **first** so its categories exist before the *arr download clients
-reference them. Bazarr runs **last** so the Sonarr/Radarr it connects to are
-already configured.
 
 > [!NOTE]
 > All configured instances of a service are processed before moving to the next
@@ -26,17 +23,17 @@ Resources are synced top to bottom:
 
 ```mermaid
 flowchart TD
-    R[Root Folders] --> N[Naming]
-    N --> DP[Delay Profiles]
+    CF[Custom Formats] --> QP[Quality Profiles]
+    QP --> QD[Quality Definitions]
+    QD --> N[Naming]
+    N --> RF[Root Folders]
+    RF --> DP[Delay Profiles]
     DP --> RP["Release Profiles<br/>(Sonarr only)"]
-    RP --> QD[Quality Definitions]
-    QD --> CF[Custom Formats]
-    CF --> QP[Quality Profiles]
-    QP --> DC[Download Clients]
+    RP --> DC[Download Clients]
     DC --> NO[Notifications]
 ```
 
-The key dependency here:
+The only ordering that is load-bearing:
 
 > [!TIP]
 > **Custom formats before quality profiles**
@@ -51,15 +48,16 @@ The key dependency here:
 | Service | Order |
 |---|---|
 | **Prowlarr** | Indexers → Applications → Download Clients |
-| **Bazarr** | General Settings → Sonarr Connection → Radarr Connection → Providers → Language Profiles |
 | **SABnzbd** | Servers → Categories → Misc Settings |
+| **Bazarr** | General Settings → Sonarr Connection → Radarr Connection → Providers → Language Profiles |
 
 ## Practical implications
 
 - **Cross-instance references resolve by address, not order.** A Prowlarr
   application pointing at Sonarr uses Sonarr's URL/API key — it doesn't require
-  Sonarr to be configured first in the same run. But the SABnzbd-first ordering
-  *does* matter for categories, which is why it's hardcoded.
+  Sonarr to be configured first in the same run. Likewise an *arr SABnzbd download
+  client just names a category string; it does not depend on SABnzbd running first
+  (SABnzbd is synced *after* the *arr apps, not before).
 - **A single file is enough.** Because ordering is handled for you, you can define
   SABnzbd categories, *arr download clients, and Prowlarr apps all in one
   `configarr.yml` and run it once.

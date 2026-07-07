@@ -14,7 +14,19 @@ _REDACTED = "***"
 # drop_secret_fields), but Bazarr echoes provider passwords in clear text, so a real
 # value can still reach a FieldDiff. Rendering must never trust that upstream dropped
 # it — a leaked secret in `--plan` output is the bug this guards against.
-_SECRET_HINTS = ("password", "passkey", "apikey", "token", "secret")
+#
+# Matching is by field *name* only: a secret stored under a non-secret-named key, or a
+# secret used as a resource match key, is NOT caught here — providers that hold
+# cleartext secrets (Bazarr) should also drop them from the diff, not rely on this.
+_SECRET_HINTS = (
+    "password",
+    "passkey",
+    "apikey",
+    "userkey",  # Pushover userKey — secret despite lacking password/apikey in the name
+    "token",
+    "secret",
+    "cookie",
+)
 
 
 def _redact(path: str, value: object) -> object:

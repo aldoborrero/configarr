@@ -105,8 +105,10 @@ class QualityProfileProvider(HttpProvider):
         return None
 
     def match_key(self, resource: dict[str, Any]) -> Hashable:
-        name: str = resource["name"]
-        return name
+        # `.get` (not `[...]`) to match the rest of the providers' contract: a
+        # nameless resource yields a None key the engine reports as a duplicate,
+        # rather than a bare KeyError here.
+        return resource.get("name")
 
     def _load_current(self) -> list[dict[str, Any]]:
         data: list[dict[str, Any]] = self._get("/api/v3/qualityprofile").json()
@@ -264,6 +266,18 @@ class QualityProfileProvider(HttpProvider):
             {**fi, "score": scores.get(fi.get("name"), 0)}
             for fi in schema.get("formatItems", [])
         ]
+        # A score keyed to a custom format that doesn't exist on this instance never
+        # lands in formatItems and would otherwise vanish silently — warn (mirrors the
+        # unmatched-quality-name warning above).
+        offered = {fi.get("name") for fi in schema.get("formatItems", [])}
+        unknown = [name for name in scores if name not in offered]
+        if unknown:
+            log.warning(
+                "quality profile %r: scores for CFs not on %s, ignored: %s",
+                profile["name"],
+                self.kind,
+                ", ".join(unknown),
+            )
         built: dict[str, Any] = {
             "name": profile["name"],
             "upgradeAllowed": upgrade.get("allowed", True),

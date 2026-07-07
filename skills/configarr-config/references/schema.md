@@ -16,24 +16,27 @@ A key is real only if it traces to one of three code layers:
    internal `upgrade.allowed`). These also define which sub-keys (`.definitions`,
    `settings.`, `profiles.`) wrap each resource.
 2. **`configarr/models.py`** Pydantic models — the authoritative **top-level
-   section contract** per instance and their defaults. `sync.py` reads these as
-   typed attributes (`config.root_folders`, `config.naming_config`, …), not via
-   `config.get`.
-3. **Each client's `sync_*` methods** (`radarr.py`, `sonarr.py`, `prowlarr.py`,
-   `bazarr/*`, `sabnzbd.py`) — read the **inner per-resource dicts** via
-   `config.get("key", default)` / `config["key"]`.
+   section contract** per instance and their defaults. Most sections are
+   `dict[str, Any]` passthrough (only `TrashConfig` is strictly typed); the
+   registry reads them as typed attributes (`config.root_folders`,
+   `config.naming_config`, …), not via `config.get`.
+3. **The resource providers** (`configarr/providers/*.py`) — one `ResourceProvider`
+   per resource kind reads the **inner per-resource dicts** via
+   `config.get("key", default)` / `config["key"]` and talks HTTP directly via
+   `requests` (there are no generated API clients).
 
 `settings:` maps are not enumerated key-by-key: every entry passes through to the
 *arr API field of the **same name** (matched against the live schema; unknown
 field names are silently ignored).
 
-**The resource inventory is authoritative from `sync.py`.** Every
-`_print_section(...)` block there is a section that must be documented. The full
-list: Root Folders, Naming, Delay Profiles, Release Profiles, Quality
-Definitions, Custom Formats, Quality Profiles, Download Clients, Notifications
-(arr); Indexers, Applications, Download Clients (prowlarr); General Settings,
-Sonarr Connection, Radarr Connection, Providers, Language Profiles (bazarr);
-Servers, Categories, Settings (sabnzbd).
+**The resource inventory is authoritative from `configarr/registry.py`.** Every
+`Registration` in `REGISTRY` is a resource that must be documented. The full list:
+Custom Formats, Quality Profiles, Quality Definitions, Naming, Root Folders, Delay
+Profiles, Release Profiles (Sonarr-only), Download Clients, Notifications (arr);
+Indexers, Applications, Download Clients (prowlarr); Servers, Categories, Misc
+Settings (sabnzbd); General/Sonarr/Radarr Settings, Providers, Language Profiles
+(bazarr). `REGISTRY` order is fixed; the one real invariant is **custom formats
+before quality profiles** within an instance.
 
 ## Top-level conventions
 
@@ -83,11 +86,11 @@ Top-level sections (from `parse_arr_instance` + `ArrServiceConfig`):
 
 ### Root folders — `settings.root_folders`
 
-A list whose entries are **`{path: ...}` objects**. Even though `sync.py` would
-accept a bare string, the `ArrServiceConfig` Pydantic model types this field as
-`list[dict[str, Any]]`, so a bare string path **fails validation at parse time**
-(`Input should be a valid dictionary`). Always wrap each path in `path:`.
-Creates the folder if absent; existing folders report `UNCHANGED`.
+A list whose entries are **`{path: ...}` objects**. The `ArrServiceConfig`
+Pydantic model types this field as `list[dict[str, Any]]`, so a bare string path
+**fails validation at parse time** (`Input should be a valid dictionary`). Always
+wrap each path in `path:`. Creates the folder if absent; existing folders report
+`UNCHANGED`.
 
 ```yaml
 settings:
@@ -128,21 +131,26 @@ A single map. Keys differ between services.
 | `season_folder_format` | string | server current | season folder format |
 | `specials_folder_format` | string | server current | specials folder format |
 
-Naming always reports `UPDATED` (it PUTs unconditionally).
+Naming is diffed against the live config (the provider merges the keys you set
+over the current settings and normalizes both sides), so it reports `UNCHANGED`
+when your values already match and `UPDATED` only on a genuine change.
 
 ### Delay profiles — `profiles.delay_profiles`
 
-A **list** of maps. Idempotency is by matching `usenet_delay` + `torrent_delay` +
-`preferred_protocol` against existing profiles; a match reports `UNCHANGED`,
-otherwise a new profile is `CREATED`.
+A **list** of maps. Idempotency identity is the profile's **sorted tag-set**: a
+config entry is matched to the existing profile carrying the same set of tags (the
+built-in catch-all has empty tags), so editing delay values updates that profile in
+place rather than creating a duplicate. A matched profile keeps its current field
+values with only your configured settings overlaid; an unmatched tag-set is
+`CREATED` from the defaults below.
 
 | key | type | default | meaning |
 |---|---|---|---|
 | `enable_usenet` | bool | `true` | |
 | `enable_torrent` | bool | `true` | |
-| `preferred_protocol` | string | `torrent` | matching key |
-| `usenet_delay` | int | `0` | matching key |
-| `torrent_delay` | int | `0` | matching key |
+| `preferred_protocol` | string | `torrent` | |
+| `usenet_delay` | int | `0` | |
+| `torrent_delay` | int | `0` | |
 | `bypass_if_highest_quality` | bool | `true` | |
 | `bypass_if_above_custom_format_score` | int | `0` | enables the bypass flag when `> 0` |
 | `minimum_custom_format_score` | int | `0` | |
@@ -150,8 +158,8 @@ otherwise a new profile is `CREATED`.
 
 ### Release profiles — `profiles.release_profiles` (Sonarr-only)
 
-A **list** of maps. Radarr ignores this section entirely (`sync.py` gates it on
-`isinstance(client, SonarrClient)`).
+A **list** of maps. Radarr ignores this section entirely — `release_profile` is
+only registered for Sonarr in `REGISTRY`.
 
 | key | type | default | meaning |
 |---|---|---|---|
@@ -165,7 +173,9 @@ A **list** of maps. Radarr ignores this section entirely (`sync.py` gates it on
 
 A **map** keyed by quality name (e.g. `WEBDL-1080p`), each value a map with any of
 `min`, `max`, `preferred`. Only listed qualities are touched; each present key
-sets the corresponding size. Always reports `UPDATED`.
+sets the corresponding size. Each quality is diffed individually, so one whose
+sizes already match reports `UNCHANGED` and only genuinely-changed qualities are
+`UPDATED`. A listed quality that doesn't exist on the instance is skipped.
 
 | key | type | default | meaning |
 |---|---|---|---|
@@ -199,7 +209,7 @@ Each entry in `specifications`:
 | `name` | string | — | **yes** | spec name |
 | `implementation` | string | — | **yes** | spec implementation (e.g. `ReleaseTitleSpecification`) |
 | `negate` | bool | `false` | no | invert the match |
-| `required` | bool | `true` | no | spec must match |
+| `required` | bool | `false` | no | spec must match |
 | `fields` | map | `{}` | no | field name → value, passthrough to the spec's fields |
 
 ```yaml
@@ -435,9 +445,9 @@ Path prefix `bazarr.instances.<name>`. Top-level keys (from
 `parse_bazarr_instance` + `BazarrConfig`): `base_url`, `api_key`, `general`,
 `sonarr`, `radarr`, `providers`, `language_profiles`.
 
-`--dry-run` is supported for Bazarr, but **provider and language-profile sync
-still issue READ (GET) requests** to fetch current state even in a dry run; only
-the mutating POSTs are skipped.
+`--plan`/`--dry-run` previews Bazarr like every other service: the providers still
+issue READ (GET) requests to fetch current state and diff against config, but no
+mutating writes happen.
 
 ### Connections — `general`, `sonarr`, `radarr`
 
@@ -482,7 +492,7 @@ providers:
 
 ### Language profiles — `language_profiles`
 
-A **list** of profile maps. Semantics (`languages.py` `sync_profiles`):
+A **list** of profile maps. Semantics (`providers/bazarr_language_profiles.py`):
 
 - Profiles you **list** (whether new or already on the server) are **rebuilt from
   your config and overwrite** the server copy.
@@ -529,13 +539,12 @@ Path prefix `sabnzbd.instances.<name>`. Top-level keys (from
 `parse_sabnzbd_instance` + `SabnzbdConfig`): `base_url`, `api_key`, `servers`,
 `categories`, `misc`.
 
-Legacy `sync_server` and `sync_category` write blindly (POST to SABnzbd's
-config API) and so report `CREATED`/`UPDATED` — never `UNCHANGED`. The diffing
-engine (`configarr/diff/`) instead GETs the full config and diffs servers and
-categories client-side, so an instance already matching config reports
-`UNCHANGED`; only genuine changes are written. `sync_misc_settings` (legacy) and
-the engine's `sabnzbd.misc` provider both report `UNCHANGED` when none of the
-managed keys differ.
+SABnzbd's config API is set-only (no per-object id, no full-document PUT), so each
+provider GETs the whole config (`mode=get_config`) and diffs servers, categories,
+and misc settings **client-side**. An instance already matching config reports
+`UNCHANGED`; only genuine changes are written back via `mode=set_config`, which
+touches only the keys it is given. The `sabnzbd.misc` provider likewise reports
+`UNCHANGED` when none of the managed keys differ.
 
 ### Servers — `servers`
 
@@ -543,7 +552,7 @@ A map keyed by server name. Booleans are coerced to `1`/`0` before sending.
 
 | key | type | default | meaning |
 |---|---|---|---|
-| `host` | string | **none** | server host; **silently dropped if omitted** (None values are filtered out) |
+| `host` | string | **none** | server host; **required** — a server missing `host` raises `ValueError` and aborts the run |
 | `port` | int | `563` | |
 | `ssl` | bool | `true` | sent as `1`/`0` |
 | `ssl_verify` | int | `2` | |
@@ -802,11 +811,12 @@ it after a code change, re-check the three layers and the inventory:
   by subscript here (hence required).
 - **`configarr/models.py`** — the Pydantic models
   (`ArrServiceConfig`, `ProwlarrConfig`, `BazarrConfig`, `SabnzbdConfig`) are the
-  top-level **section contract and defaults**; `sync.py` reads these as attributes.
-- **Client `sync_*` methods** (`radarr.py`, `sonarr.py`, `prowlarr.py`,
-  `bazarr/__init__.py`, `bazarr/languages.py`, `bazarr/settings.py`,
-  `sabnzbd.py`) — the **inner per-resource keys** via `config.get(...)`, their
-  defaults, and which keys are service-specific.
-- **`configarr/sync.py`** — every `_print_section(...)` is the **authoritative
-  list of resources**; if a new one appears, add a section here.
+  top-level **section contract and defaults** (mostly `dict[str, Any]` passthrough;
+  only `TrashConfig` is strict); the registry reads these as attributes.
+- **`configarr/providers/*.py`** — each `ResourceProvider` reads the **inner
+  per-resource keys** via `config.get(...)`, their defaults, and which keys are
+  service-specific, and drives its own diff/apply against the HTTP API.
+- **`configarr/registry.py`** — every `Registration` in `REGISTRY` is the
+  **authoritative list of resources** and fixes their order; if a new one appears,
+  add a section here.
 

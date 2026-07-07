@@ -133,8 +133,10 @@ class FieldProvider(HttpProvider):
       ``_normalized_fields`` drops them; ``_secret_names_ready`` keeps that
       self-enforcing regardless of call order — see finding I2);
     - ``coerce_scalar`` + secret-drop field normalization;
-    - the CREATE/UPDATE ``to_action`` boilerplate (CREATE strips ``id``, UPDATE carries
-      the matched ``current`` id; full-replace, additive — no DELETE);
+    - the ``to_action`` boilerplate (CREATE strips ``id``, UPDATE carries the matched
+      ``current`` id, DELETE carries just the id; full-replace). DELETE is only
+      reachable when a subclass opts into ``prunable``; the base handles it so the
+      flag and its write path stay coupled;
     - ``forceSave=true`` writes that skip the *arr live-connectivity test.
 
     Subclasses supply the resource-specific schema fetch+cache, the override map in
@@ -190,24 +192,33 @@ class FieldProvider(HttpProvider):
         current: dict[str, Any] | None,
         desired: dict[str, Any] | None,
     ) -> Action:
-        assert plan.op in (Op.CREATE, Op.UPDATE), (
+        assert plan.op in (Op.CREATE, Op.UPDATE, Op.DELETE), (
             f"to_action: unexpected op {plan.op!r}"
         )
         if plan.op is Op.CREATE:
             payload = {k: v for k, v in (desired or {}).items() if k != "id"}
             return Action(op=plan.op, key=plan.key, payload=payload)
+        if plan.op is Op.DELETE:
+            # Prune only carries the current object; we just need its id to delete.
+            assert current is not None, (
+                f"to_action: DELETE for {plan.key!r} requires the current resource"
+            )
+            return Action(op=plan.op, key=plan.key, payload={"id": current["id"]})
         payload = {**(desired or {}), "id": (current or {})["id"]}
         return Action(op=plan.op, key=plan.key, payload=payload)
 
     def _apply_force_save(self, endpoint: str, action: Action) -> None:
-        """POST (create) or PUT (update) the payload with ``forceSave=true`` and
-        invalidate the current-state cache. ``endpoint`` is the collection path,
-        e.g. ``/api/v3/downloadclient``."""
+        """POST (create) / PUT (update) / DELETE the payload with ``forceSave=true``
+        and invalidate the current-state cache. ``endpoint`` is the collection path,
+        e.g. ``/api/v3/downloadclient``. DELETE is reached only under ``--prune`` for
+        a ``prunable`` subclass."""
         if action.op is Op.CREATE:
             self._post(f"{endpoint}?forceSave=true", json=action.payload)
         elif action.op is Op.UPDATE:
             rid = action.payload["id"]
             self._put(f"{endpoint}/{rid}?forceSave=true", json=action.payload)
+        elif action.op is Op.DELETE:
+            self._delete(f"{endpoint}/{action.payload['id']}")
         else:
             raise NotImplementedError(f"apply: unsupported op {action.op!r}")
         self.invalidate_current()

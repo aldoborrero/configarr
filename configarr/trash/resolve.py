@@ -207,13 +207,14 @@ def _guide_items_to_qualities(guide_items: list[dict[str, Any]]) -> list[Any]:
     name. Disabled entries are omitted — the provider disables anything unlisted."""
     qualities: list[Any] = []
     for item in guide_items:
-        if not item.get("allowed", False):
+        name = item.get("name")
+        if not name or not item.get("allowed", False):
             continue
         children = item.get("items")
         if children:
-            qualities.append({"name": item["name"], "qualities": list(children)})
+            qualities.append({"name": name, "qualities": list(children)})
         else:
-            qualities.append(item["name"])
+            qualities.append(name)
     return qualities
 
 

@@ -29,9 +29,9 @@ config file.
 
 ## How it works
 
-configarr reads your YAML, talks to each application's HTTP API, and reconciles
-the live configuration toward what you declared. Most resources are idempotent —
-running twice is safe and the second run reports `UNCHANGED`. The
+configarr reads your YAML, diffs it against each application's live configuration
+over HTTP, and applies only what changed. Most resources are idempotent — running
+twice is safe and the second run reports `No changes to apply.`. The
 [Mental Model](concepts/mental-model.md) chapter explains the model in full.
 
 > [!NOTE]

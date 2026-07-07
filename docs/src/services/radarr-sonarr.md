@@ -54,8 +54,9 @@ sonarr:
 > The naming keys differ between the two: Radarr uses `rename_movies`,
 > `standard_movie_format`, `movie_folder_format`; Sonarr uses `rename_episodes`,
 > `multi_episode_style`, and the various episode/season formats. `colon_replacement`
-> and `replace_illegal_characters` apply to both. Naming always reports `UPDATED` —
-> it is written unconditionally.
+> and `replace_illegal_characters` apply to both. Naming is **diffed** on the fields
+> it manages: it reports `unchanged` when those already match, and only writes when
+> they differ.
 
 ## Custom formats and quality profiles
 
@@ -117,8 +118,10 @@ A few things worth knowing:
 
 ## Delay and release profiles
 
-Delay profiles (`profiles.delay_profiles`) apply to both services and are matched
-for idempotency on `usenet_delay` + `torrent_delay` + `preferred_protocol`:
+Delay profiles (`profiles.delay_profiles`) apply to both services. A profile's
+identity is its **tag set** (the sorted list of tags it applies to, with the
+built-in catch-all having no tags), not its delay values — so editing a delay
+updates the existing profile instead of creating a duplicate:
 
 ```yaml
 profiles:
@@ -180,8 +183,9 @@ notifications:
 > [!CAUTION]
 > **implementation is required**
 >
-> Omitting `implementation` on a download client or notification produces a
-> `FAILED` result. An unknown implementation value is also rejected.
+> Omitting (or misspelling) `implementation` on a download client raises a
+> `ValueError` when configarr tries to create it, which aborts the whole run (exit
+> `1`) — there is no per-resource failure line.
 
 ## Full examples
 

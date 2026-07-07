@@ -52,6 +52,15 @@ class TrashQualityProfile(TypedDict):
     format_items: dict[str, str]
 
 
+def _int(value: Any, *, field: str, source: str) -> int:
+    """Coerce a guide numeric field, surfacing a malformed value as TrashError (the
+    module's contract) rather than a bare ValueError that escapes the CLI handler."""
+    try:
+        return int(value)
+    except (TypeError, ValueError) as exc:
+        raise TrashError(f"guide {source}: non-numeric {field}={value!r}") from exc
+
+
 def _normalize_fields(fields: Any) -> dict[str, Any]:
     if isinstance(fields, dict):
         return dict(fields)
@@ -109,7 +118,10 @@ class Catalog:
                     specifications=[
                         _normalize_spec(s) for s in data.get("specifications", [])
                     ],
-                    trash_scores={k: int(v) for k, v in raw_scores.items()},
+                    trash_scores={
+                        k: _int(v, field=f"trash_scores[{k}]", source=trash_id)
+                        for k, v in raw_scores.items()
+                    },
                 )
             self._custom_formats = index
         return self._custom_formats
@@ -143,8 +155,16 @@ class Catalog:
                     score_set=data.get("trash_score_set", ""),
                     upgrade_allowed=bool(data.get("upgradeAllowed", True)),
                     cutoff=data.get("cutoff", ""),
-                    min_format_score=int(data.get("minFormatScore", 0)),
-                    cutoff_format_score=int(data.get("cutoffFormatScore", 10000)),
+                    min_format_score=_int(
+                        data.get("minFormatScore", 0),
+                        field="minFormatScore",
+                        source=trash_id,
+                    ),
+                    cutoff_format_score=_int(
+                        data.get("cutoffFormatScore", 10000),
+                        field="cutoffFormatScore",
+                        source=trash_id,
+                    ),
                     language=data.get("language", ""),
                     items=list(data.get("items") or []),
                     format_items=dict(data.get("formatItems") or {}),

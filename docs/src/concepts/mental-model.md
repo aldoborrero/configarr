@@ -60,26 +60,28 @@ Those cases are called out in the [service guides](../services/bazarr.md) and th
 
 ## Idempotency and the result vocabulary
 
-Every resource reports one of four outcomes:
+configarr diffs desired state against the live service, so `--plan` reports one
+operation per changed resource:
 
-| Result | Meaning |
+| Op | Meaning |
 |---|---|
-| `CREATED` | Did not exist; configarr created it. |
-| `UPDATED` | Existed; configarr wrote new values. |
-| `UNCHANGED` | Existed and already matched; nothing sent. |
-| `FAILED` | The API rejected the operation (see the error and [Troubleshooting](../troubleshooting.md)). |
+| `create` | Did not exist; configarr will create it. |
+| `update` | Exists but differs; configarr will write the changed fields (shown as `before -> after`). |
+| `delete` | Exists on the server but is absent from config — only with `--prune`. |
+| `unchanged` | Exists and already matches. Not shown in the plan. |
 
-Most resources are idempotent — running twice is safe and converges on
-`UNCHANGED`. A few **always write** and so never report `UNCHANGED`:
+Most resources are idempotent — running twice is safe and the second `--plan` is
+empty. Apply (the default) writes only the resources that differ and prints one
+line per provider that changed:
+`"<service>/<instance> — <label>: applied N change(s)"`, or `"No changes to
+apply."`.
 
-- Naming / media management always reports `UPDATED` (it PUTs unconditionally).
-- Quality definitions always report `UPDATED`.
-- SABnzbd servers and categories always report `CREATED`/`UPDATED`, even when the
-  values already match.
+There is **no** `FAILED` status. If the API rejects a write, that write **raises**
+and the run exits `1` — it does not continue with a per-resource failure line.
 
 > [!NOTE]
-> A non-zero number of `FAILED` results makes configarr exit with a non-zero status
-> code, which is what you want in CI. See [Command Line](../reference/cli.md#exit-codes).
+> A failed apply, a bad config, or a TRaSH import error all exit non-zero, which is
+> what you want in CI. See [Command Line](../reference/cli.md#exit-codes).
 
 ## Unknown keys are silently ignored
 
