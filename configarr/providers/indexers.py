@@ -52,8 +52,19 @@ class IndexerProvider(FieldProvider):
     ) -> dict[str, Any]:
         by_impl, by_name = self._schemas()
         if definition:
-            return by_name.get(definition, {})
-        return by_impl.get(implementation, {})
+            # Fail fast on a typo'd definition — otherwise an empty schema is built
+            # and the indexer POST 400s server-side with an opaque error.
+            if definition not in by_name:
+                raise ValueError(
+                    f"unknown Prowlarr indexer definition {definition!r} "
+                    "(not in /api/v1/indexer/schema)"
+                )
+            return by_name[definition]
+        if implementation not in by_impl:
+            raise ValueError(
+                f"unknown Prowlarr indexer implementation {implementation!r}"
+            )
+        return by_impl[implementation]
 
     def _load_current(self) -> list[dict[str, Any]]:
         data: list[dict[str, Any]] = self._get("/api/v1/indexer").json()

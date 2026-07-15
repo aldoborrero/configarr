@@ -7,8 +7,12 @@
 #
 # Reference: https://trash-guides.info
 #
-# TRaSH's cutoff for this profile is a quality *group*; configarr resolves
-# cutoffs by individual quality name, so it is mapped to Bluray-1080p here.
+# The cutoff is set to the TRaSH quality group "Bluray|WEB-1080p"; configarr
+# resolves cutoffs by group name, so the group is used directly.
+#
+# This is an illustrative full expansion, kept for reference. Prefer the `trash:`
+# import (see examples/trash.yml), which produces the same profile from a single
+# trash_id and tracks upstream changes automatically.
 #
 # Set RADARR_API_KEY in a .env beside your configarr.yml, adjust base_url, then:
 #   configarr --config examples/trash-guides/radarr/sqp-1-web-1080p.yml --service radarr
@@ -592,32 +596,6 @@ radarr:
                 negate: true
                 fields:
                   value: \b(l?)PCM(\b|\d)
-          2.0 Stereo:
-            specifications:
-              - name: Stereo
-                implementation: ReleaseTitleSpecification
-                fields:
-                  value: (?<=\b[12]\d{3}\b.*?)(?<!repac)[^0-9]2[ .]0\b|\bStereo\b
-              - name: Not 3.0ch
-                implementation: ReleaseTitleSpecification
-                negate: true
-                fields:
-                  value: '[^0-9]3[ .]0\b'
-              - name: Not 4.0ch
-                implementation: ReleaseTitleSpecification
-                negate: true
-                fields:
-                  value: '[^0-9]4[ .]0\b'
-              - name: Not High Channel Count
-                implementation: ReleaseTitleSpecification
-                negate: true
-                fields:
-                  value: '[^0-9][5-9][ .][0-1]\b'
-              - name: Not Mono
-                implementation: ReleaseTitleSpecification
-                negate: true
-                fields:
-                  value: '[^0-9]1[ .]0\b|\bMono\b|\[PCM \]'
           BHDStudio:
             specifications:
               - name: BHDStudio
@@ -1775,35 +1753,6 @@ radarr:
                 implementation: ResolutionSpecification
                 fields:
                   value: 720
-          AMZN:
-            include_when_renaming: true
-            specifications:
-              - name: Amazon
-                implementation: ReleaseTitleSpecification
-                fields:
-                  value: \b(amzn|amazon(hd)?)\b
-              - name: WEBDL
-                implementation: SourceSpecification
-                required: false
-                fields:
-                  value: 7
-              - name: WEBRIP
-                implementation: SourceSpecification
-                required: false
-                fields:
-                  value: 8
-          10bit:
-            specifications:
-              - name: 10bit
-                implementation: ReleaseTitleSpecification
-                required: false
-                fields:
-                  value: 10[.-]?bit
-              - name: hi10p
-                implementation: ReleaseTitleSpecification
-                required: false
-                fields:
-                  value: hi10p
           Bad Dual Groups:
             specifications:
               - name: alfaHD
@@ -2294,7 +2243,7 @@ radarr:
           definitions:
             '[SQP] SQP-1 WEB (1080p)':
               upgrades_allowed: true
-              upgrade_until_quality: Bluray-1080p
+              upgrade_until_quality: Bluray|WEB-1080p
               upgrade_until_custom_format_score: 10000
               minimum_custom_format_score: 1000
               qualities:

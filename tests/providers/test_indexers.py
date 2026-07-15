@@ -242,3 +242,13 @@ def test_plan_fetches_current_once(plan_provider):
     responses.get(f"{PROWLARR}/api/v1/indexer/schema", json=SCHEMA)
     plan_provider(_prowlarr(CONFIG))
     assert current.call_count == 1
+
+
+@responses.activate
+@responses.activate
+def test_unknown_cardigann_definition_raises():
+    responses.get(f"{PROWLARR}/api/v1/indexer", json=[])
+    responses.get(f"{PROWLARR}/api/v1/indexer/schema", json=SCHEMA)
+    cfg = {"MySite": {"implementation": "Cardigann", "definition": "NoSuchSite"}}
+    with pytest.raises(ValueError, match="unknown Prowlarr indexer definition"):
+        _prowlarr(cfg).build_desired()

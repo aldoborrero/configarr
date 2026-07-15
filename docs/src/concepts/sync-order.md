@@ -8,14 +8,16 @@ instance, **custom formats are synced before quality profiles**, so a profile's
 
 ## Order across services
 
-```mermaid
-flowchart LR
-    A[Radarr] --> B[Sonarr] --> C[Prowlarr] --> D[SABnzbd] --> E[Bazarr]
-```
+The registry is ordered **by resource kind, interleaving Radarr and Sonarr**, then
+Prowlarr, then SABnzbd, then Bazarr. It is *not* "all of Radarr, then all of Sonarr":
+for example every instance's custom formats and quality profiles are synced (Radarr
+then Sonarr) *before* any quality definitions. The authoritative order is the
+`REGISTRY` list in `configarr/registry.py`.
 
 > [!NOTE]
-> All configured instances of a service are processed before moving to the next
-> service. Within a service, instances run in the order they appear in the file.
+> Don't rely on the cross-service or cross-kind ordering — it's an implementation
+> detail that can change. The **only** guarantee is the one below: within a Radarr or
+> Sonarr instance, custom formats are synced before quality profiles.
 
 ## Order within a Radarr / Sonarr instance
 

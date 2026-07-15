@@ -7,8 +7,12 @@
 #
 # Reference: https://trash-guides.info/Sonarr/sonarr-setup-quality-profiles/#web-1080p
 #
-# TRaSH's cutoff for this profile is a quality *group*; configarr resolves
-# cutoffs by individual quality name, so it is mapped to WEBDL-1080p here.
+# The cutoff is set to the TRaSH quality group "WEB 1080p"; configarr resolves
+# cutoffs by group name, so the group is used directly.
+#
+# This is an illustrative full expansion, kept for reference. Prefer the `trash:`
+# import (see examples/trash.yml), which produces the same profile from a single
+# trash_id and tracks upstream changes automatically.
 #
 # Set SONARR_API_KEY in a .env beside your configarr.yml, adjust base_url, then:
 #   configarr --config examples/trash-guides/sonarr/web-1080p.yml --service sonarr
@@ -1026,7 +1030,7 @@ sonarr:
           definitions:
             WEB-1080p:
               upgrades_allowed: true
-              upgrade_until_quality: WEBDL-1080p
+              upgrade_until_quality: WEB 1080p
               upgrade_until_custom_format_score: 10000
               minimum_custom_format_score: 0
               qualities:

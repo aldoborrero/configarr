@@ -76,8 +76,9 @@ line per provider that changed:
 `"<service>/<instance> — <label>: applied N change(s)"`, or `"No changes to
 apply."`.
 
-There is **no** `FAILED` status. If the API rejects a write, that write **raises**
-and the run exits `1` — it does not continue with a per-resource failure line.
+There is **no** `FAILED` status. If the API rejects a write, that write **raises**,
+the run stops (exit `1`), and the error names where it aborted and lists the changes
+already applied before the failure — it does not keep going resource by resource.
 
 > [!NOTE]
 > A failed apply, a bad config, or a TRaSH import error all exit non-zero, which is
