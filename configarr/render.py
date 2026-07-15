@@ -20,11 +20,13 @@ _REDACTED = "***"
 # cleartext secrets (Bazarr) should also drop them from the diff, not rely on this.
 _SECRET_HINTS = (
     "password",
+    "passwd",
     "passkey",
     "apikey",
     "userkey",  # Pushover userKey — secret despite lacking password/apikey in the name
     "token",
     "secret",
+    "credential",
     "cookie",
 )
 

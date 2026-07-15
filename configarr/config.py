@@ -1,5 +1,6 @@
 """Configuration parsing for configarr."""
 
+import logging
 import os
 import re
 from pathlib import Path
@@ -16,6 +17,8 @@ from configarr.models import (
     SabnzbdConfig,
     SonarrConfig,
 )
+
+log = logging.getLogger("configarr.config")
 
 # Re-export for backwards compatibility
 __all__ = [
@@ -57,22 +60,29 @@ def load_env_file(env_path: Path) -> None:
                     os.environ[key] = value
 
 
-def expand_env_vars(value: Any) -> Any:
+def expand_env_vars(value: Any, _unresolved: set[str] | None = None) -> Any:
     """Recursively expand environment variables in config values.
 
-    Supports ${VAR} syntax. Missing env vars are left as-is.
+    Supports ${VAR} syntax. A missing variable is left as the literal ``${VAR}``;
+    its name is collected into ``_unresolved`` (when provided) so the caller can warn
+    — otherwise a literal ``${API_KEY}`` silently reaches an API payload and surfaces
+    as a confusing 401 far from the cause.
     """
     if isinstance(value, str):
 
         def replace_env(match: re.Match[str]) -> str:
             var_name = match.group(1)
-            return os.environ.get(var_name, match.group(0))
+            if var_name not in os.environ:
+                if _unresolved is not None:
+                    _unresolved.add(var_name)
+                return match.group(0)
+            return os.environ[var_name]
 
         return re.sub(r"\$\{([^}]+)\}", replace_env, value)
     if isinstance(value, dict):
-        return {k: expand_env_vars(v) for k, v in value.items()}
+        return {k: expand_env_vars(v, _unresolved) for k, v in value.items()}
     if isinstance(value, list):
-        return [expand_env_vars(item) for item in value]
+        return [expand_env_vars(item, _unresolved) for item in value]
     return value
 
 
@@ -200,8 +210,15 @@ def parse_config(config_path: Path) -> ConfigarrConfig:
             f"got {type(raw_config).__name__}"
         )
 
-    # Expand environment variables in all config values
-    raw_config = expand_env_vars(raw_config)
+    # Expand environment variables in all config values, warning about any that were
+    # left unresolved (they'd otherwise flow into API payloads as literal ${VAR}).
+    unresolved: set[str] = set()
+    raw_config = expand_env_vars(raw_config, unresolved)
+    if unresolved:
+        log.warning(
+            "unresolved ${VAR} left literal (set them in .env or the environment): %s",
+            ", ".join(sorted(unresolved)),
+        )
 
     # The `or {}` at each level keeps a present-but-null section (e.g. `radarr:`
     # with no body, or `instances:` left blank) from crashing instead of being

@@ -32,6 +32,7 @@ from configarr.providers.root_folders import RootFolderProvider
 from configarr.providers.sabnzbd_categories import SabnzbdCategoryProvider
 from configarr.providers.sabnzbd_misc import SabnzbdMiscProvider
 from configarr.providers.sabnzbd_servers import SabnzbdServerProvider
+from configarr.scope import in_scope
 
 
 @dataclass(frozen=True)
@@ -323,12 +324,9 @@ def providers_for(
 ) -> Iterator[PlannedProvider]:
     """Yield a PlannedProvider for every registered provider that matches the
     optional service/instance filters, in registry then instance order."""
-    svc_filter = service.lower() if service else None
     for reg in REGISTRY:
-        if svc_filter and reg.service != svc_filter:
-            continue
         for inst in getattr(config, reg.service):
-            if instance and inst.name != instance:
+            if not in_scope(reg.service, inst.name, service, instance):
                 continue
             yield PlannedProvider(
                 service=reg.service,

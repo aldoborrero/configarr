@@ -23,6 +23,7 @@ from configarr.models import (
     TrashQualityProfileImport,
     TrashScoreTarget,
 )
+from configarr.scope import in_scope
 from configarr.trash.catalog import Catalog, TrashCustomFormat
 from configarr.trash.errors import TrashError
 from configarr.trash.metadata import load_metadata
@@ -42,14 +43,9 @@ def resolve_trash(
     """Resolve every in-scope Radarr/Sonarr instance that declares a ``trash:``
     block. ``service``/``instance`` mirror the CLI filters so an out-of-scope
     instance's guide is never read."""
-    svc_filter = service.lower() if service else None
     for svc, instances in (("radarr", config.radarr), ("sonarr", config.sonarr)):
-        if svc_filter and svc != svc_filter:
-            continue
         for inst in instances:
-            if instance and inst.name != instance:
-                continue
-            if inst.trash is not None:
+            if inst.trash is not None and in_scope(svc, inst.name, service, instance):
                 _resolve_instance(svc, inst, base_dir)
 
 

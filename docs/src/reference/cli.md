@@ -81,8 +81,9 @@ scheduled job on it:
   stable JSON document (see [Plan, Apply & Scoping](../concepts/dry-run-and-scoping.md#machine-readable-plan-output-json)).
 - **Apply** (the default) prints one line per provider that changed —
   `"<service>/<instance> — <label>: applied N change(s)"` — or `"No changes to
-  apply."` when everything already matched. A write that the API rejects raises and
-  the run exits `1`; there is no per-resource failure line.
+  apply."` when everything already matched. A write the API rejects stops the run
+  (exit `1`); the error names where it aborted and lists the changes already applied
+  before the failure (apply is not atomic).
 
 The result vocabulary is explained in the
 [Mental Model](../concepts/mental-model.md#idempotency-and-the-result-vocabulary).

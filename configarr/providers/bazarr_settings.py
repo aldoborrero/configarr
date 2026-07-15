@@ -29,9 +29,12 @@ from configarr.providers.base import Action, CurrentStateCache
 
 def _form_value(value: Any) -> str:
     """Encode a value the way Bazarr's settings form-POST expects: bools as the
-    lower-cased ``true``/``false`` string, everything else stringified."""
+    lower-cased ``true``/``false`` string, lists comma-joined (as Bazarr does for
+    ``enabled_providers``) rather than a Python repr, everything else stringified."""
     if isinstance(value, bool):
         return str(value).lower()
+    if isinstance(value, list | tuple):
+        return ",".join(_form_value(v) for v in value)
     return str(value)
 
 
