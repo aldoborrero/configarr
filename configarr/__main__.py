@@ -63,6 +63,12 @@ log = logging.getLogger("configarr")
     default="text",
     help="Output format for --plan: 'json' emits a machine-readable diff for CI.",
 )
+@click.option(
+    "--check",
+    is_flag=True,
+    help="Validate the config offline — parse it, check the models, and resolve any "
+    "TRaSH imports — then exit without contacting any service. For CI.",
+)
 def main(
     config_path: Path,
     service: str | None,
@@ -71,6 +77,7 @@ def main(
     prune: bool,
     debug: bool,
     output: str,
+    check: bool,
 ) -> None:
     """
     Configarr - declaratively manage Radarr, Sonarr, Prowlarr, Bazarr, and SABnzbd.
@@ -157,6 +164,19 @@ def main(
     except TrashError as e:
         console.print(f"[bold red]TRaSH import error:[/bold red] {e}")
         sys.exit(1)
+
+    # --check stops here: the config parsed, the models validated, the scope
+    # resolved, and every TRaSH import expanded — all without touching a service.
+    # Everything below reaches the network.
+    if check:
+        instance_count = sum(len(names) for names in available.values())
+        service_count = sum(1 for names in available.values() if names)
+        console.print(
+            f"[bold green]OK[/bold green] — configuration is valid "
+            f"({instance_count} instance(s) across {service_count} service(s)); "
+            "no service was contacted."
+        )
+        sys.exit(0)
 
     try:
         if plan_only:

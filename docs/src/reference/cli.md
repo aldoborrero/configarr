@@ -16,6 +16,7 @@ configarr [OPTIONS]
 | `--service` | `NAME` | Only process one service: `radarr`, `sonarr`, `prowlarr`, `bazarr`, or `sabnzbd`. |
 | `--instance` | `NAME` | Only process the instance with this label. Combine with `--service` to disambiguate. |
 | `--plan` / `--dry-run` | — | Preview the diff for **all** services, then exit without writing anything. The two flags are aliases. |
+| `--check` | — | Validate the config **offline** — parse it, check the models, and resolve any TRaSH imports — then exit. Contacts **no** service, so it needs no reachable instances. For CI. |
 | `--prune` | — | Also delete unmanaged resources (present on the server, absent from config) for providers that support deletion. Additive by default; combine with `--plan` to preview deletions first. |
 | `--output` | `text\|json` | Output format for `--plan`. `json` emits a machine-readable diff for CI. Default: `text`. |
 | `--debug` | — | Verbose debug logging for the whole run. Does **not** prevent writes. |
@@ -32,6 +33,12 @@ Apply is the **default** — running with no flag writes the changes.
 > `--prune` currently affects only custom formats — the one provider that supports
 > deletion today. Other providers stay additive even when `--prune` is passed.
 
+> [!TIP]
+> `--check` is not the same as `--plan`. `--plan` **contacts every service** to
+> fetch current state and show a diff; `--check` contacts **nothing** — it only
+> confirms the config parses, the models validate, and any TRaSH imports resolve.
+> Use `--check` in CI to catch a broken config without needing reachable instances.
+
 ## Examples
 
 ```bash
@@ -43,6 +50,9 @@ configarr --config /etc/configarr/configarr.yml
 
 # Preview everything, write nothing
 configarr --plan
+
+# Validate the config in CI without any reachable instance
+configarr --check
 
 # Only Radarr
 configarr --service radarr
