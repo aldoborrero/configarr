@@ -22,12 +22,11 @@ import json
 from collections.abc import Hashable
 from typing import Any
 
-import requests
-
 from configarr.build import merge_full_replace
 from configarr.model import Op, ResourcePlan
 from configarr.normalize import coerce_scalar
 from configarr.providers.base import Action, CurrentStateCache
+from configarr.transport import build_session
 
 # Common language name → ISO code, consulted before the server's language list so a
 # plan resolves the everyday languages without a second fetch (mirrors the legacy
@@ -83,7 +82,7 @@ class BazarrLanguageProfileProvider(CurrentStateCache):
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.config = config or []
-        self._session = requests.Session()
+        self._session = build_session()
         self._languages_cache: list[dict[str, Any]] | None = None
 
     def _profiles_url(self) -> str:

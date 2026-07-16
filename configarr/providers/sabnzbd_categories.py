@@ -21,11 +21,10 @@ from __future__ import annotations
 from collections.abc import Hashable
 from typing import Any
 
-import requests
-
 from configarr.model import Op, ResourcePlan
 from configarr.normalize import coerce_scalar
 from configarr.providers.base import Action, CurrentStateCache
+from configarr.transport import build_session
 
 # Documented defaults for a brand-new category (mirrors the legacy sync_category).
 CATEGORY_DEFAULTS: dict[str, Any] = {
@@ -55,7 +54,7 @@ class SabnzbdCategoryProvider(CurrentStateCache):
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.config = config or {}
-        self._session = requests.Session()
+        self._session = build_session()
 
     def _url(self, path: str) -> str:
         return f"{self.base_url}{path}"

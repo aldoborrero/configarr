@@ -14,6 +14,7 @@ from configarr.normalize import (
     drop_secret_fields,
     secret_field_names,
 )
+from configarr.transport import build_session
 
 
 @dataclass
@@ -93,7 +94,7 @@ class HttpProvider(CurrentStateCache):
 
     def __init__(self, base_url: str, api_key: str) -> None:
         self.base_url = base_url.rstrip("/")
-        self._session = requests.Session()
+        self._session = build_session()
         self._session.headers["X-Api-Key"] = api_key
 
     def _url(self, path: str) -> str:

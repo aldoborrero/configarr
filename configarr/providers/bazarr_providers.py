@@ -29,11 +29,10 @@ from __future__ import annotations
 from collections.abc import Hashable
 from typing import Any
 
-import requests
-
 from configarr.model import Op, ResourcePlan
 from configarr.normalize import coerce_scalar, drop_secret_fields
 from configarr.providers.base import Action, CurrentStateCache
+from configarr.transport import build_session
 
 # The only config-name → Bazarr-name rename; all other names are used verbatim.
 PROVIDER_NAME_MAP = {"submate": "whisperai"}
@@ -64,7 +63,7 @@ class BazarrProviderProvider(CurrentStateCache):
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.config = config or {}
-        self._session = requests.Session()
+        self._session = build_session()
 
     def _settings_url(self) -> str:
         return f"{self.base_url}/api/system/settings"
