@@ -26,6 +26,8 @@ from configarr.providers.base import Action, FieldProvider
 class IndexerProvider(FieldProvider):
     """Diffs Prowlarr indexers by name (provider-Field resource)."""
 
+    _tag_path = "/api/v1/tag"
+
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
         super().__init__(base_url, api_key, config, kind)
         # (by implementation, by schema name) — built together, cached.
@@ -84,7 +86,7 @@ class IndexerProvider(FieldProvider):
                 "priority": definition.get("priority", 25),
                 "appProfileId": definition.get("app_profile_id", 1),
                 "redirect": definition.get("redirect", False),
-                "tags": definition.get("tags", []),
+                "tags": self._resolve_tags(definition.get("tags")),
             }
             current = current_by_key.get(name)
             if current is None:

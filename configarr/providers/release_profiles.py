@@ -73,6 +73,8 @@ class ReleaseProfileProvider(HttpProvider):
         for entry in self.config:
             name = entry["name"]
             overrides = {"name": name, **self._overrides(entry)}
+            if "tags" in overrides:
+                overrides["tags"] = self._resolve_tags(overrides["tags"])
             current = current_by_key.get(name)
             if current is None:
                 desired.append({**_CREATE_DEFAULTS, **overrides})

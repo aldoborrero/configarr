@@ -59,7 +59,7 @@ class NotificationProvider(FieldProvider):
             settings = definition.get("settings") or {}
             overrides = {
                 "name": name,
-                "tags": definition.get("tags", []),
+                "tags": self._resolve_tags(definition.get("tags")),
                 **self._event_flags(definition),
             }
             current = current_by_key.get(name)

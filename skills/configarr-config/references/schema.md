@@ -53,6 +53,11 @@ before quality profiles** within an instance.
 - **`include:` on an instance** merges shared partial-config files into it before
   anything else reads the config, so common blocks (custom formats, quality
   profiles, settings) can be factored out and reused across instances.
+- **`tags:` accept labels or ids.** Anywhere a resource takes `tags:` (indexers,
+  download clients, notifications, applications, delay/release profiles), list tag
+  **labels** (strings) or numeric **ids**. Labels are resolved against the
+  instance's existing tags; an unknown label is an error (configarr does not create
+  tags yet). Numeric ids pass through unchanged.
 
 ```yaml
 sonarr:

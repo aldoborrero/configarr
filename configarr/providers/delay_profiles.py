@@ -88,7 +88,7 @@ class DelayProfileProvider(HttpProvider):
         desired: list[dict[str, Any]] = []
         for entry in self.config:
             overrides = self._overrides(entry)
-            overrides["tags"] = sorted(entry.get("tags") or [])
+            overrides["tags"] = sorted(self._resolve_tags(entry.get("tags")))
             current = current_by_key.get(tuple(overrides["tags"]))
             if current is None:
                 desired.append({**_CREATE_DEFAULTS, **overrides})

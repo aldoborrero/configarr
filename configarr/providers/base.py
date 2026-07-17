@@ -95,13 +95,51 @@ class HttpProvider(CurrentStateCache):
     ``kind``/``config`` after calling ``super().__init__()``.
     """
 
+    # Set by every subclass; declared here so shared helpers (e.g. tag resolution)
+    # can reference it.
+    kind: str
+    # Tag endpoint for label->id resolution; Prowlarr providers override to v1.
+    _tag_path = "/api/v3/tag"
+
     def __init__(self, base_url: str, api_key: str) -> None:
         self.base_url = base_url.rstrip("/")
         self._session = build_session()
         self._session.headers["X-Api-Key"] = api_key
+        self._tag_cache: dict[str, int] | None = None
 
     def _url(self, path: str) -> str:
         return f"{self.base_url}{path}"
+
+    def _tag_map(self) -> dict[str, int]:
+        """The instance's ``label -> id`` tag map (fetched once, cached)."""
+        if self._tag_cache is None:
+            self._tag_cache = {
+                t["label"]: t["id"] for t in self._get(self._tag_path).json()
+            }
+        return self._tag_cache
+
+    def _resolve_tags(self, tags: Any) -> list[int]:
+        """Resolve a config ``tags`` list to numeric ids. Integers pass through;
+        string labels are looked up in the instance's existing tags. An unknown
+        label is a clear error (configarr does not create tags — yet)."""
+        out: list[int] = []
+        for tag in tags or []:
+            if isinstance(tag, bool):  # bool is an int subclass; reject it explicitly
+                raise ValueError(f"invalid tag {tag!r}: expected a label or id")
+            if isinstance(tag, int):
+                out.append(tag)
+            elif isinstance(tag, str):
+                tag_map = self._tag_map()
+                if tag not in tag_map:
+                    service = self.kind.split(".")[0]
+                    raise ValueError(
+                        f"unknown tag label {tag!r} on {service}: create it there "
+                        "first, or use its numeric id"
+                    )
+                out.append(tag_map[tag])
+            else:
+                raise ValueError(f"invalid tag {tag!r}: expected a label (str) or id")
+        return out
 
     def _get(self, path: str) -> requests.Response:
         resp = self._session.get(self._url(path))
