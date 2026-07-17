@@ -28,6 +28,24 @@ Inside the dev shell the package is importable for quick validation, e.g.
 `python -c "from pathlib import Path; from configarr.config import parse_config; parse_config(Path('configarr.yml'))"`
 checks that a config passes the Pydantic models without syncing.
 
+## Testing
+
+The suite is mocked (`responses`) and runs offline under `nix flake check`. A
+separate **live** integration suite in `tests/integration/` exercises the real
+create → idempotent → prune → recreate round-trip against an actual Radarr; it is
+**skipped** unless `CONFIGARR_IT_RADARR_URL` and `CONFIGARR_IT_RADARR_KEY` are set,
+so it never affects the normal suite. Run it locally against a throwaway container:
+
+```sh
+docker run -d --name radarr -p 7878:7878 lscr.io/linuxserver/radarr:latest
+# wait for it, then read the key: docker exec radarr cat /config/config.xml
+CONFIGARR_IT_RADARR_URL=http://localhost:7878 CONFIGARR_IT_RADARR_KEY=<key> \
+  nix develop --command python -m pytest tests/integration
+```
+
+CI runs the same thing on relevant PRs via `.github/workflows/integration.yml`
+(it starts the container and captures the key automatically).
+
 ## Architecture
 
 The config flows through three layers — keep this model when reading or changing

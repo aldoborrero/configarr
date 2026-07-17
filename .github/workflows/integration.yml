@@ -1,0 +1,58 @@
+name: Integration
+
+# Live round-trip against a throwaway Radarr container: create -> idempotent ->
+# prune -> recreate. This catches *arr API drift the mocked suite can't. Runs on
+# PRs that touch the code or these tests, and on demand.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "configarr/**"
+      - "tests/integration/**"
+      - ".github/workflows/integration.yml"
+      - "flake.lock"
+
+jobs:
+  live:
+    name: Live Radarr round-trip
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Start Radarr
+        run: docker run -d --name radarr -p 7878:7878 lscr.io/linuxserver/radarr:latest
+
+      - name: Wait for Radarr and capture its API key
+        run: |
+          for _ in $(seq 1 60); do
+            key=$(docker exec radarr sh -c "sed -n 's|.*<ApiKey>\(.*\)</ApiKey>.*|\1|p' /config/config.xml" 2>/dev/null || true)
+            if [ -n "$key" ]; then
+              code=$(curl -s -o /dev/null -w '%{http_code}' -H "X-Api-Key: $key" http://localhost:7878/api/v3/system/status || true)
+              if [ "$code" = "200" ]; then
+                echo "::add-mask::$key"
+                echo "CONFIGARR_IT_RADARR_URL=http://localhost:7878" >> "$GITHUB_ENV"
+                echo "CONFIGARR_IT_RADARR_KEY=$key" >> "$GITHUB_ENV"
+                echo "Radarr is ready"
+                exit 0
+              fi
+            fi
+            sleep 5
+          done
+          echo "Radarr did not become ready in time"
+          docker logs radarr || true
+          exit 1
+
+      - name: Resolve pinned nixpkgs
+        id: nixpkgs
+        run: echo "url=https://github.com/NixOS/nixpkgs/archive/$(jq -r '.nodes.nixpkgs.locked.rev' flake.lock).tar.gz" >> "$GITHUB_OUTPUT"
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31.10.6
+        with:
+          nix_path: nixpkgs=${{ steps.nixpkgs.outputs.url }}
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Run live integration tests
+        run: nix develop --command python -m pytest -q tests/integration
