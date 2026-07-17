@@ -50,6 +50,9 @@ before quality profiles** within an instance.
   are left literal (e.g. `${SONARR_KEY}` stays as-is if unset).
 - A **`.env` file in the same directory as the config** is auto-loaded before
   expansion. Existing process env vars take precedence over `.env`.
+- **`include:` on an instance** merges shared partial-config files into it before
+  anything else reads the config, so common blocks (custom formats, quality
+  profiles, settings) can be factored out and reused across instances.
 
 ```yaml
 sonarr:
@@ -57,6 +60,32 @@ sonarr:
     main:
       base_url: http://localhost:8989
       api_key: ${SONARR_API_KEY}
+```
+
+### Instance includes — `include`
+
+`include` is a list of partial-config files merged into the instance. Each entry is
+a path (relative to the config file's directory) or a `{config: path}` mapping.
+Files are merged in order, then the instance's own keys are merged on top, so **the
+instance always wins** on a conflict. Mappings deep-merge key by key (so
+`custom_formats.definitions` from several files are unioned by name); a scalar or
+list replaces. Included files may themselves have an `include:` (nested, resolved
+relative to that file, cycle-guarded). A missing or non-mapping include file is an
+error.
+
+```yaml
+radarr:
+  instances:
+    hd:
+      base_url: http://localhost:7878
+      api_key: ${RADARR_API_KEY}
+      include:
+        - shared/custom-formats.yml   # defines custom_formats.definitions
+        - shared/quality-profiles.yml
+      # instance-specific overrides win over the included files
+      settings:
+        root_folders:
+          - path: /movies
 ```
 
 ---

@@ -183,6 +183,86 @@ def parse_sabnzbd_instance(name: str, config: dict[str, Any]) -> SabnzbdConfig:
     )
 
 
+def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    """Recursively merge ``override`` into ``base``. Nested mappings merge key by
+    key; a scalar or list in ``override`` replaces the value in ``base``."""
+    result = dict(base)
+    for key, value in override.items():
+        existing = result.get(key)
+        if isinstance(existing, dict) and isinstance(value, dict):
+            result[key] = _deep_merge(existing, value)
+        else:
+            result[key] = value
+    return result
+
+
+def _include_paths(includes: Any) -> list[str]:
+    """Normalize an ``include:`` value to a list of path strings. Each entry is a
+    plain path, or a ``{config: path}`` mapping (recyclarr-compatible)."""
+    if not isinstance(includes, list):
+        raise ValueError("`include` must be a list of file paths")
+    paths: list[str] = []
+    for entry in includes:
+        if isinstance(entry, str):
+            paths.append(entry)
+        elif isinstance(entry, dict) and isinstance(entry.get("config"), str):
+            paths.append(entry["config"])
+        else:
+            raise ValueError(
+                f"invalid include entry {entry!r}: expected a path or {{config: path}}"
+            )
+    return paths
+
+
+def _resolve_include_path(base_dir: Path, entry: str) -> Path:
+    p = Path(entry).expanduser()
+    return p if p.is_absolute() else base_dir / p
+
+
+def _load_include(path: Path, seen: frozenset[Path]) -> dict[str, Any]:
+    """Load one include file, resolving its own ``include:`` first (nested includes
+    resolve relative to that file's directory). ``seen`` guards against cycles."""
+    resolved = path.resolve()
+    if resolved in seen:
+        raise ValueError(f"include cycle detected at {path}")
+    if not path.is_file():
+        raise ValueError(f"include file not found: {path}")
+    with path.open() as f:
+        data = yaml.safe_load(f)
+    if data is None:
+        return {}
+    if not isinstance(data, dict):
+        raise ValueError(f"include file must be a YAML mapping: {path}")
+    nested = data.pop("include", None)
+    merged: dict[str, Any] = {}
+    if nested is not None:
+        for entry in _include_paths(nested):
+            child = _resolve_include_path(path.parent, entry)
+            merged = _deep_merge(merged, _load_include(child, seen | {resolved}))
+    return _deep_merge(merged, data)
+
+
+def _resolve_includes(raw_config: dict[str, Any], base_dir: Path) -> None:
+    """Expand each instance's ``include:`` in place: merge the included partial
+    configs (in order), then merge the instance's own keys on top so they win."""
+    for service in ("radarr", "sonarr", "prowlarr", "bazarr", "sabnzbd"):
+        section = raw_config.get(service)
+        if not isinstance(section, dict):
+            continue
+        instances = section.get("instances")
+        if not isinstance(instances, dict):
+            continue
+        for name, inst in instances.items():
+            if not isinstance(inst, dict) or "include" not in inst:
+                continue
+            includes = inst.pop("include")
+            merged: dict[str, Any] = {}
+            for entry in _include_paths(includes):
+                path = _resolve_include_path(base_dir, entry)
+                merged = _deep_merge(merged, _load_include(path, frozenset()))
+            instances[name] = _deep_merge(merged, inst)
+
+
 def parse_config(config_path: Path) -> ConfigarrConfig:
     """Parse configarr.yml and return structured configuration.
 
@@ -209,6 +289,11 @@ def parse_config(config_path: Path) -> ConfigarrConfig:
             "Configuration file must contain a YAML mapping at the top level, "
             f"got {type(raw_config).__name__}"
         )
+
+    # Merge each instance's include: files before anything else reads the config, so
+    # shared blocks (custom formats, profiles) can be factored out and env expansion
+    # below covers included content too.
+    _resolve_includes(raw_config, config_path.parent)
 
     # Expand environment variables in all config values, warning about any that were
     # left unresolved (they'd otherwise flow into API payloads as literal ${VAR}).
