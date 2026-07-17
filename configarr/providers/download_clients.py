@@ -50,7 +50,7 @@ class DownloadClientProvider(FieldProvider):
                 "name": name,
                 "enable": definition.get("enable", True),
                 "priority": definition.get("priority", 1),
-                "tags": definition.get("tags", []),
+                "tags": self._resolve_tags(definition.get("tags")),
             }
             current = current_by_key.get(name)
             if current is None:

@@ -30,6 +30,8 @@ SYNC_LEVELS = frozenset({"disabled", "addOnly", "fullSync"})
 class ApplicationProvider(FieldProvider):
     """Diffs Prowlarr applications by name (provider-Field resource)."""
 
+    _tag_path = "/api/v1/tag"
+
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
         super().__init__(base_url, api_key, config, kind)
         self._schema_cache: dict[str, dict[str, Any]] | None = None
@@ -66,7 +68,7 @@ class ApplicationProvider(FieldProvider):
             overrides = {
                 "name": name,
                 "syncLevel": self._sync_level(definition),
-                "tags": definition.get("tags", []),
+                "tags": self._resolve_tags(definition.get("tags")),
             }
             current = current_by_key.get(name)
             if current is None:
