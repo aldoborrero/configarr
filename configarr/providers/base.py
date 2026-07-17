@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Hashable
 from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
@@ -15,6 +16,8 @@ from configarr.normalize import (
     secret_field_names,
 )
 from configarr.transport import build_session
+
+log = logging.getLogger("configarr.providers")
 
 
 @dataclass
@@ -100,6 +103,10 @@ class HttpProvider(CurrentStateCache):
     kind: str
     # Tag endpoint for label->id resolution; Prowlarr providers override to v1.
     _tag_path = "/api/v3/tag"
+    # The runner flips this on for the apply path so an unknown tag label is
+    # created; during a read-only plan it stays False (a missing label is only
+    # warned about — it would be created on apply).
+    _create_missing_tags = False
 
     def __init__(self, base_url: str, api_key: str) -> None:
         self.base_url = base_url.rstrip("/")
@@ -121,7 +128,8 @@ class HttpProvider(CurrentStateCache):
     def _resolve_tags(self, tags: Any) -> list[int]:
         """Resolve a config ``tags`` list to numeric ids. Integers pass through;
         string labels are looked up in the instance's existing tags. An unknown
-        label is a clear error (configarr does not create tags — yet)."""
+        label is created on apply (``_create_missing_tags``); during a read-only
+        plan it is warned about and skipped (it would be created on apply)."""
         out: list[int] = []
         for tag in tags or []:
             if isinstance(tag, bool):  # bool is an int subclass; reject it explicitly
@@ -130,16 +138,28 @@ class HttpProvider(CurrentStateCache):
                 out.append(tag)
             elif isinstance(tag, str):
                 tag_map = self._tag_map()
-                if tag not in tag_map:
-                    service = self.kind.split(".")[0]
-                    raise ValueError(
-                        f"unknown tag label {tag!r} on {service}: create it there "
-                        "first, or use its numeric id"
+                if tag in tag_map:
+                    out.append(tag_map[tag])
+                elif self._create_missing_tags:
+                    out.append(self._create_tag(tag))
+                else:
+                    log.warning(
+                        "tag %r does not exist on %s yet; it will be created on apply",
+                        tag,
+                        self.kind.split(".")[0],
                     )
-                out.append(tag_map[tag])
             else:
                 raise ValueError(f"invalid tag {tag!r}: expected a label (str) or id")
         return out
+
+    def _create_tag(self, label: str) -> int:
+        """Create a tag by label and return its new id, updating the cache."""
+        created = self._post(self._tag_path, json={"label": label}).json()
+        tag_id = int(created["id"])
+        if self._tag_cache is not None:
+            self._tag_cache[label] = tag_id
+        log.info("created tag %r on %s (id %s)", label, self.kind.split(".")[0], tag_id)
+        return tag_id
 
     def _get(self, path: str) -> requests.Response:
         resp = self._session.get(self._url(path))

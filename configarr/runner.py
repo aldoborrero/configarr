@@ -183,6 +183,11 @@ def run_apply(
         provider = planned.provider
         label = f"{planned.service}/{planned.instance} — {planned.label}"
         prunable = getattr(provider, "prunable", False)
+        # This is the write path, so let tag resolution create missing tags rather
+        # than only warn (plan leaves the flag False). Harmless on providers without
+        # tags. setattr (not `provider._create_missing_tags =`) because the flag is
+        # an HttpProvider implementation detail, not on the ResourceProvider protocol.
+        setattr(provider, "_create_missing_tags", True)  # noqa: B010
         # Build current and desired exactly once, then diff and derive the apply
         # payloads from the SAME objects. This closes a TOCTOU gap: re-calling
         # build_desired() for the action payloads could observe state that diverged

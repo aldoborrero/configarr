@@ -34,10 +34,37 @@ def test_tag_map_fetched_once():
 
 
 @responses.activate
-def test_unknown_label_raises_with_service():
+def test_unknown_label_warns_and_is_skipped_in_plan_mode(caplog):
+    # Read-only plan (the default): a missing label is warned about and dropped,
+    # not created — and never errors.
+    import logging
+
     responses.get(f"{BASE}/api/v3/tag", json=[{"id": 1, "label": "hd"}])
-    with pytest.raises(ValueError, match="unknown tag label 'nope' on sonarr"):
-        _P(kind="sonarr.indexer")._resolve_tags(["nope"])
+    with caplog.at_level(logging.WARNING, logger="configarr.providers"):
+        out = _P(kind="sonarr.indexer")._resolve_tags(["hd", "nope"])
+    assert out == [1]  # 'nope' skipped
+    assert "will be created on apply" in caplog.text
+    assert [c for c in responses.calls if c.request.method == "POST"] == []
+
+
+@responses.activate
+def test_unknown_label_created_on_apply():
+    responses.get(f"{BASE}/api/v3/tag", json=[{"id": 1, "label": "hd"}])
+    responses.post(f"{BASE}/api/v3/tag", json={"id": 9, "label": "new"}, status=201)
+    p = _P()
+    p._create_missing_tags = True  # the runner sets this on the apply path
+    assert p._resolve_tags(["hd", "new"]) == [1, 9]
+
+
+@responses.activate
+def test_created_tag_is_cached():
+    responses.get(f"{BASE}/api/v3/tag", json=[])
+    responses.post(f"{BASE}/api/v3/tag", json={"id": 9, "label": "new"}, status=201)
+    p = _P()
+    p._create_missing_tags = True
+    p._resolve_tags(["new"])
+    p._resolve_tags(["new"])  # second time uses the cache, no second POST
+    assert len([c for c in responses.calls if c.request.method == "POST"]) == 1
 
 
 def test_no_labels_skips_the_tag_fetch():
