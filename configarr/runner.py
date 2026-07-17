@@ -4,14 +4,28 @@ imports."""
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any, TypedDict
 
 from configarr.engine import diff
-from configarr.model import Plan
+from configarr.model import Op, Plan
 from configarr.models import ConfigarrConfig
 from configarr.providers.base import ResourceProvider
 from configarr.registry import PlannedProvider, providers_for
 from configarr.render import ResourceJson, plan_resources_json, render_plan
+from configarr.state import State
+
+
+def _scope(planned: PlannedProvider) -> str:
+    return f"{planned.service}/{planned.instance}"
+
+
+def _managed_keys(state: State | None, planned: PlannedProvider) -> set[Any] | None:
+    """Managed-key set for prune scoping, or None to keep legacy delete-any-unmanaged
+    behavior. Ownership only matters for prunable providers; others never delete."""
+    if state is None or not getattr(planned.provider, "prunable", False):
+        return None
+    return set(state.managed_keys(_scope(planned), planned.provider.kind))
 
 
 class ProviderJson(TypedDict):
@@ -32,11 +46,12 @@ def _diff_provider(
     current: list[dict[str, Any]],
     desired: list[dict[str, Any]],
     prune: bool = False,
+    managed_keys: set[Any] | None = None,
 ) -> Plan:
     """Diff a provider's already-fetched current/desired exactly as the runner does,
     honoring the opt-in full_replace flag so plan and apply never diverge on diff
-    semantics. ``prune`` enables opt-in deletion of unmanaged resources (default
-    additive)."""
+    semantics. ``prune`` enables opt-in deletion; ``managed_keys`` scopes that
+    deletion to resources configarr owns (see ``configarr.state``)."""
     return diff(
         provider.kind,
         current,
@@ -49,13 +64,22 @@ def _diff_provider(
         # Only providers that expose deletion participate in --prune; singletons
         # and set-only/config providers stay additive even when prune is asked for.
         prune=prune and getattr(provider, "prunable", False),
+        managed_keys=managed_keys,
     )
 
 
-def _plan_provider(provider: ResourceProvider, prune: bool = False) -> Plan:
+def _plan_provider(
+    provider: ResourceProvider,
+    prune: bool = False,
+    managed_keys: set[Any] | None = None,
+) -> Plan:
     """Diff a single provider exactly as the runner does (read-only plan path)."""
     return _diff_provider(
-        provider, provider.fetch_current(), provider.build_desired(), prune=prune
+        provider,
+        provider.fetch_current(),
+        provider.build_desired(),
+        prune=prune,
+        managed_keys=managed_keys,
     )
 
 
@@ -65,11 +89,21 @@ def run_plan(
     instance: str | None = None,
     prune: bool = False,
     output: str = "text",
+    state_path: Path | None = None,
 ) -> str:
     """Render a read-only plan. ``output`` is "text" (human) or "json" (a stable,
-    machine-readable document for CI/automation drift gating)."""
+    machine-readable document for CI/automation drift gating). ``state_path`` scopes
+    prune deletions to configarr-owned resources; the plan never writes state."""
+    state = State.load(state_path) if state_path else None
     planned_plans: list[tuple[PlannedProvider, Plan]] = [
-        (planned, _plan_provider(planned.provider, prune=prune))
+        (
+            planned,
+            _plan_provider(
+                planned.provider,
+                prune=prune,
+                managed_keys=_managed_keys(state, planned),
+            ),
+        )
         for planned in providers_for(config, service, instance)
     ]
     if output == "json":
@@ -109,6 +143,7 @@ def run_apply(
     service: str | None = None,
     instance: str | None = None,
     prune: bool = False,
+    state_path: Path | None = None,
 ) -> str:
     """Execute each provider's plan provider-by-provider in registry order, which
     orders custom formats before quality profiles so ``custom_format_scores`` resolve.
@@ -116,13 +151,20 @@ def run_apply(
     apply(). With ``prune`` set, the plan also emits DELETE for unmanaged resources;
     default stays additive.
 
+    ``state_path`` enables ownership tracking: prune only deletes resources configarr
+    previously created (recorded in the state file), and after a successful run the
+    state is rewritten with the resources configarr now manages.
+
     Apply is **not atomic**: providers write in sequence with no rollback. If a write
     fails mid-run, the changes already made are surfaced in the raised error so the
-    operator knows the partial state, then the error propagates (exit 1)."""
+    operator knows the partial state, then the error propagates (exit 1). State is
+    saved only after the whole run succeeds."""
+    state = State.load(state_path) if state_path else None
     sections: list[str] = []
     for planned in providers_for(config, service, instance):
         provider = planned.provider
         label = f"{planned.service}/{planned.instance} — {planned.label}"
+        prunable = getattr(provider, "prunable", False)
         # Build current and desired exactly once, then diff and derive the apply
         # payloads from the SAME objects. This closes a TOCTOU gap: re-calling
         # build_desired() for the action payloads could observe state that diverged
@@ -130,10 +172,17 @@ def run_apply(
         # threading these issues no extra GETs either.
         current = provider.fetch_current()
         desired = provider.build_desired()
-        plan = _diff_provider(provider, current, desired, prune=prune)
+        plan = _diff_provider(
+            provider,
+            current,
+            desired,
+            prune=prune,
+            managed_keys=_managed_keys(state, planned),
+        )
         current_by_key = {provider.match_key(c): c for c in current}
         desired_by_key = {provider.match_key(d): d for d in desired}
         applied = 0
+        deleted: set[Any] = set()
         try:
             for resource in plan.resources:
                 if not resource.changed:
@@ -144,6 +193,8 @@ def run_apply(
                     desired_by_key.get(resource.key),
                 )
                 provider.apply(action)
+                if resource.op is Op.DELETE:
+                    deleted.add(resource.key)
                 applied += 1
         except Exception as exc:
             # Surface everything already written (completed providers + this one's
@@ -154,8 +205,19 @@ def run_apply(
                 f"apply aborted at {label}: {exc}\n"
                 f"Applied before the failure:\n{already}"
             ) from exc
+        # Record ownership of everything configarr declares for a prunable provider
+        # (even when nothing changed), minus anything just deleted, so a later prune
+        # can remove a resource this config drops — and only such resources.
+        if state is not None and prunable:
+            prior = state.managed_keys(_scope(planned), provider.kind)
+            desired_keys = {provider.match_key(d) for d in desired}
+            state.set_managed(
+                _scope(planned), provider.kind, (prior | desired_keys) - deleted
+            )
         if applied:
             sections.append(f"{label}: applied {applied} change(s)")
+    if state is not None:
+        state.save()
     if not sections:
         return "No changes to apply."
     return "\n".join(sections)
