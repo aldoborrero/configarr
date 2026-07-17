@@ -126,5 +126,5 @@ class IndexerProvider(FieldProvider):
             "fields": self._normalized_fields(resource),
         }
 
-    def apply(self, action: Action) -> None:
-        self._apply_force_save("/api/v1/indexer", action)
+    def apply(self, action: Action) -> int | None:
+        return self._apply_force_save("/api/v1/indexer", action)

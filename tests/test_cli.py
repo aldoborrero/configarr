@@ -129,3 +129,12 @@ def test_unknown_key_without_strict_still_runs(tmp_path):
     )
     res = CliRunner().invoke(main, ["--config", cfg, "--check"])
     assert res.exit_code == 0
+
+
+def test_version_flag():
+    res = CliRunner().invoke(main, ["--version"])
+    assert res.exit_code == 0
+    assert "configarr" in res.output
+    from configarr import __version__
+
+    assert __version__ in res.output

@@ -56,3 +56,32 @@ def test_field_provider_apply_force_save_deletes():
     deletes = [c for c in responses.calls if c.request.method == "DELETE"]
     assert len(deletes) == 1
     assert deletes[0].request.url == "http://x/api/v3/downloadclient/9"
+
+
+@responses.activate
+def test_field_provider_apply_force_save_returns_service_id():
+    # The runner records this id for rename-tolerant matching (create response id;
+    # the known id on update; nothing on delete).
+    p = _FP("http://x", "k", {}, "radarr.download_client")
+    responses.post("http://x/api/v3/downloadclient", json={"id": 5}, status=201)
+    assert (
+        p._apply_force_save(
+            "/api/v3/downloadclient",
+            Action(op=Op.CREATE, key="n", payload={"name": "n"}),
+        )
+        == 5
+    )
+    responses.put("http://x/api/v3/downloadclient/7", status=200)
+    assert (
+        p._apply_force_save(
+            "/api/v3/downloadclient", Action(op=Op.UPDATE, key="n", payload={"id": 7})
+        )
+        == 7
+    )
+    responses.delete("http://x/api/v3/downloadclient/9", status=200)
+    assert (
+        p._apply_force_save(
+            "/api/v3/downloadclient", Action(op=Op.DELETE, key="n", payload={"id": 9})
+        )
+        is None
+    )

@@ -12,6 +12,7 @@ from pydantic import ValidationError
 from rich.console import Console
 from rich.panel import Panel
 
+from configarr import __version__
 from configarr.config import parse_config
 from configarr.runner import run_apply, run_plan
 from configarr.schema import build_json_schema
@@ -31,6 +32,7 @@ def _print_schema(ctx: click.Context, param: click.Parameter, value: bool) -> No
 
 
 @click.command()
+@click.version_option(version=__version__, prog_name="configarr")
 @click.option(
     "--print-schema",
     is_flag=True,
