@@ -56,8 +56,9 @@ before quality profiles** within an instance.
 - **`tags:` accept labels or ids.** Anywhere a resource takes `tags:` (indexers,
   download clients, notifications, applications, delay/release profiles), list tag
   **labels** (strings) or numeric **ids**. Labels are resolved against the
-  instance's existing tags; an unknown label is an error (configarr does not create
-  tags yet). Numeric ids pass through unchanged.
+  instance's existing tags; a label that doesn't exist is **created on apply**
+  (during a read-only `--plan` it's warned about and skipped, since it would be
+  created on apply). Numeric ids pass through unchanged.
 - **Unrecognized section keys are warned about** at load time (a typo like
   `custom_format:` for `custom_formats:` is the usual cause of an edit that does
   nothing); `--strict` makes it an error. Generate an editor JSON Schema with
