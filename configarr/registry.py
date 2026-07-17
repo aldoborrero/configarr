@@ -19,6 +19,7 @@ from configarr.providers.bazarr_settings import BazarrSettingsProvider
 from configarr.providers.custom_formats import CustomFormatProvider
 from configarr.providers.delay_profiles import DelayProfileProvider
 from configarr.providers.download_clients import DownloadClientProvider
+from configarr.providers.import_lists import ImportListProvider
 from configarr.providers.indexers import IndexerProvider
 from configarr.providers.naming import NamingProvider
 from configarr.providers.notifications import NotificationProvider
@@ -201,6 +202,22 @@ REGISTRY: list[Registration] = [
         label="notifications",
         factory=lambda inst: NotificationProvider(
             inst.base_url, inst.api_key, inst.notifications, "sonarr.notification"
+        ),
+    ),
+    Registration(
+        kind="radarr.import_list",
+        service="radarr",
+        label="import lists",
+        factory=lambda inst: ImportListProvider(
+            inst.base_url, inst.api_key, inst.import_lists, "radarr.import_list"
+        ),
+    ),
+    Registration(
+        kind="sonarr.import_list",
+        service="sonarr",
+        label="import lists",
+        factory=lambda inst: ImportListProvider(
+            inst.base_url, inst.api_key, inst.import_lists, "sonarr.import_list"
         ),
     ),
     # Prowlarr-only: indexers are the first Prowlarr resource in the rollout.

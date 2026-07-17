@@ -69,6 +69,7 @@ def _register_radarr_reads(custom_formats):
     responses.get(f"{BASE}/api/v3/delayprofile", json=[])
     responses.get(f"{BASE}/api/v3/downloadclient", json=[])
     responses.get(f"{BASE}/api/v3/notification", json=[])
+    responses.get(f"{BASE}/api/v3/importlist", json=[])
 
 
 class _CountingProvider:

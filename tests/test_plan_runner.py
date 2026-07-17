@@ -96,6 +96,7 @@ def test_run_plan_instance_filter_selects_only_that_instance(tmp_path):
     responses.get("http://main.test/api/v3/delayprofile", json=[])
     responses.get("http://main.test/api/v3/downloadclient", json=[])
     responses.get("http://main.test/api/v3/notification", json=[])
+    responses.get("http://main.test/api/v3/importlist", json=[])
 
     out = run_plan(config, instance="main")
 
@@ -117,6 +118,7 @@ def test_run_plan_reports_create_and_writes_nothing(tmp_path):
     responses.get(f"{BASE}/api/v3/delayprofile", json=[])
     responses.get(f"{BASE}/api/v3/downloadclient", json=[])
     responses.get(f"{BASE}/api/v3/notification", json=[])
+    responses.get(f"{BASE}/api/v3/importlist", json=[])
 
     out = run_plan(config)
 
@@ -138,6 +140,7 @@ def test_run_plan_json_output_is_valid_and_read_only(tmp_path):
     responses.get(f"{BASE}/api/v3/delayprofile", json=[])
     responses.get(f"{BASE}/api/v3/downloadclient", json=[])
     responses.get(f"{BASE}/api/v3/notification", json=[])
+    responses.get(f"{BASE}/api/v3/importlist", json=[])
 
     doc = json.loads(run_plan(config, output="json"))  # must be valid JSON
 

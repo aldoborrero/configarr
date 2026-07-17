@@ -41,6 +41,7 @@ _ARR_INSTANCE: dict[str, Any] = {
     },
     "download_clients": {"definitions": _OBJ},
     "notifications": {"definitions": _OBJ},
+    "import_lists": {"definitions": _OBJ},
 }
 _PROWLARR_INSTANCE: dict[str, Any] = {
     "base_url": _STR,

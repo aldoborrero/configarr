@@ -140,6 +140,7 @@ def parse_arr_instance(name: str, config: dict[str, Any]) -> ArrServiceConfig:
         root_folders=(config.get("settings") or {}).get("root_folders"),
         download_clients=(config.get("download_clients") or {}).get("definitions", {}),
         notifications=(config.get("notifications") or {}).get("definitions", {}),
+        import_lists=(config.get("import_lists") or {}).get("definitions", {}),
         # Carried through as-is; TRaSH resolution is a separate, IO-performing pass
         # (configarr.trash.resolve_trash) so parse_config stays pure.
         trash=config.get("trash"),
