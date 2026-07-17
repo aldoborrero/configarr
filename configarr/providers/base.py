@@ -249,18 +249,25 @@ class FieldProvider(HttpProvider):
         payload = {**(desired or {}), "id": (current or {})["id"]}
         return Action(op=plan.op, key=plan.key, payload=payload)
 
-    def _apply_force_save(self, endpoint: str, action: Action) -> None:
+    def _apply_force_save(self, endpoint: str, action: Action) -> int | None:
         """POST (create) / PUT (update) / DELETE the payload with ``forceSave=true``
         and invalidate the current-state cache. ``endpoint`` is the collection path,
-        e.g. ``/api/v3/downloadclient``. DELETE is reached only under ``--prune`` for
-        a ``prunable`` subclass."""
+        e.g. ``/api/v3/downloadclient``. Returns the resource's service id for a
+        create/update (so the runner can record ownership for rename-tolerant
+        matching), None for delete. DELETE is reached only under ``--prune`` for a
+        ``prunable`` subclass."""
+        service_id: int | None = None
         if action.op is Op.CREATE:
-            self._post(f"{endpoint}?forceSave=true", json=action.payload)
+            created = self._post(
+                f"{endpoint}?forceSave=true", json=action.payload
+            ).json()
+            service_id = created.get("id") if isinstance(created, dict) else None
         elif action.op is Op.UPDATE:
-            rid = action.payload["id"]
-            self._put(f"{endpoint}/{rid}?forceSave=true", json=action.payload)
+            service_id = action.payload["id"]
+            self._put(f"{endpoint}/{service_id}?forceSave=true", json=action.payload)
         elif action.op is Op.DELETE:
             self._delete(f"{endpoint}/{action.payload['id']}")
         else:
             raise NotImplementedError(f"apply: unsupported op {action.op!r}")
         self.invalidate_current()
+        return service_id

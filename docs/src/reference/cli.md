@@ -22,6 +22,7 @@ configarr [OPTIONS]
 | `--strict` | — | Treat an unrecognized config key (likely a typo) as an error instead of a warning. |
 | `--print-schema` | — | Print a JSON Schema for `configarr.yml` (for editor autocomplete/validation) and exit. Needs no config file. |
 | `--debug` | — | Verbose debug logging for the whole run. Does **not** prevent writes. |
+| `--version` | — | Print the configarr version and exit. |
 
 Apply is the **default** — running with no flag writes the changes.
 
@@ -47,9 +48,10 @@ Apply is the **default** — running with no flag writes the changes.
 > Commit or ignore the state file as you see fit.
 >
 > The state also records each managed resource's service id, which makes matching
-> **rename-tolerant**: if a custom format configarr created is renamed on the server,
-> configarr recognizes it by that id and renames it back to match your config,
-> instead of leaving the rename or creating a confusing duplicate.
+> **rename-tolerant**: if a resource configarr created (a custom format, indexer,
+> download client, or notification) is renamed on the server, configarr recognizes
+> it by that id and renames it back to match your config, instead of leaving the
+> rename or creating a confusing duplicate.
 
 > [!TIP]
 > `--check` is not the same as `--plan`. `--plan` **contacts every service** to
