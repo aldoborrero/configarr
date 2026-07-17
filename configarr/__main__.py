@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Configarr CLI - Configuration manager for *arr applications."""
 
+import json
 import logging
 import sys
 from pathlib import Path
@@ -13,13 +14,32 @@ from rich.panel import Panel
 
 from configarr.config import parse_config
 from configarr.runner import run_apply, run_plan
+from configarr.schema import build_json_schema
 from configarr.trash import TrashError, resolve_trash
 
 console = Console()
 log = logging.getLogger("configarr")
 
 
+def _print_schema(ctx: click.Context, param: click.Parameter, value: bool) -> None:
+    """Eager --print-schema callback: emit the JSON Schema to stdout and exit, before
+    --config (which requires an existing file) is validated."""
+    if not value or ctx.resilient_parsing:
+        return
+    click.echo(json.dumps(build_json_schema(), indent=2))
+    ctx.exit()
+
+
 @click.command()
+@click.option(
+    "--print-schema",
+    is_flag=True,
+    is_eager=True,
+    expose_value=False,
+    callback=_print_schema,
+    help="Print a JSON Schema for configarr.yml (for editor autocomplete/validation) "
+    "and exit.",
+)
 @click.option(
     "--config",
     "config_path",
@@ -69,6 +89,11 @@ log = logging.getLogger("configarr")
     help="Validate the config offline — parse it, check the models, and resolve any "
     "TRaSH imports — then exit without contacting any service. For CI.",
 )
+@click.option(
+    "--strict",
+    is_flag=True,
+    help="Treat unrecognized config keys as an error instead of a warning.",
+)
 def main(
     config_path: Path,
     service: str | None,
@@ -78,6 +103,7 @@ def main(
     debug: bool,
     output: str,
     check: bool,
+    strict: bool,
 ) -> None:
     """
     Configarr - declaratively manage Radarr, Sonarr, Prowlarr, Bazarr, and SABnzbd.
@@ -117,7 +143,7 @@ def main(
         console.print(f"[dim]Configuration file:[/dim] {config_path}\n")
 
     try:
-        config = parse_config(config_path)
+        config = parse_config(config_path, strict=strict)
     except FileNotFoundError:
         console.print(
             f"[bold red]Configuration file not found:[/bold red] {config_path}"

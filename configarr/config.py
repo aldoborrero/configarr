@@ -17,6 +17,7 @@ from configarr.models import (
     SabnzbdConfig,
     SonarrConfig,
 )
+from configarr.schema import unknown_keys
 
 log = logging.getLogger("configarr.config")
 
@@ -263,7 +264,7 @@ def _resolve_includes(raw_config: dict[str, Any], base_dir: Path) -> None:
             instances[name] = _deep_merge(merged, inst)
 
 
-def parse_config(config_path: Path) -> ConfigarrConfig:
+def parse_config(config_path: Path, strict: bool = False) -> ConfigarrConfig:
     """Parse configarr.yml and return structured configuration.
 
     Supports ${VAR} environment variable substitution in all string values.
@@ -294,6 +295,18 @@ def parse_config(config_path: Path) -> ConfigarrConfig:
     # shared blocks (custom formats, profiles) can be factored out and env expansion
     # below covers included content too.
     _resolve_includes(raw_config, config_path.parent)
+
+    # Warn about section keys configarr doesn't recognize — the usual cause of an
+    # edit that silently does nothing (e.g. `custom_format:` for `custom_formats:`).
+    # --strict promotes it to a hard error.
+    unknown = unknown_keys(raw_config)
+    if unknown:
+        message = "unrecognized config keys (a typo? check the schema): " + ", ".join(
+            unknown
+        )
+        if strict:
+            raise ValueError(message)
+        log.warning("%s", message)
 
     # Expand environment variables in all config values, warning about any that were
     # left unresolved (they'd otherwise flow into API payloads as literal ${VAR}).
