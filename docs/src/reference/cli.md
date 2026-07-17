@@ -30,8 +30,11 @@ Apply is the **default** — running with no flag writes the changes.
 > [Plan, Apply & Scoping](../concepts/dry-run-and-scoping.md).
 
 > [!NOTE]
-> `--prune` currently affects only custom formats — the one provider that supports
-> deletion today. Other providers stay additive even when `--prune` is passed.
+> `--prune` deletes for the providers that support it: **custom formats**,
+> **indexers**, **applications**, **download clients** (Radarr/Sonarr and Prowlarr),
+> and **notifications**. Singletons and set-only/config providers (naming, quality
+> profiles/definitions, SABnzbd, Bazarr, delay/release profiles) stay additive even
+> when `--prune` is passed.
 
 > [!IMPORTANT]
 > Prune is **ownership-scoped**. configarr records which resources it manages in a

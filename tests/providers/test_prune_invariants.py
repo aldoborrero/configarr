@@ -9,7 +9,7 @@ from configarr.providers.indexers import IndexerProvider
 from configarr.providers.notifications import NotificationProvider
 from configarr.providers.prowlarr_download_clients import ProwlarrDownloadClientProvider
 
-FIELD_PROVIDERS = [
+COLLECTION_FIELD_PROVIDERS = [
     DownloadClientProvider,
     NotificationProvider,
     IndexerProvider,
@@ -18,14 +18,15 @@ FIELD_PROVIDERS = [
 ]
 
 
-def test_field_providers_stay_non_prunable():
-    # Locks the invariant: FieldProviders don't opt into --prune. If one ever does,
-    # its to_action/_apply_force_save DELETE path (below) must be verified first.
-    for cls in FIELD_PROVIDERS:
-        assert cls.prunable is False, cls
+def test_collection_field_providers_are_prunable():
+    # These name-keyed collections opt into --prune. Their DELETE path is verified by
+    # the to_action / _apply_force_save tests below, and prune is ownership-scoped
+    # (configarr.state), so only configarr-created resources are ever deleted.
+    for cls in COLLECTION_FIELD_PROVIDERS:
+        assert cls.prunable is True, cls
 
 
-def test_only_custom_formats_opts_into_prune():
+def test_custom_formats_is_prunable():
     assert CustomFormatProvider.prunable is True
 
 
