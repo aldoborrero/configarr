@@ -115,15 +115,18 @@ class CustomFormatProvider(HttpProvider):
         payload = {**(desired or {}), "id": (current or {})["id"]}
         return Action(op=plan.op, key=plan.key, payload=payload)
 
-    def apply(self, action: Action) -> None:
+    def apply(self, action: Action) -> int | None:
+        service_id: int | None = None
         if action.op is Op.CREATE:
-            self._post("/api/v3/customformat", json=action.payload)
+            created = self._post("/api/v3/customformat", json=action.payload).json()
+            service_id = created.get("id") if isinstance(created, dict) else None
         elif action.op is Op.UPDATE:
-            cf_id = action.payload["id"]
-            self._put(f"/api/v3/customformat/{cf_id}", json=action.payload)
+            service_id = action.payload["id"]
+            self._put(f"/api/v3/customformat/{service_id}", json=action.payload)
         elif action.op is Op.DELETE:
             cf_id = action.payload["id"]
             self._delete(f"/api/v3/customformat/{cf_id}")
         else:
             raise NotImplementedError(f"apply: unsupported op {action.op!r}")
         self.invalidate_current()
+        return service_id

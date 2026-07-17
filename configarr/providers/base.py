@@ -49,7 +49,10 @@ class ResourceProvider(Protocol):
         current: dict[str, Any] | None,
         desired: dict[str, Any] | None,
     ) -> Action: ...
-    def apply(self, action: Action) -> None: ...
+    # Returns the resource's service id when a create/update knows it (the CF
+    # provider does, to record ownership for rename-tolerant matching); None
+    # otherwise.
+    def apply(self, action: Action) -> int | None: ...
 
 
 class CurrentStateCache:

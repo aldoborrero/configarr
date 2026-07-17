@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Any, TypedDict
 
-from configarr.engine import diff
+from configarr.engine import diff, reconcile_renames
 from configarr.model import Op, Plan
 from configarr.models import ConfigarrConfig
 from configarr.providers.base import ResourceProvider
@@ -26,6 +26,13 @@ def _managed_keys(state: State | None, planned: PlannedProvider) -> set[Any] | N
     if state is None or not getattr(planned.provider, "prunable", False):
         return None
     return set(state.managed_keys(_scope(planned), planned.provider.kind))
+
+
+def _managed_ids(state: State | None, planned: PlannedProvider) -> dict[str, int]:
+    """Recorded ``{name: id}`` for a prunable provider, for rename reconciliation."""
+    if state is None or not getattr(planned.provider, "prunable", False):
+        return {}
+    return state.managed_ids(_scope(planned), planned.provider.kind)
 
 
 class ProviderJson(TypedDict):
@@ -47,11 +54,13 @@ def _diff_provider(
     desired: list[dict[str, Any]],
     prune: bool = False,
     managed_keys: set[Any] | None = None,
+    force_update: set[Any] | None = None,
 ) -> Plan:
     """Diff a provider's already-fetched current/desired exactly as the runner does,
     honoring the opt-in full_replace flag so plan and apply never diverge on diff
     semantics. ``prune`` enables opt-in deletion; ``managed_keys`` scopes that
-    deletion to resources configarr owns (see ``configarr.state``)."""
+    deletion to resources configarr owns; ``force_update`` marks reconciled renames
+    that must be written even without a field diff (see ``configarr.state``)."""
     return diff(
         provider.kind,
         current,
@@ -65,6 +74,7 @@ def _diff_provider(
         # and set-only/config providers stay additive even when prune is asked for.
         prune=prune and getattr(provider, "prunable", False),
         managed_keys=managed_keys,
+        force_update=force_update,
     )
 
 
@@ -72,14 +82,21 @@ def _plan_provider(
     provider: ResourceProvider,
     prune: bool = False,
     managed_keys: set[Any] | None = None,
+    managed_ids: dict[str, int] | None = None,
 ) -> Plan:
     """Diff a single provider exactly as the runner does (read-only plan path)."""
+    current = provider.fetch_current()
+    desired = provider.build_desired()
+    # Relabel any server-renamed managed resource so the plan shows it as an UPDATE
+    # (rename) rather than a create-plus-orphan.
+    current, renamed = reconcile_renames(current, desired, managed_ids or {})
     return _diff_provider(
         provider,
-        provider.fetch_current(),
-        provider.build_desired(),
+        current,
+        desired,
         prune=prune,
         managed_keys=managed_keys,
+        force_update=renamed,
     )
 
 
@@ -102,6 +119,7 @@ def run_plan(
                 planned.provider,
                 prune=prune,
                 managed_keys=_managed_keys(state, planned),
+                managed_ids=_managed_ids(state, planned),
             ),
         )
         for planned in providers_for(config, service, instance)
@@ -172,17 +190,25 @@ def run_apply(
         # threading these issues no extra GETs either.
         current = provider.fetch_current()
         desired = provider.build_desired()
+        # Relabel a server-renamed managed resource to its desired name so it is
+        # updated in place (rename) rather than duplicated. No-op when there's no
+        # state or the provider isn't prunable.
+        current, renamed = reconcile_renames(
+            current, desired, _managed_ids(state, planned)
+        )
         plan = _diff_provider(
             provider,
             current,
             desired,
             prune=prune,
             managed_keys=_managed_keys(state, planned),
+            force_update=renamed,
         )
         current_by_key = {provider.match_key(c): c for c in current}
         desired_by_key = {provider.match_key(d): d for d in desired}
         applied = 0
         deleted: set[Any] = set()
+        applied_ids: dict[Any, int] = {}
         try:
             for resource in plan.resources:
                 if not resource.changed:
@@ -192,9 +218,11 @@ def run_apply(
                     current_by_key.get(resource.key),
                     desired_by_key.get(resource.key),
                 )
-                provider.apply(action)
+                service_id = provider.apply(action)
                 if resource.op is Op.DELETE:
                     deleted.add(resource.key)
+                elif service_id is not None:
+                    applied_ids[resource.key] = service_id
                 applied += 1
         except Exception as exc:
             # Surface everything already written (completed providers + this one's
@@ -209,11 +237,21 @@ def run_apply(
         # (even when nothing changed), minus anything just deleted, so a later prune
         # can remove a resource this config drops — and only such resources.
         if state is not None and prunable:
-            prior = state.managed_keys(_scope(planned), provider.kind)
+            scope, kind = _scope(planned), provider.kind
+            prior = state.managed_keys(scope, kind)
             desired_keys = {provider.match_key(d) for d in desired}
-            state.set_managed(
-                _scope(planned), provider.kind, (prior | desired_keys) - deleted
-            )
+            state.set_managed(scope, kind, (prior | desired_keys) - deleted)
+            # Record each managed resource's service id (from the write, or from the
+            # matched current) so a later run can recognize it after a server rename.
+            for d in desired:
+                key = provider.match_key(d)
+                sid = applied_ids.get(key)
+                if sid is None:
+                    cur = current_by_key.get(key)
+                    if isinstance(cur, dict) and isinstance(cur.get("id"), int):
+                        sid = cur["id"]
+                if sid is not None:
+                    state.set_id(scope, kind, str(key), sid)
         if applied:
             sections.append(f"{label}: applied {applied} change(s)")
     if state is not None:

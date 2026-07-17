@@ -24,7 +24,48 @@ def test_save_is_versioned_and_sorted(tmp_path):
     s.save()
     data = json.loads(p.read_text())
     assert data["version"] == STATE_VERSION
-    assert data["managed"]["radarr/movies"]["radarr.custom_format"] == ["A", "B"]
+    # v2 stores name -> id (unknown ids are null), keys sorted.
+    assert data["managed"]["radarr/movies"]["radarr.custom_format"] == {
+        "A": None,
+        "B": None,
+    }
+
+
+def test_id_recorded_and_preserved_across_set_managed(tmp_path):
+    p = tmp_path / "state.json"
+    s = State(p)
+    s.set_managed("radarr/movies", "radarr.custom_format", ["A", "B"])
+    s.set_id("radarr/movies", "radarr.custom_format", "A", 42)
+    # Re-declaring the same keys keeps A's known id.
+    s.set_managed("radarr/movies", "radarr.custom_format", ["A", "B"])
+    s.save()
+    loaded = State.load(p)
+    assert loaded.managed_id("radarr/movies", "radarr.custom_format", "A") == 42
+    assert loaded.managed_id("radarr/movies", "radarr.custom_format", "B") is None
+
+
+def test_set_id_ignores_unmanaged_name(tmp_path):
+    s = State(tmp_path / "s.json")
+    s.set_managed("radarr/movies", "radarr.custom_format", ["A"])
+    s.set_id("radarr/movies", "radarr.custom_format", "ghost", 9)
+    assert s.managed_keys("radarr/movies", "radarr.custom_format") == {"A"}
+    assert s.managed_id("radarr/movies", "radarr.custom_format", "ghost") is None
+
+
+def test_loads_v1_list_shape(tmp_path):
+    # A state file written by the previous (v1) release lists names without ids.
+    p = tmp_path / "state.json"
+    p.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "managed": {"radarr/movies": {"radarr.custom_format": ["A"]}},
+            }
+        )
+    )
+    s = State.load(p)
+    assert s.managed_keys("radarr/movies", "radarr.custom_format") == {"A"}
+    assert s.managed_id("radarr/movies", "radarr.custom_format", "A") is None
 
 
 def test_set_empty_drops_scope(tmp_path):

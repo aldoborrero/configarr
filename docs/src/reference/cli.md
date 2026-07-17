@@ -40,6 +40,11 @@ Apply is the **default** — running with no flag writes the changes.
 > format you made by hand is never deleted. On the very first apply the state is
 > empty, so prune deletes nothing until configarr has recorded what it manages.
 > Commit or ignore the state file as you see fit.
+>
+> The state also records each managed resource's service id, which makes matching
+> **rename-tolerant**: if a custom format configarr created is renamed on the server,
+> configarr recognizes it by that id and renames it back to match your config,
+> instead of leaving the rename or creating a confusing duplicate.
 
 > [!TIP]
 > `--check` is not the same as `--plan`. `--plan` **contacts every service** to

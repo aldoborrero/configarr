@@ -270,3 +270,47 @@ def test_state_records_managed_even_when_unchanged(tmp_path):
     assert State.load(sp).managed_keys("radarr/main", "radarr.custom_format") == {
         "x265"
     }
+
+
+@responses.activate
+def test_rename_tolerant_matching_updates_in_place(tmp_path):
+    # A managed CF renamed on the server (id unchanged) is updated in place — renamed
+    # back to match config — not duplicated.
+    sp = tmp_path / ".configarr-state.json"
+    cfg = tmp_path / "configarr.yml"
+    cfg.write_text(CONFIG_YAML)
+
+    # Run 1: create x265 (id 7) and record its id in state.
+    _register_radarr_reads([])
+    responses.post(f"{BASE}/api/v3/customformat", json=CREATED, status=201)
+    run_apply(parse_config(cfg), state_path=sp)
+    assert State.load(sp).managed_id("radarr/main", "radarr.custom_format", "x265") == 7
+
+    # Run 2: a user renamed id 7 to "x265-renamed"; config still declares "x265".
+    responses.reset()
+    _register_radarr_reads([{**CREATED, "name": "x265-renamed"}])
+    responses.put(f"{BASE}/api/v3/customformat/7", json=CREATED, status=200)
+    run_apply(parse_config(cfg), state_path=sp)
+
+    assert [c for c in responses.calls if c.request.method == "POST"] == []
+    puts = [c for c in responses.calls if c.request.method == "PUT"]
+    assert len(puts) == 1
+    assert puts[0].request.url == f"{BASE}/api/v3/customformat/7"
+
+
+@responses.activate
+def test_rename_tolerant_matching_no_dup_when_id_gone(tmp_path):
+    # If the recorded id no longer exists (user deleted it), fall back to a normal
+    # create — no spurious update against a missing id.
+    sp = tmp_path / ".configarr-state.json"
+    cfg = tmp_path / "configarr.yml"
+    cfg.write_text(CONFIG_YAML)
+    _register_radarr_reads([])
+    responses.post(f"{BASE}/api/v3/customformat", json=CREATED, status=201)
+    run_apply(parse_config(cfg), state_path=sp)
+
+    responses.reset()
+    _register_radarr_reads([])  # id 7 is gone from the server
+    responses.post(f"{BASE}/api/v3/customformat", json=CREATED, status=201)
+    run_apply(parse_config(cfg), state_path=sp)
+    assert len([c for c in responses.calls if c.request.method == "POST"]) == 1
