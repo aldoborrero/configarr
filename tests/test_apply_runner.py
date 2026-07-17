@@ -6,6 +6,15 @@ from configarr.model import Op
 from configarr.providers.base import Action
 from configarr.registry import PlannedProvider
 from configarr.runner import run_apply, run_plan
+from configarr.state import State
+
+CONFIG_NO_CF = """
+radarr:
+  instances:
+    main:
+      base_url: http://radarr.test
+      api_key: k
+"""
 
 BASE = "http://radarr.test"
 SCHEMA = [
@@ -201,3 +210,63 @@ def test_run_apply_surfaces_partial_state_on_failure(tmp_path):
     responses.post(f"{BASE}/api/v3/customformat", status=500)
     with pytest.raises(RuntimeError, match="apply aborted"):
         run_apply(config)
+
+
+@responses.activate
+def test_prune_with_state_spares_unmanaged(tmp_path):
+    # With ownership state, a CF configarr never created is NOT pruned even though
+    # it's absent from config — the legacy path (no state) would delete it.
+    cfg = tmp_path / "configarr.yml"
+    cfg.write_text(CONFIG_YAML)
+    config = parse_config(cfg)
+    sp = tmp_path / ".configarr-state.json"
+    _register_radarr_reads([CREATED, {**CREATED, "id": 99, "name": "userCF"}])
+
+    run_apply(config, prune=True, state_path=sp)
+
+    assert [c for c in responses.calls if c.request.method == "DELETE"] == []
+    # x265 is recorded as managed; the user's CF is not.
+    assert State.load(sp).managed_keys("radarr/main", "radarr.custom_format") == {
+        "x265"
+    }
+
+
+@responses.activate
+def test_prune_with_state_deletes_dropped_managed_cf(tmp_path):
+    sp = tmp_path / ".configarr-state.json"
+    # Run 1: config declares x265 -> created and recorded as managed.
+    cfg = tmp_path / "configarr.yml"
+    cfg.write_text(CONFIG_YAML)
+    _register_radarr_reads([])
+    responses.post(f"{BASE}/api/v3/customformat", json=CREATED, status=201)
+    run_apply(parse_config(cfg), state_path=sp)
+    assert State.load(sp).managed_keys("radarr/main", "radarr.custom_format") == {
+        "x265"
+    }
+
+    # Run 2: config drops x265; the server still has it; prune deletes it because
+    # it is configarr-managed, and state is updated to forget it.
+    responses.reset()
+    cfg.write_text(CONFIG_NO_CF)
+    _register_radarr_reads([CREATED])
+    responses.delete(f"{BASE}/api/v3/customformat/7", status=200)
+    run_apply(parse_config(cfg), prune=True, state_path=sp)
+
+    deletes = [c for c in responses.calls if c.request.method == "DELETE"]
+    assert len(deletes) == 1
+    assert deletes[0].request.url == f"{BASE}/api/v3/customformat/7"
+    assert State.load(sp).managed_keys("radarr/main", "radarr.custom_format") == set()
+
+
+@responses.activate
+def test_state_records_managed_even_when_unchanged(tmp_path):
+    sp = tmp_path / ".configarr-state.json"
+    cfg = tmp_path / "configarr.yml"
+    cfg.write_text(CONFIG_YAML)
+    _register_radarr_reads([CREATED])  # already matches config -> no change
+
+    assert run_apply(parse_config(cfg), state_path=sp) == "No changes to apply."
+    assert sp.is_file()
+    assert State.load(sp).managed_keys("radarr/main", "radarr.custom_format") == {
+        "x265"
+    }

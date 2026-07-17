@@ -178,6 +178,9 @@ def main(
         )
         sys.exit(0)
 
+    # Ownership state lives next to the config; it records what configarr manages
+    # so --prune only deletes configarr-created resources, never user-made ones.
+    state_path = config_path.parent / ".configarr-state.json"
     try:
         if plan_only:
             result = run_plan(
@@ -186,9 +189,16 @@ def main(
                 instance=instance,
                 prune=prune,
                 output=output,
+                state_path=state_path,
             )
         else:
-            result = run_apply(config, service=service, instance=instance, prune=prune)
+            result = run_apply(
+                config,
+                service=service,
+                instance=instance,
+                prune=prune,
+                state_path=state_path,
+            )
     except Exception as e:
         action = "Plan" if plan_only else "Apply"
         console.print(f"[bold red]{action} failed:[/bold red] {e}")

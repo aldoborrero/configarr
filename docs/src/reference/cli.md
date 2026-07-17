@@ -17,7 +17,7 @@ configarr [OPTIONS]
 | `--instance` | `NAME` | Only process the instance with this label. Combine with `--service` to disambiguate. |
 | `--plan` / `--dry-run` | — | Preview the diff for **all** services, then exit without writing anything. The two flags are aliases. |
 | `--check` | — | Validate the config **offline** — parse it, check the models, and resolve any TRaSH imports — then exit. Contacts **no** service, so it needs no reachable instances. For CI. |
-| `--prune` | — | Also delete unmanaged resources (present on the server, absent from config) for providers that support deletion. Additive by default; combine with `--plan` to preview deletions first. |
+| `--prune` | — | Also delete resources **configarr previously created** that the config no longer declares, for providers that support deletion. Ownership-scoped — never deletes resources you made by hand. Additive by default; combine with `--plan` to preview deletions first. |
 | `--output` | `text\|json` | Output format for `--plan`. `json` emits a machine-readable diff for CI. Default: `text`. |
 | `--debug` | — | Verbose debug logging for the whole run. Does **not** prevent writes. |
 
@@ -32,6 +32,14 @@ Apply is the **default** — running with no flag writes the changes.
 > [!NOTE]
 > `--prune` currently affects only custom formats — the one provider that supports
 > deletion today. Other providers stay additive even when `--prune` is passed.
+
+> [!IMPORTANT]
+> Prune is **ownership-scoped**. configarr records which resources it manages in a
+> state file (`.configarr-state.json`, written next to your config after each apply)
+> and only prunes resources it created that the config has since dropped — a custom
+> format you made by hand is never deleted. On the very first apply the state is
+> empty, so prune deletes nothing until configarr has recorded what it manages.
+> Commit or ignore the state file as you see fit.
 
 > [!TIP]
 > `--check` is not the same as `--plan`. `--plan` **contacts every service** to

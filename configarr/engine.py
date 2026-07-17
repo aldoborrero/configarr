@@ -56,6 +56,7 @@ def diff(
     normalize: Callable[[dict[str, Any]], dict[str, Any]],
     full_replace: bool = False,
     prune: bool = False,
+    managed_keys: set[Hashable] | None = None,
 ) -> Plan:
     cur_by_key = _index(current, match_key, "current")
     des_by_key = _index(desired, match_key, "desired")
@@ -72,9 +73,15 @@ def diff(
             fds = fds + _current_only_diffs(nc, nd)
         plans.append(ResourcePlan(kind, key, Op.UPDATE if fds else Op.UNCHANGED, fds))
     if prune:
-        # Opt-in deletion: any current resource not in desired is an unmanaged
-        # leftover. The default path never reaches here, so sync stays additive.
+        # Opt-in deletion of a current resource the config no longer declares.
+        # ``managed_keys`` scopes this to ownership: when supplied, only resources
+        # configarr previously created (recorded in state) are deletable, so a
+        # user-created resource is never pruned. ``None`` keeps the legacy
+        # delete-any-unmanaged behavior for callers without state.
         for key in cur_by_key:
-            if key not in des_by_key:
-                plans.append(ResourcePlan(kind, key, Op.DELETE))
+            if key in des_by_key:
+                continue
+            if managed_keys is not None and key not in managed_keys:
+                continue
+            plans.append(ResourcePlan(kind, key, Op.DELETE))
     return Plan(resources=plans)

@@ -49,7 +49,9 @@ configarr is declarative but it is **not a full two-way diff engine**:
 - It **updates** resources you declare that do exist.
 - With documented exceptions, it does **not delete** resources you remove from the
   file. Removing a download client from `configarr.yml` does not remove it from
-  Radarr.
+  Radarr. `--prune` opts into deletion for the providers that support it, and even
+  then only for resources **configarr itself created** (tracked in a state file) —
+  never ones you made by hand. See [Command Line](../reference/cli.md#options).
 
 So your config is the source of truth for the **keys it manages**, not a mirror of
 the application's entire state. A couple of resources have stronger, documented
