@@ -20,11 +20,10 @@ from __future__ import annotations
 from collections.abc import Hashable
 from typing import Any
 
-import requests
-
 from configarr.model import Op, ResourcePlan
 from configarr.normalize import coerce_scalar
 from configarr.providers.base import Action, CurrentStateCache
+from configarr.transport import build_session
 
 
 def _form_value(value: Any) -> str:
@@ -48,7 +47,7 @@ class BazarrSettingsProvider(CurrentStateCache):
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.config = config or {}
-        self._session = requests.Session()
+        self._session = build_session()
 
     def _settings_url(self) -> str:
         return f"{self.base_url}/api/system/settings"
