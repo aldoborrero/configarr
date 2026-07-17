@@ -283,11 +283,19 @@ name conflict.
 
 | key | type | default | meaning |
 |---|---|---|---|
-| `source` | string | `local` | only `local` is supported today |
-| `path` | string | — | path to a Guides checkout; **required** for `local`. Relative paths resolve against the config file's directory |
+| `source` | string | `local` | `local` (an existing checkout) or `git` (clone/update one into a cache) |
+| `path` | string | — | path to a Guides checkout; **required** for `local`, rejected for `git`. Relative paths resolve against the config file's directory |
+| `url` | string | official TRaSH-Guides repo | **`git` only.** Guides repo to clone. Rejected for `local` |
+| `ref` | string | the repo's default branch | **`git` only.** Branch or tag to check out. Rejected for `local` |
 | `quality_definition` | string | unset | a guide quality-size `type` (e.g. `movie`, `anime`) to import as `profiles.quality_definitions` |
 | `custom_formats` | list | `[]` | groups of custom formats to import and score |
 | `quality_profiles` | list | `[]` | whole guide quality profiles to import by `trash_id` |
+
+With `source: git`, configarr shallow-clones `url` at `ref` into a per-(url, ref)
+cache under `$XDG_CACHE_HOME/configarr/guides` (default `~/.cache/...`) and
+fetches+resets it on later runs. If the network is unavailable but a cache
+already exists, the cached checkout is used with a warning. `git` must be on
+`PATH` (the Nix package bundles it).
 
 Each entry under `custom_formats`:
 

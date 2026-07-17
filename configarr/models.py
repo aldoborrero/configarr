@@ -3,7 +3,7 @@
 from enum import StrEnum
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 # The TRaSH import block is the one part of the config with a tight, fully-modelled
 # contract, so it forbids unknown keys — a typo (`trash_id` vs `trash_ids`,
@@ -46,15 +46,35 @@ class TrashQualityProfileImport(BaseModel):
 class TrashConfig(BaseModel):
     """Per-instance TRaSH-Guides import block. Resolved after parsing into the
     instance's own ``custom_formats`` / ``quality_profiles`` / ``quality_definitions``
-    (see ``configarr.trash``). ``source: local`` reads an existing Guides checkout at
-    ``path`` (relative paths resolve against the config file's directory)."""
+    (see ``configarr.trash``).
+
+    - ``source: local`` reads an existing Guides checkout at ``path`` (relative
+      paths resolve against the config file's directory).
+    - ``source: git`` clones/updates a Guides repo into a local cache. ``url``
+      defaults to the official TRaSH-Guides repo; ``ref`` pins a branch/tag (the
+      repo's default branch when unset)."""
 
     model_config = _STRICT
-    source: Literal["local"] = "local"
+    source: Literal["local", "git"] = "local"
     path: str | None = None
+    url: str | None = None
+    ref: str | None = None
     quality_definition: str | None = None
     custom_formats: list[TrashCustomFormatGroup] = []
     quality_profiles: list[TrashQualityProfileImport] = []
+
+    @model_validator(mode="after")
+    def _check_source_fields(self) -> "TrashConfig":
+        # Fail fast on a misused field instead of silently ignoring it: local needs
+        # a path and rejects git-only keys; git rejects the local-only path.
+        if self.source == "local":
+            if not self.path:
+                raise ValueError("trash source 'local' requires 'path'")
+            if self.url or self.ref:
+                raise ValueError("'url'/'ref' are only valid with trash source 'git'")
+        elif self.source == "git" and self.path:
+            raise ValueError("'path' is only valid with trash source 'local'")
+        return self
 
 
 class SyncStatus(StrEnum):
