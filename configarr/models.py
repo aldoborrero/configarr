@@ -112,6 +112,7 @@ class ArrServiceConfig(BaseModel):
     root_folders: list[dict[str, Any]] | None = None
     download_clients: dict[str, dict[str, Any]] = {}
     notifications: dict[str, dict[str, Any]] = {}
+    import_lists: dict[str, dict[str, Any]] = {}
     trash: TrashConfig | None = None
 
     @field_validator("base_url")

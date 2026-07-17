@@ -123,6 +123,7 @@ Top-level sections (from `parse_arr_instance` + `ArrServiceConfig`):
 | `custom_formats.definitions` | map | keyed by format name |
 | `download_clients.definitions` | map | keyed by client name |
 | `notifications.definitions` | map | keyed by connection name |
+| `import_lists.definitions` | map | keyed by list name |
 | `trash` | map | TRaSH-Guides import, resolved into `custom_formats` + `quality_definitions` |
 
 ### Root folders — `settings.root_folders`
@@ -429,6 +430,39 @@ A map keyed by connection name.
 | `on_import_complete` | bool | `true` | no | **Sonarr-only** (Radarr never reads it) |
 | `tags` | list | `[]` | no | |
 | `settings` | map | `{}` | no | field name → value, passthrough to the connection's schema fields |
+
+### Import lists — `import_lists.definitions`
+
+A map keyed by list name. Like download clients/notifications it's a provider-Field
+resource (schema-driven `fields` via `settings`), but its **top-level** attributes
+differ between Radarr and Sonarr, so they are **passed straight through** to the API
+(camelCase, matching the arr field names). Set whichever your service uses.
+
+| key | type | required | meaning |
+|---|---|---|---|
+| `implementation` | string | **yes** | list implementation (e.g. `TraktPopularImport`, `ImdbListImport`); missing/unknown raises locally |
+| `settings` | map | no | field name → value, passthrough to the list's schema fields |
+| `tags` | list | no | labels or ids (see conventions) |
+| *top-level API fields* | — | no | any other key is sent through verbatim: **Radarr** `enabled`, `enableAuto`, `monitor`, `qualityProfileId`, `rootFolderPath`, `searchOnAdd`, `minimumAvailability`; **Sonarr** `enableAutomaticAdd`, `shouldMonitor`, `monitorNewItems`, `seriesType`, `seasonFolder`, `searchForMissingEpisodes`, `qualityProfileId`, `rootFolderPath` |
+
+`qualityProfileId` is a numeric id today (resolving it from a profile **name** is a
+possible future addition, like tag labels). Participates in `--prune` (ownership-scoped).
+
+```yaml
+radarr:
+  instances:
+    main:
+      import_lists:
+        definitions:
+          "Trakt Popular":
+            implementation: TraktPopularImport
+            enabled: true
+            qualityProfileId: 1
+            rootFolderPath: /movies
+            monitor: movieOnly
+            settings:
+              traktListType: 0
+```
 
 ---
 
