@@ -96,3 +96,36 @@ def test_check_validates_trash_resolvability(tmp_path):
     res = CliRunner().invoke(main, ["--config", cfg, "--check"])
     assert res.exit_code == 1
     assert "TRaSH import error" in res.output
+
+
+def test_print_schema_emits_valid_json_without_config():
+    # --print-schema is eager: it works with no --config file present.
+    import json
+
+    res = CliRunner().invoke(main, ["--print-schema"])
+    assert res.exit_code == 0
+    doc = json.loads(res.output)
+    assert doc["title"] == "configarr configuration"
+    assert set(doc["properties"]) >= {"radarr", "sonarr", "prowlarr"}
+
+
+def test_strict_unknown_key_exits_1(tmp_path):
+    cfg = _write(
+        tmp_path,
+        "radarr:\n  instances:\n    m:\n"
+        "      base_url: http://r\n      api_key: k\n      bogus: 1\n",
+    )
+    res = CliRunner().invoke(main, ["--config", cfg, "--strict", "--check"])
+    assert res.exit_code == 1
+    assert "Configuration error" in res.output
+
+
+def test_unknown_key_without_strict_still_runs(tmp_path):
+    # Default behavior: a typo warns but does not fail (--check succeeds).
+    cfg = _write(
+        tmp_path,
+        "radarr:\n  instances:\n    m:\n"
+        "      base_url: http://r\n      api_key: k\n      bogus: 1\n",
+    )
+    res = CliRunner().invoke(main, ["--config", cfg, "--check"])
+    assert res.exit_code == 0

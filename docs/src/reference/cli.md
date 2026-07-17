@@ -19,6 +19,8 @@ configarr [OPTIONS]
 | `--check` | — | Validate the config **offline** — parse it, check the models, and resolve any TRaSH imports — then exit. Contacts **no** service, so it needs no reachable instances. For CI. |
 | `--prune` | — | Also delete resources **configarr previously created** that the config no longer declares, for providers that support deletion. Ownership-scoped — never deletes resources you made by hand. Additive by default; combine with `--plan` to preview deletions first. |
 | `--output` | `text\|json` | Output format for `--plan`. `json` emits a machine-readable diff for CI. Default: `text`. |
+| `--strict` | — | Treat an unrecognized config key (likely a typo) as an error instead of a warning. |
+| `--print-schema` | — | Print a JSON Schema for `configarr.yml` (for editor autocomplete/validation) and exit. Needs no config file. |
 | `--debug` | — | Verbose debug logging for the whole run. Does **not** prevent writes. |
 
 Apply is the **default** — running with no flag writes the changes.
@@ -55,6 +57,15 @@ Apply is the **default** — running with no flag writes the changes.
 > confirms the config parses, the models validate, and any TRaSH imports resolve.
 > Use `--check` in CI to catch a broken config without needing reachable instances.
 
+> [!TIP]
+> **Editor autocomplete & validation.** `configarr --print-schema > configarr.schema.json`
+> writes a JSON Schema for your config. Point your editor at it — e.g. with the YAML
+> language server, add a first line to `configarr.yml`:
+> `# yaml-language-server: $schema=./configarr.schema.json` — to get autocomplete of
+> section keys and red squiggles on typos as you type. The same section-key check
+> runs at load time: an unrecognized key is warned about (it's the usual cause of an
+> edit that silently does nothing), and `--strict` turns that warning into an error.
+
 ## Examples
 
 ```bash
@@ -69,6 +80,9 @@ configarr --plan
 
 # Validate the config in CI without any reachable instance
 configarr --check
+
+# Generate a JSON Schema for editor autocomplete/validation
+configarr --print-schema > configarr.schema.json
 
 # Only Radarr
 configarr --service radarr

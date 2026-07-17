@@ -86,14 +86,19 @@ already applied before the failure — it does not keep going resource by resour
 > A failed apply, a bad config, or a TRaSH import error all exit non-zero, which is
 > what you want in CI. See [Command Line](../reference/cli.md#exit-codes).
 
-## Unknown keys are silently ignored
+## Unknown keys — warned, not silently dropped
 
-configarr does **not** error on unrecognised keys. A resource that never shows up
-in the results was most likely filed under a wrong or misspelled key — check it
-against the [schema](../reference/schema.md). This is the most common "it didn't
-do anything" cause. (`settings:` passthrough maps behave the same way: unknown
-field names are matched against the live API schema and dropped if they don't
-exist.)
+A misspelled key is the most common "it didn't do anything" cause. configarr now
+**warns** at load time about an unrecognised **section** key (e.g. `custom_format:`
+for `custom_formats:`), and `--strict` turns that warning into an error. For live,
+as-you-type feedback, generate the editor schema with `configarr --print-schema`
+(see [Command Line](../reference/cli.md#options)).
+
+The check is at the section level; deep **passthrough** field names (inside
+`settings:`, a custom format's specification, etc.) are not the *arr API keys and
+are still matched against the live API schema and dropped if they don't exist — so
+if a resource is created but a field didn't take, check that field against the
+[schema](../reference/schema.md).
 
 ## Multiple instances
 

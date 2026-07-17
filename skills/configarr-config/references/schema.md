@@ -58,6 +58,12 @@ before quality profiles** within an instance.
   **labels** (strings) or numeric **ids**. Labels are resolved against the
   instance's existing tags; an unknown label is an error (configarr does not create
   tags yet). Numeric ids pass through unchanged.
+- **Unrecognized section keys are warned about** at load time (a typo like
+  `custom_format:` for `custom_formats:` is the usual cause of an edit that does
+  nothing); `--strict` makes it an error. Generate an editor JSON Schema with
+  `configarr --print-schema` for autocomplete and as-you-type validation. Deep
+  `settings:`-style passthrough field names are still matched against the live API
+  and dropped if unknown (see below).
 
 ```yaml
 sonarr:
