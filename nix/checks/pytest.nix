@@ -17,5 +17,8 @@ in
 flake.lib.srcCheck pkgs {
   name = "pytest-check";
   src = inputs.self;
+  # The trash git-source tests shell out to `git` (a local repo stands in for a
+  # remote), so it must be on PATH inside the sandbox.
+  nativeBuildInputs = [ pkgs.git ];
   command = "${py}/bin/pytest -q";
 }

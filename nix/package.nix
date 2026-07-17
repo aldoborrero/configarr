@@ -31,6 +31,15 @@ python313.pkgs.buildPythonApplication rec {
     rich
   ];
 
+  # The `trash: { source: git }` import shells out to `git` to clone/update a
+  # Guides repo, so put it on the wrapped program's PATH.
+  makeWrapperArgs = [
+    "--prefix"
+    "PATH"
+    ":"
+    (lib.makeBinPath [ git ])
+  ];
+
   meta = with lib; {
     description = "Configuration manager for Radarr, Sonarr, Prowlarr, Bazarr, and SABnzbd";
     homepage = "https://github.com/aldoborrero/configarr";
