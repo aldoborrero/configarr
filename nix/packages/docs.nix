@@ -9,7 +9,9 @@ let
 in
 pkgs.stdenvNoCC.mkDerivation {
   pname = "configarr-docs";
-  version = "0.2.0";
+  # Track the tool version, sourced from pyproject.toml (imported at eval time,
+  # so it need not be part of the build src below).
+  version = (pkgs.lib.importTOML ../../pyproject.toml).project.version;
 
   src = fs.toSource {
     root = ../..;
