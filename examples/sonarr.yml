@@ -61,3 +61,19 @@ sonarr:
             on_import_complete: true
             settings:
               webHookUrl: ${DISCORD_WEBHOOK}
+
+      # Import lists auto-add series from an external source. Top-level keys are
+      # Sonarr's (enableAutomaticAdd/shouldMonitor/seriesType/seasonFolder/…);
+      # settings are passed to the list implementation's own fields.
+      import_lists:
+        definitions:
+          "Trakt Popular":
+            implementation: TraktPopularImport
+            enableAutomaticAdd: true
+            shouldMonitor: all
+            seriesType: standard
+            seasonFolder: true
+            qualityProfileId: 1
+            rootFolderPath: /tv
+            settings:
+              traktListType: 0

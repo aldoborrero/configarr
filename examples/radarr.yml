@@ -72,3 +72,17 @@ radarr:
             on_upgrade: true
             settings:
               webHookUrl: ${DISCORD_WEBHOOK}
+
+      # Import lists auto-add movies from an external source. Top-level keys are
+      # Radarr's (enabled/monitor/minimumAvailability/…); settings are passed to
+      # the list implementation's own fields.
+      import_lists:
+        definitions:
+          "Trakt Popular":
+            implementation: TraktPopularImport
+            enabled: true
+            monitor: movieOnly
+            qualityProfileId: 1
+            rootFolderPath: /movies
+            settings:
+              traktListType: 0

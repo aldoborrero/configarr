@@ -6,7 +6,7 @@ Configuration manager for *arr applications and SABnzbd. Declaratively manage yo
 
 ## Features
 
-- **Radarr/Sonarr**: Root folders, naming, quality profiles, download clients
+- **Radarr/Sonarr**: Root folders, naming, custom formats, quality profiles, delay/release profiles, download clients, notifications, import lists
 - **Prowlarr**: Indexers, applications, download clients
 - **Bazarr**: Language profiles, providers, Sonarr/Radarr connections
 - **SABnzbd**: Servers, categories, misc settings
