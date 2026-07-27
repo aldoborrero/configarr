@@ -187,6 +187,54 @@ notifications:
 > `ValueError` when configarr tries to create it, which aborts the whole run (exit
 > `1`) — there is no per-resource failure line.
 
+## Import lists
+
+Import lists auto-add movies or series from an external source (Trakt, IMDb,
+another *arr, …). Like download clients they're a map under `.definitions` keyed by
+a name you choose, each requiring an `implementation`, with `settings` passed
+through to that implementation's own fields.
+
+The **top-level** keys differ between Radarr and Sonarr — set whichever your
+service uses; they're sent straight through as *arr field names. The
+[import-lists schema reference](../reference/schema.md) lists the fields each
+service accepts.
+
+```yaml
+# Radarr
+import_lists:
+  definitions:
+    "Trakt Popular":
+      implementation: TraktPopularImport
+      enabled: true
+      monitor: movieOnly
+      qualityProfileId: 1
+      rootFolderPath: /movies
+      settings:
+        traktListType: 0
+```
+
+```yaml
+# Sonarr — note the different top-level keys
+import_lists:
+  definitions:
+    "Trakt Popular":
+      implementation: TraktPopularImport
+      enableAutomaticAdd: true
+      shouldMonitor: all
+      seriesType: standard
+      seasonFolder: true
+      qualityProfileId: 1
+      rootFolderPath: /tv
+      settings:
+        traktListType: 0
+```
+
+> [!NOTE]
+> `qualityProfileId` is a numeric id (resolving it from a profile name may come
+> later, like tag labels). `implementation` is required — the same
+> abort-the-run rule as download clients applies. Import lists participate in
+> `--prune` (ownership-scoped).
+
 ## Full examples
 
 - [`examples/radarr.yml`](https://github.com/aldoborrero/configarr/blob/main/examples/radarr.yml)
