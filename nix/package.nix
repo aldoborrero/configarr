@@ -6,7 +6,8 @@ with pkgs;
 
 python313.pkgs.buildPythonApplication rec {
   pname = "configarr";
-  version = "0.2.0";
+  # Single source of truth: read the version from pyproject.toml at eval time.
+  version = (lib.importTOML ../pyproject.toml).project.version;
   pyproject = true;
 
   src = lib.fileset.toSource {
