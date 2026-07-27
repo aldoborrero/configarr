@@ -111,6 +111,23 @@ how). Both the skill and the book pick up the change automatically.
 - Deploys to GitHub Pages via `.github/workflows/docs.yml` on pushes to `main`
   touching docs sources.
 
+## Releasing
+
+The version lives in **one** place: `pyproject.toml`. `configarr.__version__` and
+both Nix derivations read it from there, so never hardcode it elsewhere.
+
+To cut a release:
+
+1. Bump `version` in `pyproject.toml`.
+2. In `CHANGELOG.md`, rename the `## [Unreleased]` section to `## [X.Y.Z] - <date>`
+   and add the compare links at the bottom.
+3. Commit, then tag and push: `git tag vX.Y.Z && git push origin vX.Y.Z`.
+
+The tag push triggers two workflows: `docker.yml` publishes the image to GHCR, and
+`release.yml` publishes the GitHub Release. `release.yml` **fails if the tag does
+not match `pyproject.toml`** (guarding the tag/version drift that broke 0.2.0) and
+uses the matching `CHANGELOG.md` section as the release notes.
+
 ## Conventions
 
 - GitHub Actions are pinned to commit SHAs, and nixpkgs is resolved from

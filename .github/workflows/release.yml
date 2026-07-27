@@ -1,0 +1,97 @@
+name: Release
+
+# Publishes a GitHub Release when a vX.Y.Z tag is pushed. The tag must match the
+# version in pyproject.toml (the single source of truth) or the run fails — this
+# guards against the tag/version drift that broke the 0.2.0 release. Release notes
+# come from the matching CHANGELOG.md section, falling back to auto-generated
+# notes. Docker images are published separately by docker.yml on the same tag.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing vX.Y.Z tag to publish a release for"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Publish GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve tag
+        id: tag
+        env:
+          EVENT: ${{ github.event_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            tag="$INPUT_TAG"
+          else
+            tag="$REF_NAME"
+          fi
+          case "$tag" in
+            v*) ;;
+            *) echo "::error::tag '$tag' must start with 'v'"; exit 1 ;;
+          esac
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ steps.tag.outputs.tag }}
+
+      - name: Verify tag matches pyproject.toml version
+        env:
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          pyproject="$(sed -n 's/^version = "\(.*\)"$/\1/p' pyproject.toml | head -1)"
+          if [ "$VERSION" != "$pyproject" ]; then
+            echo "::error::tag version '$VERSION' does not match pyproject.toml version '$pyproject'"
+            exit 1
+          fi
+          echo "OK: $VERSION matches pyproject.toml"
+
+      - name: Extract release notes from CHANGELOG
+        env:
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          awk -v ver="$VERSION" '
+            $0 ~ ("^## \\[" ver "\\]") { capture = 1; next }
+            capture && /^## \[/ { exit }
+            capture { print }
+          ' CHANGELOG.md > RELEASE_NOTES.md
+          # Drop leading blank lines so the release body starts at the first heading.
+          sed -i -e '/./,$!d' RELEASE_NOTES.md
+          if [ -s RELEASE_NOTES.md ]; then
+            echo "Using the CHANGELOG section for $VERSION."
+          else
+            echo "No CHANGELOG entry for $VERSION; notes will be auto-generated."
+          fi
+
+      - name: Create the GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.tag.outputs.tag }}
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; nothing to do."
+            exit 0
+          fi
+          args=(--title "$TAG")
+          # A tag like v0.3.0-rc1 (a pre-release version) is marked as such.
+          case "$VERSION" in
+            *-*) args+=(--prerelease) ;;
+          esac
+          if [ -s RELEASE_NOTES.md ]; then
+            args+=(--notes-file RELEASE_NOTES.md)
+          else
+            args+=(--generate-notes)
+          fi
+          gh release create "$TAG" "${args[@]}"
