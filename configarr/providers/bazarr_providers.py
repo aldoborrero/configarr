@@ -18,10 +18,12 @@ never removing others.
 
 Secret handling differs from the *arr providers: Bazarr's ``GET /api/system/settings``
 returns secrets in CLEARTEXT and uses no mask sentinel (verified against Bazarr's
-``app/config.get_settings``, which only strips ``flask_secret_key``). Idempotency for
-password/apikey fields therefore works by direct value comparison, so the
-``drop_secret_fields`` call in ``normalize`` is purely defensive against a literal
-``"********"`` value and is a no-op against real Bazarr output.
+``app/config.get_settings``, which only strips ``flask_secret_key``). To keep those
+values out of the plan, ``normalize`` fingerprints secret-named fields
+(``redact_secret_fields``): idempotency and change detection still work by comparing
+fingerprints, but the raw password/apikey never reaches a FieldDiff. Apply is
+unaffected — it posts the real value from the desired config. ``drop_secret_fields``
+stays as defense against a literal ``"********"`` value.
 """
 
 from __future__ import annotations
@@ -30,7 +32,7 @@ from collections.abc import Hashable
 from typing import Any
 
 from configarr.model import Op, ResourcePlan
-from configarr.normalize import coerce_scalar, drop_secret_fields
+from configarr.normalize import coerce_scalar, drop_secret_fields, redact_secret_fields
 from configarr.providers.base import Action, CurrentStateCache
 from configarr.transport import build_session
 
@@ -120,7 +122,10 @@ class BazarrProviderProvider(CurrentStateCache):
 
     def normalize(self, resource: dict[str, Any]) -> dict[str, Any]:
         cleaned = drop_secret_fields(resource)
-        return {key: coerce_scalar(value) for key, value in cleaned.items()}
+        coerced = {key: coerce_scalar(value) for key, value in cleaned.items()}
+        # Fingerprint cleartext secrets so a changed password/apikey still diffs
+        # without the raw value entering the plan (apply posts the real value).
+        return redact_secret_fields(coerced)
 
     def to_action(
         self,
