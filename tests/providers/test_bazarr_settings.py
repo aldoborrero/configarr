@@ -23,6 +23,7 @@ CURRENT_SETTINGS = {
         "port": 8989,
         "base_url": "/",
         "ssl": False,
+        "apikey": "sonarr-key",
     },
     "radarr": {
         "ip": "radarr.local",
@@ -116,6 +117,38 @@ def test_radarr_section_is_independent(plan_provider):
     assert plan.resources[0].op is Op.UPDATE
     paths = {d.path for d in plan.resources[0].field_diffs}
     assert paths == {"port"}
+
+
+@responses.activate
+def test_matching_apikey_is_noop(plan_provider):
+    # The sonarr/radarr sections carry an apikey (cleartext); an equal value is
+    # idempotent because both sides fingerprint identically.
+    _mock_get_settings()
+    plan = plan_provider(_provider("sonarr", {"apikey": "sonarr-key"}))
+    assert not plan.has_changes, plan.resources
+
+
+@responses.activate
+def test_changed_apikey_diff_is_fingerprint_not_cleartext(plan_provider):
+    _mock_get_settings()
+    plan = plan_provider(_provider("sonarr", {"apikey": "rotated"}))
+    d = next(d for d in plan.resources[0].field_diffs if d.path == "apikey")
+    assert d.before != "sonarr-key" and d.after != "rotated"
+    assert str(d.after).startswith("secret:")
+    assert "sonarr-key" not in str(d.before) and "rotated" not in str(d.after)
+
+
+@responses.activate
+def test_apply_writes_real_apikey_not_fingerprint(plan_provider, apply_changes):
+    _mock_get_settings()
+    _mock_post_settings()
+    p = _provider("sonarr", {"apikey": "rotated"})
+    apply_changes(p, plan_provider(p))
+    body = [c for c in responses.calls if c.request.method == "POST"][-1].request.body
+    rendered = body.decode() if isinstance(body, bytes) else str(body)
+    assert "settings-sonarr-apikey" in rendered
+    assert "rotated" in rendered
+    assert "secret:" not in rendered
 
 
 @responses.activate

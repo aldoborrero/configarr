@@ -7,33 +7,18 @@ from typing import TypedDict
 from rich.console import Console
 
 from configarr.model import Op, Plan
+from configarr.normalize import is_secret_name
 
 _REDACTED = "***"
-# Substrings marking a field name as secret. This output-layer redaction is a
-# backstop: providers normally drop secrets from the diff (see normalize.MASK /
-# drop_secret_fields), but Bazarr echoes provider passwords in clear text, so a real
-# value can still reach a FieldDiff. Rendering must never trust that upstream dropped
-# it — a leaked secret in `--plan` output is the bug this guards against.
-#
-# Matching is by field *name* only: a secret stored under a non-secret-named key, or a
-# secret used as a resource match key, is NOT caught here — providers that hold
-# cleartext secrets (Bazarr) should also drop them from the diff, not rely on this.
-_SECRET_HINTS = (
-    "password",
-    "passwd",
-    "passkey",
-    "apikey",
-    "userkey",  # Pushover userKey — secret despite lacking password/apikey in the name
-    "token",
-    "secret",
-    "credential",
-    "cookie",
-)
+# Output-layer backstop over the shared secret-name policy (normalize.is_secret_name).
+# Providers that echo secrets in clear text (Bazarr) fingerprint them in normalize, so
+# the cleartext should not reach a FieldDiff — but rendering must never trust that, as
+# a leaked secret in `--plan`/JSON output is the bug this guards against. Matching is
+# by field *name* only: a secret under a non-secret-named key is not caught here.
 
 
 def _redact(path: str, value: object) -> object:
-    leaf = path.rsplit(".", 1)[-1].replace("_", "").lower()
-    if any(hint in leaf for hint in _SECRET_HINTS):
+    if is_secret_name(path):
         return _REDACTED
     return value
 

@@ -107,12 +107,39 @@ def test_matching_cleartext_secret_is_noop(plan_provider):
 @responses.activate
 def test_changed_secret_surfaces_update(plan_provider):
     # The flip side of cleartext handling: a real secret change must NOT be hidden.
-    # Secrets are never dropped by name here, so a differing password surfaces.
+    # Secrets are fingerprinted (not dropped) by name, so a differing password still
+    # surfaces as an update.
     _mock_get_settings()
     plan = plan_provider(_provider({"opensubtitlescom": {"password": "changed"}}))
     assert plan.resources[0].op is Op.UPDATE
     paths = {d.path for d in plan.resources[0].field_diffs}
     assert "password" in paths
+
+
+@responses.activate
+def test_changed_secret_diff_is_fingerprint_not_cleartext(plan_provider):
+    # The whole point of the hardening: neither the old nor the new secret value
+    # appears in the plan; both sides are fingerprints.
+    _mock_get_settings()
+    plan = plan_provider(_provider({"opensubtitlescom": {"password": "changed"}}))
+    d = next(d for d in plan.resources[0].field_diffs if d.path == "password")
+    assert d.before != "pw" and d.after != "changed"
+    assert str(d.before).startswith("secret:") and str(d.after).startswith("secret:")
+    assert "pw" not in str(d.before) and "changed" not in str(d.after)
+
+
+@responses.activate
+def test_apply_writes_real_secret_not_fingerprint(plan_provider, apply_changes):
+    # Fingerprinting is diff-only: apply must still POST the real password.
+    _mock_get_settings()
+    _mock_post_settings()
+    p = _provider({"opensubtitlescom": {"password": "changed"}})
+    apply_changes(p, plan_provider(p))
+    body = [c for c in responses.calls if c.request.method == "POST"][-1].request.body
+    rendered = body.decode() if isinstance(body, bytes) else str(body)
+    assert "settings-opensubtitlescom-password" in rendered
+    assert "changed" in rendered
+    assert "secret:" not in rendered
 
 
 @responses.activate

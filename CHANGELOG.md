@@ -32,6 +32,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The package version is single-sourced from `pyproject.toml`; the Nix
   derivations and `configarr.__version__` derive from it (#25).
 
+### Security
+
+- Bazarr secrets (which its settings API returns in clear text) are fingerprinted
+  before they enter a plan, so a rotated password or apikey no longer appears in
+  `--plan`/`--output json`. Change detection and apply are unaffected.
+
 ## [0.2.0] - 2026-07-17
 
 ### Added

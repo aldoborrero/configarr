@@ -21,7 +21,7 @@ from collections.abc import Hashable
 from typing import Any
 
 from configarr.model import Op, ResourcePlan
-from configarr.normalize import coerce_scalar
+from configarr.normalize import coerce_scalar, redact_secret_fields
 from configarr.providers.base import Action, CurrentStateCache
 from configarr.transport import build_session
 
@@ -74,8 +74,11 @@ class BazarrSettingsProvider(CurrentStateCache):
     def normalize(self, resource: dict[str, Any]) -> dict[str, Any]:
         # coerce_scalar canonicalizes both sides so '25' == 25 and 'true' == True;
         # the engine only compares the desired keys, so carrying extra current keys
-        # here is harmless.
-        return {key: coerce_scalar(value) for key, value in resource.items()}
+        # here is harmless. redact_secret_fields fingerprints secret-named values (the
+        # sonarr/radarr sections carry an apikey) so a changed secret still diffs while
+        # the cleartext stays out of the plan; apply writes the real value.
+        coerced = {key: coerce_scalar(value) for key, value in resource.items()}
+        return redact_secret_fields(coerced)
 
     def to_action(
         self,

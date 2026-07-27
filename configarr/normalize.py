@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import re
 from collections.abc import Collection, Iterable
 from typing import Any
@@ -53,3 +54,49 @@ def drop_secret_fields(
     whose value is literally the mask. Pass ``secret_names`` for provider-Field
     resources; omit it when only mask-valued fields must be dropped."""
     return {k: v for k, v in fields.items() if k not in secret_names and v != MASK}
+
+
+# Field-name policy for secrets a provider echoes in CLEAR TEXT (Bazarr), where there
+# is no schema privacy metadata to key off. Matching is by the leaf name, case- and
+# underscore-insensitive. This is used both to fingerprint such values before they
+# enter a plan (redact_secret_fields) and as render's output-layer backstop. It is a
+# heuristic: a secret under a name none of these substrings match is not recognized.
+_SECRET_NAME_HINTS = (
+    "password",
+    "passwd",
+    "passkey",
+    "passphrase",
+    "apikey",
+    "userkey",  # Pushover userKey — secret despite lacking "password"/"apikey"
+    "token",
+    "secret",
+    "credential",
+    "cookie",
+)
+
+
+def is_secret_name(name: str) -> bool:
+    """True if a field name looks like it holds a secret. Compares the leaf segment
+    (after the last ``.``) with separators removed and case folded."""
+    leaf = str(name).rsplit(".", 1)[-1].replace("_", "").lower()
+    return any(hint in leaf for hint in _SECRET_NAME_HINTS)
+
+
+def fingerprint_secret(value: Any) -> str:
+    """A stable, non-reversible stand-in for a secret value. Equal secrets share a
+    fingerprint (an unchanged config does not diff) and a changed secret changes it
+    (the update is still detected), while the cleartext never enters the plan."""
+    if value is None or value == "":
+        return "secret:unset"
+    return "secret:" + hashlib.sha256(str(value).encode()).hexdigest()[:12]
+
+
+def redact_secret_fields(fields: dict[str, Any]) -> dict[str, Any]:
+    """Replace secret-named field values with a fingerprint. For providers whose API
+    returns secrets in clear text (Bazarr): the diff still compares and detects a
+    changed secret, but the raw value never enters the plan. Apply is unaffected — it
+    writes the real value from the desired config, not from this normalized view."""
+    return {
+        k: (fingerprint_secret(v) if is_secret_name(k) else v)
+        for k, v in fields.items()
+    }
