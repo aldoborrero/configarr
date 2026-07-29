@@ -26,7 +26,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   still never retried on connection errors or `5xx` that may have taken effect.
 - Duplicate-identity errors now name the resource kind and distinguish a repeated
   name from two nameless resources, instead of a bare `duplicate key` message.
-
+- Ownership state is now persisted even when an apply fails mid-run, so the
+  `.configarr-state.json` record of resources already written (by completed
+  providers, and by a provider that aborted partway through) is no longer lost.
 ## [0.3.0] - 2026-07-28
 
 ### Added
