@@ -6,6 +6,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Bazarr `enabled_providers` is now written as one repeated form field per
+  provider instead of a comma-joined value, which Bazarr stored as a single
+  malformed list entry that matched — and thus enabled — no provider.
+
 ## [0.3.0] - 2026-07-28
 
 ### Added
