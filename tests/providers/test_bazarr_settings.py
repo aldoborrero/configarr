@@ -30,6 +30,11 @@ CURRENT_SETTINGS = {
         "port": 7878,
         "ssl": False,
     },
+    "subsync": {
+        "use_subsync": False,
+        "subsync_threshold": 90,
+        "gss": True,
+    },
 }
 
 
@@ -166,6 +171,25 @@ def test_apply_posts_section_form_fields(plan_provider, apply_changes):
     assert "50" in rendered
     assert "settings-general-use_sonarr" in rendered
     assert "false" in rendered
+
+
+@responses.activate
+def test_subsync_apply_posts_use_subsync(plan_provider, apply_changes):
+    _mock_get_settings()
+    _mock_post_settings()
+    p = _provider("subsync", {"use_subsync": True})
+    apply_changes(p, plan_provider(p))
+    body = [c for c in responses.calls if c.request.method == "POST"][-1].request.body
+    rendered = body.decode() if isinstance(body, bytes) else str(body)
+    assert "settings-subsync-use_subsync" in rendered
+    assert "true" in rendered
+
+
+@responses.activate
+def test_subsync_idempotent_when_current_matches(plan_provider):
+    _mock_get_settings()
+    plan = plan_provider(_provider("subsync", {"use_subsync": False, "gss": True}))
+    assert not plan.has_changes, plan.resources
 
 
 @responses.activate

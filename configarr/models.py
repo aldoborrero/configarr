@@ -153,6 +153,8 @@ class BazarrConfig(BaseModel):
     general: dict[str, Any] | None = None
     sonarr: dict[str, Any] | None = None
     radarr: dict[str, Any] | None = None
+    subsync: dict[str, Any] | None = None
+    translator: dict[str, Any] | None = None
     providers: dict[str, dict[str, Any]] = {}
     language_profiles: list[dict[str, Any]] = []
 

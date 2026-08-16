@@ -58,6 +58,8 @@ _BAZARR_INSTANCE: dict[str, Any] = {
     "general": _OBJ,
     "sonarr": _OBJ,
     "radarr": _OBJ,
+    "subsync": _OBJ,
+    "translator": _OBJ,
     "providers": _OBJ,
     "language_profiles": _ARR,
 }
