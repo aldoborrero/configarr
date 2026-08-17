@@ -1,7 +1,7 @@
 import pytest
 import responses
 
-from configarr.model import Op
+from configarr.plan import Op
 from configarr.providers.lingarr.settings import LingarrSettingsProvider
 
 LIN = "http://lingarr.test"
@@ -94,7 +94,7 @@ def test_apply_posts_the_payload_to_set():
     _mock_get(CURRENT)
     set_call = responses.post(f"{LIN}/api/setting/multiple/set", json={})
     prov = _provider({"local_ai_model": "deepseek/deepseek-v4-flash"})
-    from configarr.model import ResourcePlan
+    from configarr.plan import ResourcePlan
     from configarr.providers.base import Action
 
     action = prov.to_action(

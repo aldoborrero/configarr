@@ -1,6 +1,6 @@
 import responses
 
-from configarr.model import Op, ResourcePlan
+from configarr.plan import Op, ResourcePlan
 from configarr.providers.arr.custom_formats import CustomFormatProvider
 from configarr.providers.arr.download_clients import DownloadClientProvider
 from configarr.providers.arr.notifications import NotificationProvider

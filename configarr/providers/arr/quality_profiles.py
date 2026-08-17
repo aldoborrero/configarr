@@ -22,7 +22,7 @@ from collections.abc import Hashable, Iterator
 from typing import Any
 
 from configarr.build import merge_full_replace
-from configarr.model import Op, ResourcePlan
+from configarr.plan import Op, ResourcePlan
 from configarr.providers.base import Action, HttpProvider
 
 log = logging.getLogger("configarr.quality_profile")

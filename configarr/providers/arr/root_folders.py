@@ -14,7 +14,7 @@ from __future__ import annotations
 from collections.abc import Hashable
 from typing import Any
 
-from configarr.model import Op, ResourcePlan
+from configarr.plan import Op, ResourcePlan
 from configarr.providers.base import Action, HttpProvider
 
 

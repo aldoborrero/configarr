@@ -22,8 +22,8 @@ from collections.abc import Hashable
 from typing import Any
 
 from configarr.build import merge_full_replace
-from configarr.model import Op, ResourcePlan
 from configarr.normalize import coerce_scalar
+from configarr.plan import Op, ResourcePlan
 from configarr.providers.base import Action, HttpProvider
 
 # config key -> API field (straight passthrough of the user's value).

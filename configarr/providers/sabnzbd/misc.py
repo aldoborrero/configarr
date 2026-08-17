@@ -22,8 +22,8 @@ import logging
 from collections.abc import Hashable
 from typing import Any
 
-from configarr.model import Op, ResourcePlan
 from configarr.normalize import coerce_scalar
+from configarr.plan import Op, ResourcePlan
 from configarr.providers.base import Action, CurrentStateCache
 from configarr.transport import build_session
 

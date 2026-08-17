@@ -1,6 +1,6 @@
 import responses
 
-from configarr.model import Op
+from configarr.plan import Op
 from configarr.providers.arr.naming import NamingProvider
 
 RADARR = "http://radarr.test"

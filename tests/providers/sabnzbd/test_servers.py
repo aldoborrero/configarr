@@ -2,7 +2,7 @@ import pytest
 import responses
 from responses import matchers
 
-from configarr.model import Op
+from configarr.plan import Op
 from configarr.providers.sabnzbd.servers import SabnzbdServerProvider
 
 SAB = "http://sab.test"

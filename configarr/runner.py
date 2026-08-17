@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import Any, TypedDict
 
 from configarr.engine import diff, reconcile_renames
-from configarr.model import Op, Plan
 from configarr.models import ConfigarrConfig
+from configarr.plan import Op, Plan
 from configarr.providers.base import ResourceProvider
 from configarr.registry import PlannedProvider, providers_for
 from configarr.render import ResourceJson, plan_resources_json, render_plan

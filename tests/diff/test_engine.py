@@ -1,7 +1,7 @@
 import pytest
 
 from configarr.engine import diff
-from configarr.model import Op
+from configarr.plan import Op
 
 
 def _norm(r):  # identity normalize for the test

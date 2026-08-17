@@ -1,6 +1,6 @@
 import responses
 
-from configarr.model import Op
+from configarr.plan import Op
 from configarr.providers.arr.release_profiles import ReleaseProfileProvider
 
 SONARR = "http://sonarr.test"

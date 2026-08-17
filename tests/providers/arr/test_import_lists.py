@@ -1,6 +1,6 @@
 import responses
 
-from configarr.model import Op
+from configarr.plan import Op
 from configarr.providers.arr.import_lists import ImportListProvider
 
 BASE = "http://radarr.test"

@@ -1,6 +1,6 @@
 import responses
 
-from configarr.model import Op
+from configarr.plan import Op
 from configarr.providers.bazarr.providers import BazarrProviderProvider
 
 BAZARR = "http://bazarr.test"

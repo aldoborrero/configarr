@@ -1,7 +1,7 @@
 import pytest
 import responses
 
-from configarr.model import Op, ResourcePlan
+from configarr.plan import Op, ResourcePlan
 from configarr.providers.arr.custom_formats import CustomFormatProvider
 
 BASE = "http://radarr.test"

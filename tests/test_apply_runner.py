@@ -2,7 +2,7 @@ import responses
 
 from configarr import runner
 from configarr.config import parse_config
-from configarr.model import Op
+from configarr.plan import Op
 from configarr.providers.base import Action
 from configarr.registry import PlannedProvider
 from configarr.runner import run_apply, run_plan

@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Hashable
 from typing import Any
 
-from configarr.model import FieldDiff, Op, Plan, ResourcePlan
+from configarr.plan import FieldDiff, Op, Plan, ResourcePlan
 
 
 def reconcile_renames(

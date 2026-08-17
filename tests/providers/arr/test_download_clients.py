@@ -3,7 +3,7 @@ import json
 import pytest
 import responses
 
-from configarr.model import Op
+from configarr.plan import Op
 from configarr.providers.arr.download_clients import DownloadClientProvider
 
 RADARR = "http://radarr.test"
