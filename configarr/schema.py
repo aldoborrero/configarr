@@ -87,6 +87,10 @@ SERVICES: dict[str, dict[str, Any]] = {
     "sabnzbd": _SABNZBD_INSTANCE,
     "lingarr": _LINGARR_INSTANCE,
 }
+# The canonical service list. Everything that enumerates services — the config
+# parser, the CLI --service choices and scope validation — derives from this so a
+# new service is added in one place, not silently missed in one of them.
+SERVICE_NAMES: tuple[str, ...] = tuple(SERVICES)
 _REQUIRED = ("base_url", "api_key")
 
 
