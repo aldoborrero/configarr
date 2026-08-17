@@ -6,7 +6,21 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-## [0.4.1] - 2026-08-17
+### Fixed
+
+- A read-only `--plan` no longer drops a config `tags` label that doesn't exist on
+  the instance yet: it is kept as its label (still warned) so the plan's tag set
+  matches what apply writes. This stops a delay profile referencing an uncreated tag
+  from crashing `--plan` (tag-set identities collapsing) and stops name-keyed
+  resources (notifications/import lists/release profiles) from under-reporting the
+  `tags` change.
+- Root-folder paths are matched with the trailing slash stripped, so `/data/media/`
+  in config matches the server's `/data/media` instead of reporting a phantom CREATE
+  and a duplicate-path apply error.
+- Quality definitions are matched case-insensitively (as quality profiles already
+  are) and warn on an unmatched name, instead of silently applying nothing.
+- A quality profile config with two quality groups sharing a name now errors clearly
+  instead of shipping a PUT where both groups collide on one server id.
 
 ### Changed
 

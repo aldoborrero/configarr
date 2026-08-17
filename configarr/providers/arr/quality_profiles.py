@@ -136,6 +136,12 @@ class QualityProfileProvider(HttpProvider):
                         continue
                     members.append({**leaf, "allowed": enabled})
                     wanted_qualities.add(child.lower())
+                if cq["name"].lower() in wanted_groups:
+                    raise ValueError(
+                        f"quality profile: duplicate quality group name "
+                        f"{cq['name']!r} — a profile cannot have two groups with the "
+                        f"same name (they would collide on one server id)"
+                    )
                 group: dict[str, Any] = {
                     "name": cq["name"],
                     "allowed": enabled,

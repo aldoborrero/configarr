@@ -34,15 +34,16 @@ def test_tag_map_fetched_once():
 
 
 @responses.activate
-def test_unknown_label_warns_and_is_skipped_in_plan_mode(caplog):
-    # Read-only plan (the default): a missing label is warned about and dropped,
-    # not created — and never errors.
+def test_unknown_label_warns_and_is_kept_in_plan_mode(caplog):
+    # Read-only plan (the default): a missing label is warned about and kept as its
+    # label (not created, never errors) so the plan's tag set stays the same length
+    # as what apply will write.
     import logging
 
     responses.get(f"{BASE}/api/v3/tag", json=[{"id": 1, "label": "hd"}])
     with caplog.at_level(logging.WARNING, logger="configarr.providers"):
         out = _P(kind="sonarr.indexer")._resolve_tags(["hd", "nope"])
-    assert out == [1]  # 'nope' skipped
+    assert out == [1, "nope"]  # 'nope' kept as its label, not dropped
     assert "will be created on apply" in caplog.text
     assert [c for c in responses.calls if c.request.method == "POST"] == []
 

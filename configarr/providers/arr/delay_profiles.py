@@ -64,7 +64,10 @@ class DelayProfileProvider(HttpProvider):
         self.config = config or []
 
     def match_key(self, resource: dict[str, Any]) -> Hashable:
-        return tuple(sorted(resource.get("tags") or []))
+        # key=str keeps the sort total-order-safe when a plan carries an unresolved
+        # tag label (str) alongside resolved ids (int); both sides use the same key,
+        # so matching is unaffected for the all-int case.
+        return tuple(sorted(resource.get("tags") or [], key=str))
 
     def _load_current(self) -> list[dict[str, Any]]:
         data: list[dict[str, Any]] = self._get("/api/v3/delayprofile").json()
@@ -88,7 +91,7 @@ class DelayProfileProvider(HttpProvider):
         desired: list[dict[str, Any]] = []
         for entry in self.config:
             overrides = self._overrides(entry)
-            overrides["tags"] = sorted(self._resolve_tags(entry.get("tags")))
+            overrides["tags"] = sorted(self._resolve_tags(entry.get("tags")), key=str)
             current = current_by_key.get(tuple(overrides["tags"]))
             if current is None:
                 desired.append({**_CREATE_DEFAULTS, **overrides})

@@ -1,3 +1,4 @@
+import pytest
 import responses
 
 from configarr.plan import Op
@@ -141,6 +142,23 @@ def test_items_in_config_priority_order():
     [desired] = _provider(CONFIG).build_desired()
     order = [i["quality"]["name"] for i in desired["items"]]
     assert order == ["WEBDL-1080p", "Bluray-1080p", "SDTV"]
+
+
+@responses.activate
+def test_duplicate_group_name_raises():
+    responses.get(f"{BASE}/api/v3/qualityprofile", json=[])
+    responses.get(f"{BASE}/api/v3/qualityprofile/schema", json=SCHEMA)
+    config = [
+        {
+            **CONFIG[0],
+            "qualities": [
+                {"name": "1080p", "qualities": ["WEBDL-1080p"]},
+                {"name": "1080p", "qualities": ["Bluray-1080p"]},
+            ],
+        }
+    ]
+    with pytest.raises(ValueError, match="duplicate quality group"):
+        _provider(config).build_desired()
 
 
 @responses.activate

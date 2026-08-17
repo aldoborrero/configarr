@@ -45,6 +45,22 @@ def _sonarr(config):
 
 
 @responses.activate
+def test_unresolved_tags_do_not_collide_on_plan(plan_provider):
+    # Two entries with different not-yet-created tag labels keep distinct identities on
+    # a read-only plan; previously both collapsed to () and crashed the diff's _index.
+    responses.get(f"{RADARR}/api/v3/tag", json=[])
+    responses.get(f"{RADARR}/api/v3/delayprofile", json=[RADARR_DEFAULT])
+    config = [
+        {"preferred_protocol": "torrent", "torrent_delay": 5, "tags": ["anime"]},
+        {"preferred_protocol": "torrent", "torrent_delay": 10, "tags": ["movies"]},
+    ]
+    plan = plan_provider(_radarr(config))
+    # No crash; both target not-yet-existing tag sets, so both are CREATE.
+    assert len(plan.resources) == 2
+    assert all(r.op is Op.CREATE for r in plan.resources)
+
+
+@responses.activate
 def test_empty_tags_updates_the_default_profile_instead_of_creating(plan_provider):
     # The core fix: identity is the tag-set, not the value tuple, so a changed
     # delay re-targets the existing default profile rather than duplicating it.

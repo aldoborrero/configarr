@@ -18,6 +18,15 @@ from configarr.plan import Op, ResourcePlan
 from configarr.providers.base import Action, HttpProvider
 
 
+def _norm_path(path: str | None) -> str | None:
+    """Normalize a root-folder path for matching: the *arr API stores paths without a
+    trailing slash, so ``/data/media/`` and ``/data/media`` are the same folder (a
+    bare ``/`` is preserved)."""
+    if path is None:
+        return path
+    return path.rstrip("/") or "/"
+
+
 class RootFolderProvider(HttpProvider):
     """Diffs Radarr/Sonarr root folders by filesystem path; create-only (no update)."""
 
@@ -27,19 +36,24 @@ class RootFolderProvider(HttpProvider):
         self.config = config or []
 
     def match_key(self, resource: dict[str, Any]) -> Hashable:
-        return resource.get("path")
+        return _norm_path(resource.get("path"))
 
     def _load_current(self) -> list[dict[str, Any]]:
         data: list[dict[str, Any]] = self._get("/api/v3/rootfolder").json()
         return data
 
     def build_desired(self) -> list[dict[str, Any]]:
-        return [{"path": entry["path"]} for entry in self.config if entry.get("path")]
+        return [
+            {"path": _norm_path(entry["path"])}
+            for entry in self.config
+            if entry.get("path")
+        ]
 
     def normalize(self, resource: dict[str, Any]) -> dict[str, Any]:
         # Path is the only managed field; server-side stats (accessible/freeSpace)
-        # are read-only and never compared.
-        return {"path": resource.get("path")}
+        # are read-only and never compared. Trailing slashes are stripped so a config
+        # path matches the server-normalized one.
+        return {"path": _norm_path(resource.get("path"))}
 
     def to_action(
         self,
