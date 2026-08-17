@@ -20,6 +20,7 @@
 - [Prowlarr](services/prowlarr.md)
 - [Bazarr](services/bazarr.md)
 - [SABnzbd](services/sabnzbd.md)
+- [Lingarr](services/lingarr.md)
 
 # Reference
 

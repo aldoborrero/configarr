@@ -1,6 +1,6 @@
 # configarr
 
-Configuration manager for *arr applications and SABnzbd. Declaratively manage your Radarr, Sonarr, Prowlarr, Bazarr, and SABnzbd instances from a single YAML file.
+Configuration manager for *arr applications, SABnzbd, and Lingarr. Declaratively manage your Radarr, Sonarr, Prowlarr, Bazarr, SABnzbd, and Lingarr instances from a single YAML file.
 
 📖 **[Read the documentation](https://aldoborrero.github.io/configarr/)** — installation, core concepts, per-service guides, the full configuration schema, recipes, and troubleshooting.
 
@@ -10,6 +10,7 @@ Configuration manager for *arr applications and SABnzbd. Declaratively manage yo
 - **Prowlarr**: Indexers, applications, download clients
 - **Bazarr**: Language profiles, providers, Sonarr/Radarr connections
 - **SABnzbd**: Servers, categories, misc settings
+- **Lingarr**: Translation backend + Sonarr/Radarr integration settings
 - **Multi-instance**: Configure multiple instances of each service
 - **Environment variables**: `${VAR}` substitution in config values
 - **Plan & apply**: preview the diff with `--plan`; sync applies only what changed, with opt-in `--prune` to remove unmanaged resources
@@ -52,7 +53,7 @@ docker run --rm \
 
 ```
 --config PATH    Path to configarr.yml (default: ./configarr.yml)
---service NAME   Only process a specific service (radarr, sonarr, prowlarr, bazarr, sabnzbd)
+--service NAME   Only process a specific service (radarr, sonarr, prowlarr, bazarr, sabnzbd, lingarr)
 --instance NAME  Only process a specific instance
 --plan           Preview the diff without writing (alias: --dry-run)
 --prune          Also delete unmanaged resources (sync is additive by default)

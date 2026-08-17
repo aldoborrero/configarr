@@ -35,3 +35,26 @@ bazarr:
         "translator_type": "lingarr",
         "lingarr_url": "http://lingarr.test:9876",
     }
+
+
+def test_parse_config_carries_lingarr_sections(tmp_path):
+    _write(
+        tmp_path,
+        """
+lingarr:
+  instances:
+    main:
+      base_url: http://lingarr.test:9876
+      translation:
+        service_type: localai
+      integration:
+        sonarr_url: http://sonarr.test:8989
+""",
+    )
+
+    config = parse_config(tmp_path / "configarr.yml")
+
+    inst = config.lingarr[0]
+    assert inst.api_key == ""  # optional — AUTH_ENABLED=false
+    assert inst.translation == {"service_type": "localai"}
+    assert inst.integration == {"sonarr_url": "http://sonarr.test:8989"}

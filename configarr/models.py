@@ -182,6 +182,23 @@ class SabnzbdConfig(BaseModel):
         return v.rstrip("/")
 
 
+class LingarrConfig(BaseModel):
+    """Configuration for a Lingarr instance."""
+
+    name: str
+    base_url: str
+    # AUTH_ENABLED=false needs no credential; kept optional for a future token.
+    api_key: str = ""
+    translation: dict[str, Any] | None = None
+    integration: dict[str, Any] | None = None
+
+    @field_validator("base_url")
+    @classmethod
+    def strip_trailing_slash(cls, v: str) -> str:
+        """Remove trailing slash from base_url."""
+        return v.rstrip("/")
+
+
 class ConfigarrConfig(BaseModel):
     """Root configuration containing all service instances."""
 
@@ -190,3 +207,4 @@ class ConfigarrConfig(BaseModel):
     prowlarr: list[ProwlarrConfig] = []
     bazarr: list[BazarrConfig] = []
     sabnzbd: list[SabnzbdConfig] = []
+    lingarr: list[LingarrConfig] = []

@@ -2,6 +2,7 @@ from configarr.models import (
     ArrServiceConfig,
     BazarrConfig,
     ConfigarrConfig,
+    LingarrConfig,
     ProwlarrConfig,
     SabnzbdConfig,
 )
@@ -161,6 +162,20 @@ def test_bazarr_settings_are_bazarr_only():
     assert _instances_for_kind(planned, "bazarr.translator") == ["subs"]
     assert _instances_for_kind(planned, "bazarr.provider") == ["subs"]
     assert _instances_for_kind(planned, "radarr.general") == []
+
+
+def _lingarr(name: str) -> LingarrConfig:
+    return LingarrConfig(name=name, base_url=f"http://{name}.test")
+
+
+def test_lingarr_settings_are_lingarr_only():
+    config = ConfigarrConfig(radarr=[_radarr("hd")], lingarr=[_lingarr("main")])
+
+    planned = list(providers_for(config))
+
+    assert _instances_for_kind(planned, "lingarr.translation") == ["main"]
+    assert _instances_for_kind(planned, "lingarr.integration") == ["main"]
+    assert _instances_for_kind(planned, "radarr.translation") == []
 
 
 def test_service_filter_narrows_to_matching_service():

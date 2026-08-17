@@ -52,7 +52,8 @@ def _print_schema(ctx: click.Context, param: click.Parameter, value: bool) -> No
 @click.option(
     "--service",
     type=click.Choice(
-        ["radarr", "sonarr", "prowlarr", "bazarr", "sabnzbd"], case_sensitive=False
+        ["radarr", "sonarr", "prowlarr", "bazarr", "sabnzbd", "lingarr"],
+        case_sensitive=False,
     ),
     help="Only process this service type",
 )
