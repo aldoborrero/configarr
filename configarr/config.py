@@ -168,6 +168,8 @@ def parse_bazarr_instance(name: str, config: dict[str, Any]) -> BazarrConfig:
         general=config.get("general"),
         sonarr=config.get("sonarr"),
         radarr=config.get("radarr"),
+        subsync=config.get("subsync"),
+        translator=config.get("translator"),
         providers=config.get("providers") or {},
         language_profiles=config.get("language_profiles") or [],
     )
