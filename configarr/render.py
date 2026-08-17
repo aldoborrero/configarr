@@ -6,8 +6,8 @@ from typing import TypedDict
 
 from rich.console import Console
 
-from configarr.model import Op, Plan
 from configarr.normalize import is_secret_name
+from configarr.plan import Op, Plan
 
 _REDACTED = "***"
 # Output-layer backstop over the shared secret-name policy (normalize.is_secret_name).

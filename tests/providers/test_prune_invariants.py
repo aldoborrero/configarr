@@ -1,13 +1,13 @@
 import responses
 
-from configarr.model import Op, ResourcePlan
-from configarr.providers.applications import ApplicationProvider
+from configarr.plan import Op, ResourcePlan
+from configarr.providers.arr.custom_formats import CustomFormatProvider
+from configarr.providers.arr.download_clients import DownloadClientProvider
+from configarr.providers.arr.notifications import NotificationProvider
 from configarr.providers.base import Action, FieldProvider
-from configarr.providers.custom_formats import CustomFormatProvider
-from configarr.providers.download_clients import DownloadClientProvider
-from configarr.providers.indexers import IndexerProvider
-from configarr.providers.notifications import NotificationProvider
-from configarr.providers.prowlarr_download_clients import ProwlarrDownloadClientProvider
+from configarr.providers.prowlarr.applications import ApplicationProvider
+from configarr.providers.prowlarr.download_clients import ProwlarrDownloadClientProvider
+from configarr.providers.prowlarr.indexers import IndexerProvider
 
 COLLECTION_FIELD_PROVIDERS = [
     DownloadClientProvider,

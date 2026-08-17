@@ -6,6 +6,14 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- Internal: providers are grouped into family subpackages
+  (`providers/{arr,prowlarr,bazarr,sabnzbd,lingarr}/`) reflecting that the *arr
+  providers are shared by radarr and sonarr, and the plan/diff types moved from
+  `model.py` to `plan.py` to disambiguate them from the config `models.py`. No
+  behaviour or configuration change.
+
 ## [0.4.0] - 2026-08-17
 
 ### Added

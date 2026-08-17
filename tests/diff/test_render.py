@@ -1,4 +1,4 @@
-from configarr.model import FieldDiff, Op, Plan, ResourcePlan
+from configarr.plan import FieldDiff, Op, Plan, ResourcePlan
 from configarr.render import plan_resources_json, render_plan
 
 

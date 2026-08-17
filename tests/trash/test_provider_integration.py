@@ -5,7 +5,7 @@ exact API shape (fields as a [{name, value}] list, schema defaults merged)."""
 import responses
 
 from configarr.models import ArrServiceConfig, ConfigarrConfig, TrashConfig
-from configarr.providers.custom_formats import CustomFormatProvider
+from configarr.providers.arr.custom_formats import CustomFormatProvider
 from configarr.trash import resolve_trash
 
 BASE = "http://r.test"

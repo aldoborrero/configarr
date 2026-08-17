@@ -9,12 +9,12 @@ from typing import Any, Protocol, runtime_checkable
 
 import requests
 
-from configarr.model import Op, ResourcePlan
 from configarr.normalize import (
     coerce_scalar,
     drop_secret_fields,
     secret_field_names,
 )
+from configarr.plan import Op, ResourcePlan
 from configarr.transport import build_session
 
 log = logging.getLogger("configarr.providers")
