@@ -3,7 +3,7 @@ import json
 import responses
 
 from configarr.model import Op
-from configarr.providers.bazarr_language_profiles import (
+from configarr.providers.bazarr.language_profiles import (
     BazarrLanguageProfileProvider,
 )
 

@@ -9,31 +9,31 @@ from dataclasses import dataclass
 from typing import Any
 
 from configarr.models import ConfigarrConfig
-from configarr.providers.applications import ApplicationProvider
+from configarr.providers.arr.custom_formats import CustomFormatProvider
+from configarr.providers.arr.delay_profiles import DelayProfileProvider
+from configarr.providers.arr.download_clients import DownloadClientProvider
+from configarr.providers.arr.import_lists import ImportListProvider
+from configarr.providers.arr.naming import NamingProvider
+from configarr.providers.arr.notifications import NotificationProvider
+from configarr.providers.arr.quality_definitions import QualityDefinitionProvider
+from configarr.providers.arr.quality_profiles import QualityProfileProvider
+from configarr.providers.arr.release_profiles import ReleaseProfileProvider
+from configarr.providers.arr.root_folders import RootFolderProvider
 from configarr.providers.base import ResourceProvider
-from configarr.providers.bazarr_language_profiles import (
+from configarr.providers.bazarr.language_profiles import (
     BazarrLanguageProfileProvider,
 )
-from configarr.providers.bazarr_providers import BazarrProviderProvider
-from configarr.providers.bazarr_settings import BazarrSettingsProvider
-from configarr.providers.custom_formats import CustomFormatProvider
-from configarr.providers.delay_profiles import DelayProfileProvider
-from configarr.providers.download_clients import DownloadClientProvider
-from configarr.providers.import_lists import ImportListProvider
-from configarr.providers.indexers import IndexerProvider
-from configarr.providers.lingarr_settings import LingarrSettingsProvider
-from configarr.providers.naming import NamingProvider
-from configarr.providers.notifications import NotificationProvider
-from configarr.providers.prowlarr_download_clients import (
+from configarr.providers.bazarr.providers import BazarrProviderProvider
+from configarr.providers.bazarr.settings import BazarrSettingsProvider
+from configarr.providers.lingarr.settings import LingarrSettingsProvider
+from configarr.providers.prowlarr.applications import ApplicationProvider
+from configarr.providers.prowlarr.download_clients import (
     ProwlarrDownloadClientProvider,
 )
-from configarr.providers.quality_definitions import QualityDefinitionProvider
-from configarr.providers.quality_profiles import QualityProfileProvider
-from configarr.providers.release_profiles import ReleaseProfileProvider
-from configarr.providers.root_folders import RootFolderProvider
-from configarr.providers.sabnzbd_categories import SabnzbdCategoryProvider
-from configarr.providers.sabnzbd_misc import SabnzbdMiscProvider
-from configarr.providers.sabnzbd_servers import SabnzbdServerProvider
+from configarr.providers.prowlarr.indexers import IndexerProvider
+from configarr.providers.sabnzbd.categories import SabnzbdCategoryProvider
+from configarr.providers.sabnzbd.misc import SabnzbdMiscProvider
+from configarr.providers.sabnzbd.servers import SabnzbdServerProvider
 from configarr.scope import in_scope
 
 

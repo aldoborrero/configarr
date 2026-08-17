@@ -5,7 +5,7 @@ import pytest
 import responses
 
 from configarr.models import ArrServiceConfig, ConfigarrConfig, TrashConfig
-from configarr.providers.quality_profiles import QualityProfileProvider
+from configarr.providers.arr.quality_profiles import QualityProfileProvider
 from configarr.trash import resolve_trash
 from configarr.trash.catalog import Catalog
 from configarr.trash.errors import TrashError

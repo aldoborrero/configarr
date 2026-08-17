@@ -2,7 +2,7 @@ import pytest
 import responses
 
 from configarr.model import Op
-from configarr.providers.indexers import IndexerProvider
+from configarr.providers.prowlarr.indexers import IndexerProvider
 
 PROWLARR = "http://prowlarr.test"
 

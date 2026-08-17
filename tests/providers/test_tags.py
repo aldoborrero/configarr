@@ -2,7 +2,7 @@ import pytest
 import responses
 
 from configarr.providers.base import HttpProvider
-from configarr.providers.indexers import IndexerProvider
+from configarr.providers.prowlarr.indexers import IndexerProvider
 
 BASE = "http://svc.test"
 

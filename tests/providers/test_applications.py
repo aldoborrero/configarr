@@ -2,7 +2,7 @@ import pytest
 import responses
 
 from configarr.model import Op
-from configarr.providers.applications import ApplicationProvider
+from configarr.providers.prowlarr.applications import ApplicationProvider
 
 PROWLARR = "http://prowlarr.test"
 

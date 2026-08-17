@@ -2,7 +2,7 @@ import pytest
 import responses
 
 from configarr.model import Op
-from configarr.providers.lingarr_settings import LingarrSettingsProvider
+from configarr.providers.lingarr.settings import LingarrSettingsProvider
 
 LIN = "http://lingarr.test"
 

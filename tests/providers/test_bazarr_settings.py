@@ -1,7 +1,7 @@
 import responses
 
 from configarr.model import Op
-from configarr.providers.bazarr_settings import BazarrSettingsProvider
+from configarr.providers.bazarr.settings import BazarrSettingsProvider
 
 BAZARR = "http://bazarr.test"
 

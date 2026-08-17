@@ -2,7 +2,7 @@ import responses
 from responses import matchers
 
 from configarr.model import Op
-from configarr.providers.sabnzbd_misc import SabnzbdMiscProvider
+from configarr.providers.sabnzbd.misc import SabnzbdMiscProvider
 
 SAB = "http://sab.test"
 

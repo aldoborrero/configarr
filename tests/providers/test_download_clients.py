@@ -4,7 +4,7 @@ import pytest
 import responses
 
 from configarr.model import Op
-from configarr.providers.download_clients import DownloadClientProvider
+from configarr.providers.arr.download_clients import DownloadClientProvider
 
 RADARR = "http://radarr.test"
 

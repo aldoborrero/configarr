@@ -1,7 +1,7 @@
 import responses
 
 from configarr.model import Op
-from configarr.providers.bazarr_providers import BazarrProviderProvider
+from configarr.providers.bazarr.providers import BazarrProviderProvider
 
 BAZARR = "http://bazarr.test"
 
@@ -198,7 +198,7 @@ def test_apply_then_replan_is_noop(plan_provider, apply_changes):
 
 
 def test_form_value_encodes_lists_comma_joined():
-    from configarr.providers.bazarr_providers import _form_value
+    from configarr.providers.bazarr.providers import _form_value
 
     assert _form_value(["a", "b"]) == "a,b"  # not the Python repr "['a', 'b']"
     assert _form_value(True) == "true"
