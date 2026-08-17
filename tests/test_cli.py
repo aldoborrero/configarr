@@ -13,6 +13,15 @@ radarr:
       api_key: k
 """
 
+LINGARR = """
+lingarr:
+  instances:
+    main:
+      base_url: http://lingarr.test:9876
+      translation:
+        service_type: localai
+"""
+
 
 def _write(tmp_path, text):
     cfg = tmp_path / "configarr.yml"
@@ -39,6 +48,27 @@ def test_unknown_instance_exits_2(tmp_path):
     res = CliRunner().invoke(main, ["--config", cfg, "--instance", "nope", "--plan"])
     assert res.exit_code == 2
     assert "No instance named 'nope'" in res.output
+
+
+def test_service_lingarr_with_no_instances_exits_2_not_crash(tmp_path):
+    # Regression: the scope-validation `available` dict once omitted lingarr, so
+    # --service lingarr raised an uncaught KeyError instead of the friendly message.
+    cfg = _write(tmp_path, VALID)  # radarr-only config
+    res = CliRunner().invoke(main, ["--config", cfg, "--service", "lingarr", "--plan"])
+    assert res.exit_code == 2
+    assert "No 'lingarr' instances" in res.output
+
+
+def test_check_counts_a_lingarr_instance(tmp_path):
+    cfg = _write(tmp_path, LINGARR)
+    res = CliRunner().invoke(main, ["--config", cfg, "--check"])
+    assert res.exit_code == 0
+
+
+def test_instance_of_lingarr_without_service_is_found(tmp_path):
+    cfg = _write(tmp_path, LINGARR)
+    res = CliRunner().invoke(main, ["--config", cfg, "--instance", "main", "--check"])
+    assert res.exit_code == 0
 
 
 def test_invalid_config_exits_1(tmp_path):

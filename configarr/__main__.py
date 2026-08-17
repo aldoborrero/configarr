@@ -171,6 +171,7 @@ def main(
         "prowlarr": [c.name for c in config.prowlarr],
         "bazarr": [c.name for c in config.bazarr],
         "sabnzbd": [c.name for c in config.sabnzbd],
+        "lingarr": [c.name for c in config.lingarr],
     }
     if service and not available[service.lower()]:
         console.print(f"[bold red]No '{service}' instances are configured.[/bold red]")
