@@ -22,6 +22,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
+from typing import TypeGuard
 
 from configarr.models import TrashConfig
 from configarr.trash.errors import TrashError
@@ -100,7 +101,7 @@ def _resolve_git(trash: TrashConfig) -> Path:
 _SHA_RE = re.compile(r"[0-9a-fA-F]{7,40}")
 
 
-def _looks_like_sha(ref: str | None) -> bool:
+def _looks_like_sha(ref: str | None) -> TypeGuard[str]:
     """True for a hex ref git treats as a commit SHA — ``clone --branch`` rejects it."""
     return ref is not None and _SHA_RE.fullmatch(ref) is not None
 
