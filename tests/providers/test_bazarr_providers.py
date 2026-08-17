@@ -172,9 +172,14 @@ def test_apply_adds_to_enabled_providers_additively(plan_provider, apply_changes
     post_calls = [c for c in responses.calls if c.request.method == "POST"]
     body = post_calls[-1].request.body
     rendered = body.decode() if isinstance(body, bytes) else str(body)
-    # The existing enabled provider is preserved alongside the newly added one.
+    # The existing enabled provider is preserved alongside the newly added one,
+    # and each is sent as its own repeated form field — NOT comma-joined into one
+    # value, which Bazarr would store as a single malformed, unmatchable entry.
     assert "opensubtitlescom" in rendered
     assert "addic7ed" in rendered
+    assert "opensubtitlescom,addic7ed" not in rendered
+    assert "addic7ed,opensubtitlescom" not in rendered
+    assert rendered.count('name="settings-general-enabled_providers"') == 2
 
 
 @responses.activate

@@ -48,8 +48,9 @@ ENABLED_KEY = "enabled"
 
 def _form_value(value: Any) -> str:
     """Encode a value the way Bazarr's settings form-POST expects: bools as the
-    lower-cased ``true``/``false`` string, lists comma-joined (as Bazarr does for
-    ``enabled_providers``) rather than a Python repr, everything else stringified."""
+    lower-cased ``true``/``false`` string, lists comma-joined rather than a Python
+    repr, everything else stringified. (``enabled_providers`` is NOT sent through
+    here — apply writes it as repeated form fields, one per provider.)"""
     if isinstance(value, bool):
         return str(value).lower()
     if isinstance(value, list | tuple):
@@ -140,17 +141,24 @@ class BazarrProviderProvider(CurrentStateCache):
         if action.op is not Op.UPDATE:
             raise NotImplementedError(f"apply: unsupported op {action.op!r}")
         bazarr_name = str(action.key)
-        files: dict[str, tuple[None, str]] = {}
+        # requests renders a list of (name, spec) tuples as multipart fields, letting a
+        # field name repeat. enabled_providers MUST be sent as one repeated field per
+        # provider: Bazarr stores a comma-joined value as a single malformed list entry
+        # (e.g. "opensubtitlescom,whisperai") that then matches no provider.
+        files: list[tuple[str, tuple[None, str]]] = []
         for field, value in action.payload.items():
             if field in ("name", ENABLED_KEY):
                 continue
-            files[f"settings-{bazarr_name}-{field}"] = (None, _form_value(value))
+            files.append(
+                (f"settings-{bazarr_name}-{field}", (None, _form_value(value)))
+            )
         # enabled_providers is additively managed: re-read the live list and add this
         # provider, leaving every other enabled provider in place.
         enabled = self._enabled_list(self._get_settings())
         if bazarr_name not in enabled:
             enabled.append(bazarr_name)
-        files["settings-general-enabled_providers"] = (None, ",".join(enabled))
+        for name in enabled:
+            files.append(("settings-general-enabled_providers", (None, name)))
         resp = self._session.post(
             self._settings_url(), params={"apikey": self.api_key}, files=files
         )

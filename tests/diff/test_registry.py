@@ -157,6 +157,8 @@ def test_bazarr_settings_are_bazarr_only():
     assert _instances_for_kind(planned, "bazarr.general") == ["subs"]
     assert _instances_for_kind(planned, "bazarr.sonarr") == ["subs"]
     assert _instances_for_kind(planned, "bazarr.radarr") == ["subs"]
+    assert _instances_for_kind(planned, "bazarr.subsync") == ["subs"]
+    assert _instances_for_kind(planned, "bazarr.translator") == ["subs"]
     assert _instances_for_kind(planned, "bazarr.provider") == ["subs"]
     assert _instances_for_kind(planned, "radarr.general") == []
 

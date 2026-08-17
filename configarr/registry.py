@@ -306,6 +306,22 @@ REGISTRY: list[Registration] = [
             inst.base_url, inst.api_key, inst.radarr, "bazarr.radarr"
         ),
     ),
+    Registration(
+        kind="bazarr.subsync",
+        service="bazarr",
+        label="subsync settings",
+        factory=lambda inst: BazarrSettingsProvider(
+            inst.base_url, inst.api_key, inst.subsync, "bazarr.subsync"
+        ),
+    ),
+    Registration(
+        kind="bazarr.translator",
+        service="bazarr",
+        label="translator settings",
+        factory=lambda inst: BazarrSettingsProvider(
+            inst.base_url, inst.api_key, inst.translator, "bazarr.translator"
+        ),
+    ),
     # Bazarr subtitle providers: each configured provider owns one section of the
     # same /system/settings document, with enabled_providers force-managed
     # additively (work-list #16).
