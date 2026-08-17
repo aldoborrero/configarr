@@ -21,6 +21,7 @@ from configarr.providers.delay_profiles import DelayProfileProvider
 from configarr.providers.download_clients import DownloadClientProvider
 from configarr.providers.import_lists import ImportListProvider
 from configarr.providers.indexers import IndexerProvider
+from configarr.providers.lingarr_settings import LingarrSettingsProvider
 from configarr.providers.naming import NamingProvider
 from configarr.providers.notifications import NotificationProvider
 from configarr.providers.prowlarr_download_clients import (
@@ -345,6 +346,25 @@ REGISTRY: list[Registration] = [
             inst.api_key,
             inst.language_profiles,
             "bazarr.language_profile",
+        ),
+    ),
+    # Lingarr's flat settings store, split into two logical groups. Both hit the same
+    # /api/setting endpoints; each owns its own known-key set (translation before
+    # integration is cosmetic — they're independent singletons).
+    Registration(
+        kind="lingarr.translation",
+        service="lingarr",
+        label="translation settings",
+        factory=lambda inst: LingarrSettingsProvider(
+            inst.base_url, inst.api_key, inst.translation, "lingarr.translation"
+        ),
+    ),
+    Registration(
+        kind="lingarr.integration",
+        service="lingarr",
+        label="arr integration",
+        factory=lambda inst: LingarrSettingsProvider(
+            inst.base_url, inst.api_key, inst.integration, "lingarr.integration"
         ),
     ),
 ]

@@ -12,6 +12,7 @@ from configarr.models import (
     ArrServiceConfig,
     BazarrConfig,
     ConfigarrConfig,
+    LingarrConfig,
     ProwlarrConfig,
     RadarrConfig,
     SabnzbdConfig,
@@ -193,6 +194,17 @@ def parse_sabnzbd_instance(name: str, config: dict[str, Any]) -> SabnzbdConfig:
     )
 
 
+def parse_lingarr_instance(name: str, config: dict[str, Any]) -> LingarrConfig:
+    """Parse a Lingarr instance configuration."""
+    return LingarrConfig(
+        name=name,
+        base_url=config["base_url"],
+        api_key=config.get("api_key", ""),
+        translation=config.get("translation"),
+        integration=config.get("integration"),
+    )
+
+
 def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
     """Recursively merge ``override`` into ``base``. Nested mappings merge key by
     key; a scalar or list in ``override`` replaces the value in ``base``."""
@@ -255,7 +267,7 @@ def _load_include(path: Path, seen: frozenset[Path]) -> dict[str, Any]:
 def _resolve_includes(raw_config: dict[str, Any], base_dir: Path) -> None:
     """Expand each instance's ``include:`` in place: merge the included partial
     configs (in order), then merge the instance's own keys on top so they win."""
-    for service in ("radarr", "sonarr", "prowlarr", "bazarr", "sabnzbd"):
+    for service in ("radarr", "sonarr", "prowlarr", "bazarr", "sabnzbd", "lingarr"):
         section = raw_config.get(service)
         if not isinstance(section, dict):
             continue
@@ -353,5 +365,9 @@ def parse_config(config_path: Path, strict: bool = False) -> ConfigarrConfig:
         sabnzbd=[
             parse_sabnzbd_instance(name, cfg or {})
             for name, cfg in instances("sabnzbd").items()
+        ],
+        lingarr=[
+            parse_lingarr_instance(name, cfg or {})
+            for name, cfg in instances("lingarr").items()
         ],
     )

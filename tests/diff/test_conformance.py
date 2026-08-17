@@ -11,6 +11,7 @@ from configarr.models import (
     ArrServiceConfig,
     BazarrConfig,
     ConfigarrConfig,
+    LingarrConfig,
     ProwlarrConfig,
     SabnzbdConfig,
 )
@@ -55,6 +56,12 @@ def _full_config() -> ConfigarrConfig:
                 name="b",
                 base_url="http://b.test",
                 api_key="k",
+            )
+        ],
+        lingarr=[
+            LingarrConfig(
+                name="l",
+                base_url="http://l.test",
             )
         ],
     )

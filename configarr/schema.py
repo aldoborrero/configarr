@@ -71,6 +71,13 @@ _SABNZBD_INSTANCE: dict[str, Any] = {
     "categories": _OBJ,
     "misc": _OBJ,
 }
+_LINGARR_INSTANCE: dict[str, Any] = {
+    "base_url": _STR,
+    "api_key": _STR,
+    "include": _INCLUDE,
+    "translation": _OBJ,
+    "integration": _OBJ,
+}
 
 SERVICES: dict[str, dict[str, Any]] = {
     "radarr": _ARR_INSTANCE,
@@ -78,6 +85,7 @@ SERVICES: dict[str, dict[str, Any]] = {
     "prowlarr": _PROWLARR_INSTANCE,
     "bazarr": _BAZARR_INSTANCE,
     "sabnzbd": _SABNZBD_INSTANCE,
+    "lingarr": _LINGARR_INSTANCE,
 }
 _REQUIRED = ("base_url", "api_key")
 

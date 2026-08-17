@@ -10,7 +10,14 @@ from configarr.schema import build_json_schema, unknown_keys
 def test_schema_structure_and_serializable():
     s = build_json_schema()
     assert s["type"] == "object"
-    assert set(s["properties"]) == {"radarr", "sonarr", "prowlarr", "bazarr", "sabnzbd"}
+    assert set(s["properties"]) == {
+        "radarr",
+        "sonarr",
+        "prowlarr",
+        "bazarr",
+        "sabnzbd",
+        "lingarr",
+    }
     assert s["additionalProperties"] is False
     inst = s["properties"]["radarr"]["properties"]["instances"]["additionalProperties"]
     assert inst["required"] == ["base_url", "api_key"]

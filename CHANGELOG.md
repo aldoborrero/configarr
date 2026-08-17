@@ -6,6 +6,14 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Lingarr support: manage a Lingarr instance's `translation` backend and `arr`
+  `integration` settings declaratively under `lingarr.instances.<name>`. Two
+  provider groups (`lingarr.translation`, `lingarr.integration`) over its flat
+  `/api/setting` store; secret keys are fingerprinted so they stay out of the plan;
+  a key outside its group's known set is warned about rather than written blindly.
+
 ### Fixed
 
 - Bazarr `enabled_providers` is now written as one repeated form field per
