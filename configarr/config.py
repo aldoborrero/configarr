@@ -3,6 +3,7 @@
 import logging
 import os
 import re
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -18,7 +19,7 @@ from configarr.models import (
     SabnzbdConfig,
     SonarrConfig,
 )
-from configarr.schema import unknown_keys
+from configarr.schema import SERVICE_NAMES, unknown_keys
 
 log = logging.getLogger("configarr.config")
 
@@ -205,6 +206,20 @@ def parse_lingarr_instance(name: str, config: dict[str, Any]) -> LingarrConfig:
     )
 
 
+# Per-service instance parser, keyed by service name. Must cover every name in
+# schema.SERVICE_NAMES — parse_config builds the config by mapping each service
+# through its parser, and a ConfigarrConfig field is required for each (a
+# test asserts these three stay in lock-step).
+_PARSERS: dict[str, Callable[[str, dict[str, Any]], Any]] = {
+    "radarr": parse_arr_instance,
+    "sonarr": parse_arr_instance,
+    "prowlarr": parse_prowlarr_instance,
+    "bazarr": parse_bazarr_instance,
+    "sabnzbd": parse_sabnzbd_instance,
+    "lingarr": parse_lingarr_instance,
+}
+
+
 def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
     """Recursively merge ``override`` into ``base``. Nested mappings merge key by
     key; a scalar or list in ``override`` replaces the value in ``base``."""
@@ -267,7 +282,7 @@ def _load_include(path: Path, seen: frozenset[Path]) -> dict[str, Any]:
 def _resolve_includes(raw_config: dict[str, Any], base_dir: Path) -> None:
     """Expand each instance's ``include:`` in place: merge the included partial
     configs (in order), then merge the instance's own keys on top so they win."""
-    for service in ("radarr", "sonarr", "prowlarr", "bazarr", "sabnzbd", "lingarr"):
+    for service in SERVICE_NAMES:
         section = raw_config.get(service)
         if not isinstance(section, dict):
             continue
@@ -346,28 +361,11 @@ def parse_config(config_path: Path, strict: bool = False) -> ConfigarrConfig:
         return (raw_config.get(section) or {}).get("instances") or {}
 
     return ConfigarrConfig(
-        radarr=[
-            parse_arr_instance(name, cfg or {})
-            for name, cfg in instances("radarr").items()
-        ],
-        sonarr=[
-            parse_arr_instance(name, cfg or {})
-            for name, cfg in instances("sonarr").items()
-        ],
-        prowlarr=[
-            parse_prowlarr_instance(name, cfg or {})
-            for name, cfg in instances("prowlarr").items()
-        ],
-        bazarr=[
-            parse_bazarr_instance(name, cfg or {})
-            for name, cfg in instances("bazarr").items()
-        ],
-        sabnzbd=[
-            parse_sabnzbd_instance(name, cfg or {})
-            for name, cfg in instances("sabnzbd").items()
-        ],
-        lingarr=[
-            parse_lingarr_instance(name, cfg or {})
-            for name, cfg in instances("lingarr").items()
-        ],
+        **{
+            service: [
+                _PARSERS[service](name, cfg or {})
+                for name, cfg in instances(service).items()
+            ]
+            for service in SERVICE_NAMES
+        }
     )

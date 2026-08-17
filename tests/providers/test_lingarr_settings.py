@@ -108,6 +108,31 @@ def test_apply_posts_the_payload_to_set():
 
 
 @responses.activate
+def test_json_array_setting_does_not_phantom_diff(plan_provider):
+    # Lingarr stores arrays as compact JSON; a YAML list must compare equal regardless
+    # of json.dumps spacing, or it would report a phantom change on every run.
+    _mock_get({"source_languages": '["en","es"]'})
+    plan = plan_provider(_provider({"source_languages": ["en", "es"]}))
+    assert not plan.has_changes
+
+
+@responses.activate
+def test_json_array_change_is_detected(plan_provider):
+    _mock_get({"source_languages": '["en"]'})
+    plan = plan_provider(_provider({"source_languages": ["en", "es"]}))
+    assert plan.resources[0].op is Op.UPDATE
+
+
+@responses.activate
+def test_null_value_is_skipped():
+    # A YAML null must not be written as the string "None"; it is dropped so the key
+    # keeps its Lingarr value.
+    _mock_get(CURRENT)
+    [desired] = _provider({"local_ai_model": None}).build_desired()
+    assert "local_ai_model" not in desired
+
+
+@responses.activate
 def test_integration_group_manages_arr_keys():
     _mock_get({"sonarr_url": "", "sonarr_api_key": ""})
     [desired] = _provider(

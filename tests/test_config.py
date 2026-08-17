@@ -1,4 +1,15 @@
-from configarr.config import parse_config
+from configarr.config import _PARSERS, parse_config
+from configarr.models import ConfigarrConfig
+from configarr.schema import SERVICE_NAMES
+
+
+def test_service_wiring_stays_in_lockstep():
+    # Every service is defined once (schema.SERVICE_NAMES) and everything that
+    # enumerates services derives from it. This guards the drift that let a service
+    # be added to some spots but missed in others (e.g. the scope-validation dict).
+    names = set(SERVICE_NAMES)
+    assert set(_PARSERS) == names, "a service has no parser (or vice versa)"
+    assert set(ConfigarrConfig.model_fields) == names, "model fields != service names"
 
 
 def _write(directory, body):

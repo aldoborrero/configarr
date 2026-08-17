@@ -114,13 +114,28 @@ _SINGLETON = "settings"
 
 def _encode(value: Any) -> str:
     """Encode a value for Lingarr's string-typed set API: bools as ``true``/``false``,
-    lists/dicts as JSON (Lingarr stores e.g. ``source_languages`` as a JSON array),
-    everything else stringified."""
+    lists/dicts as compact JSON (Lingarr stores e.g. ``source_languages`` as a JSON
+    array with no spaces), everything else stringified."""
     if isinstance(value, bool):
         return "true" if value else "false"
     if isinstance(value, list | dict):
-        return json.dumps(value)
+        return json.dumps(value, separators=(",", ":"))
     return str(value)
+
+
+def _canonicalize(value: Any) -> Any:
+    """Canonicalize a setting value for comparison. A JSON-container string (a Lingarr
+    array/object setting such as ``source_languages``) is parsed to its object so
+    whitespace or key-order differences between our encoding and Lingarr's serializer
+    don't produce a phantom diff; scalars fall through to ``coerce_scalar``."""
+    if isinstance(value, str):
+        stripped = value.strip()
+        if stripped[:1] in ("[", "{"):
+            try:
+                return json.loads(stripped)
+            except ValueError:
+                pass
+    return coerce_scalar(value)
 
 
 class LingarrSettingsProvider(CurrentStateCache):
@@ -166,15 +181,24 @@ class LingarrSettingsProvider(CurrentStateCache):
                 self.kind.split(".", 1)[1],
                 ", ".join(sorted(unmanaged)),
             )
-        return [{key: _encode(self.config[key]) for key in self._managed()}]
+        # A null value would encode to the string "None"; skip it rather than write
+        # garbage — an unset key keeps its Lingarr value (over-current).
+        return [
+            {
+                key: _encode(self.config[key])
+                for key in self._managed()
+                if self.config[key] is not None
+            }
+        ]
 
     def normalize(self, resource: dict[str, Any]) -> dict[str, Any]:
-        # coerce_scalar canonicalizes both sides ('true' == True, '300' == 300); the
-        # engine only compares the desired keys, so extra current keys are harmless.
-        # redact_secret_fields fingerprints secret-named values (the *_api_key keys)
-        # so a changed key still diffs while its cleartext stays out of the plan.
-        coerced = {key: coerce_scalar(value) for key, value in resource.items()}
-        return redact_secret_fields(coerced)
+        # _canonicalize canonicalizes both sides ('true' == True, '300' == 300, and a
+        # JSON-array/object string to its object); the engine only compares the desired
+        # keys, so extra current keys are harmless. redact_secret_fields fingerprints
+        # secret-named values (the *_api_key keys) so a changed key still diffs while
+        # its cleartext stays out of the plan.
+        canonical = {key: _canonicalize(value) for key, value in resource.items()}
+        return redact_secret_fields(canonical)
 
     def to_action(
         self,

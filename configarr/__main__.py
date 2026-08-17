@@ -15,11 +15,19 @@ from rich.panel import Panel
 from configarr import __version__
 from configarr.config import parse_config
 from configarr.runner import run_apply, run_plan
-from configarr.schema import build_json_schema
+from configarr.schema import SERVICE_NAMES, build_json_schema
 from configarr.trash import TrashError, resolve_trash
 
 console = Console()
 log = logging.getLogger("configarr")
+
+
+def _services_prose() -> str:
+    """Human-readable, Oxford-comma list of the managed services (for the banner)."""
+    titles = [name.title() for name in SERVICE_NAMES]
+    if len(titles) < 2:
+        return "".join(titles)
+    return f"{', '.join(titles[:-1])}, and {titles[-1]}"
 
 
 def _print_schema(ctx: click.Context, param: click.Parameter, value: bool) -> None:
@@ -51,10 +59,7 @@ def _print_schema(ctx: click.Context, param: click.Parameter, value: bool) -> No
 )
 @click.option(
     "--service",
-    type=click.Choice(
-        ["radarr", "sonarr", "prowlarr", "bazarr", "sabnzbd", "lingarr"],
-        case_sensitive=False,
-    ),
+    type=click.Choice(list(SERVICE_NAMES), case_sensitive=False),
     help="Only process this service type",
 )
 @click.option(
@@ -109,7 +114,7 @@ def main(
     strict: bool,
 ) -> None:
     """
-    Configarr - declaratively manage Radarr, Sonarr, Prowlarr, Bazarr, and SABnzbd.
+    Configarr - declaratively manage your *arr services from one configarr.yml.
 
     Diffs your configarr.yml against each service and applies only what changed.
     Run with --plan to preview the diff without writing; add --prune to also remove
@@ -137,8 +142,7 @@ def main(
         console.print(
             Panel.fit(
                 "[bold cyan]Configarr[/bold cyan]\n"
-                "Configuration manager for Radarr, Sonarr, Prowlarr, "
-                "Bazarr, and SABnzbd",
+                f"Configuration manager for {_services_prose()}",
                 border_style="cyan",
             )
         )
@@ -166,11 +170,7 @@ def main(
     # Validate --service / --instance against what's configured so a typo doesn't
     # silently no-op and still exit 0.
     available = {
-        "radarr": [c.name for c in config.radarr],
-        "sonarr": [c.name for c in config.sonarr],
-        "prowlarr": [c.name for c in config.prowlarr],
-        "bazarr": [c.name for c in config.bazarr],
-        "sabnzbd": [c.name for c in config.sabnzbd],
+        name: [c.name for c in getattr(config, name)] for name in SERVICE_NAMES
     }
     if service and not available[service.lower()]:
         console.print(f"[bold red]No '{service}' instances are configured.[/bold red]")
