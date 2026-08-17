@@ -18,6 +18,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - SABnzbd `misc`/`servers`/`categories` config keys outside the managed
   allow-list, and a `profiles.quality_profiles` block missing its `definitions:`
   layer, now emit a warning instead of being silently dropped from the plan.
+- TRaSH `git` source now accepts a commit SHA as `ref` (documented but previously
+  broken — `git clone --branch` rejects a SHA); a SHA pin is fetched explicitly and
+  checked out detached.
 
 ## [0.3.0] - 2026-07-28
 

@@ -97,12 +97,31 @@ def _resolve_git(trash: TrashConfig) -> Path:
     return dest
 
 
+_SHA_RE = re.compile(r"[0-9a-fA-F]{7,40}")
+
+
+def _looks_like_sha(ref: str | None) -> bool:
+    """True when ``ref`` is a hex string git would treat as a commit SHA rather than
+    a branch/tag name — ``git clone --branch`` rejects those."""
+    return ref is not None and _SHA_RE.fullmatch(ref) is not None
+
+
 def _fresh_clone(dest: Path, url: str, ref: str | None) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     # A partial/corrupt dir (e.g. an interrupted earlier clone) would fail the
     # clone; start clean.
     if dest.exists():
         shutil.rmtree(dest)
+    if _looks_like_sha(ref):
+        # `git clone --branch` only accepts branch/tag names, so a commit-SHA pin
+        # (documented as a valid `ref`) must be fetched explicitly. Servers that
+        # advertise the commit's branch — GitHub included — allow this shallow fetch.
+        _git("init", "--quiet", str(dest))
+        _git("remote", "add", "origin", url, cwd=dest)
+        _git("fetch", "--depth", "1", "origin", ref, cwd=dest)
+        _git("checkout", "--quiet", "--detach", "FETCH_HEAD", cwd=dest)
+        log.info("cloning TRaSH guides %s (commit %s) -> %s", url, ref, dest)
+        return
     args = ["clone", "--depth", "1"]
     if ref:
         args += ["--branch", ref]

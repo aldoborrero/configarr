@@ -119,6 +119,23 @@ def test_git_ref_selects_branch(tmp_path, monkeypatch):
     assert (root / "marker").read_text() == "other"
 
 
+def test_git_ref_accepts_commit_sha(tmp_path, monkeypatch):
+    # A commit SHA is a documented `ref`, but `git clone --branch <sha>` rejects it.
+    # Pinning must fetch that exact commit, not the branch tip.
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path / "cache"))
+    remote = _make_remote(tmp_path / "remote", {"marker": "first"})
+    sha = subprocess.run(
+        ["git", "-C", str(remote), "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    _commit(remote, {"marker": "second"}, "second")  # advance the branch past the pin
+    trash = TrashConfig(source="git", url=f"file://{remote}", ref=sha)
+    root = resolve_source(trash, tmp_path)
+    assert (root / "marker").read_text() == "first"
+
+
 def test_git_offline_falls_back_to_cache(tmp_path, monkeypatch):
     monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path / "cache"))
     remote = _make_remote(tmp_path / "remote", {"metadata.json": "{}"})
