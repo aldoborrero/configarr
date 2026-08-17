@@ -575,7 +575,7 @@ providers:
 
 ### Language profiles — `language_profiles`
 
-A **list** of profile maps. Semantics (`providers/bazarr_language_profiles.py`):
+A **list** of profile maps. Semantics (`providers/bazarr/language_profiles.py`):
 
 - Profiles you **list** (whether new or already on the server) are **rebuilt from
   your config and overwrite** the server copy.

@@ -51,6 +51,25 @@ def test_only_listed_quality_is_planned(plan_provider):
 
 
 @responses.activate
+def test_case_insensitive_quality_name_is_matched(plan_provider):
+    # A config key whose case differs from the server's still finds the definition
+    # (was silently dropped before).
+    responses.get(f"{BASE}/api/v3/qualitydefinition", json=CURRENT)
+    plan = plan_provider(_provider({"webdl-1080p": {"min": 5}}))
+    assert [r.key for r in plan.resources] == ["WEBDL-1080p"]
+    assert plan.resources[0].op is Op.UPDATE
+
+
+@responses.activate
+def test_unknown_quality_name_warns(caplog):
+    responses.get(f"{BASE}/api/v3/qualitydefinition", json=CURRENT)
+    with caplog.at_level("WARNING"):
+        desired = _provider({"NoSuchQuality": {"min": 5}}).build_desired()
+    assert desired == []
+    assert any("not found" in r.getMessage() for r in caplog.records)
+
+
+@responses.activate
 def test_desired_merges_sizes_over_current():
     responses.get(f"{BASE}/api/v3/qualitydefinition", json=CURRENT)
     [desired] = _provider(CONFIG).build_desired()

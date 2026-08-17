@@ -12,6 +12,7 @@ the legacy bulk PUT) is what fixes the resource always reporting UPDATED.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Hashable
 from typing import Any
 
@@ -19,6 +20,8 @@ from configarr.build import merge_full_replace
 from configarr.normalize import coerce_scalar
 from configarr.plan import Op, ResourcePlan
 from configarr.providers.base import Action, HttpProvider
+
+log = logging.getLogger(__name__)
 
 # config key -> API field
 _SIZE_FIELDS = {"min": "minSize", "max": "maxSize", "preferred": "preferredSize"}
@@ -43,11 +46,20 @@ class QualityDefinitionProvider(HttpProvider):
 
     def build_desired(self) -> list[dict[str, Any]]:
         current_by_name = {self.match_key(c): c for c in self.fetch_current()}
+        # Quality names are matched case-insensitively (as quality_profiles does), so a
+        # config key whose case differs from the server's still finds its definition.
+        by_lower = {
+            k.lower(): v for k, v in current_by_name.items() if isinstance(k, str)
+        }
         desired: list[dict[str, Any]] = []
         for name, cfg in self.config.items():
-            current = current_by_name.get(name)
+            current = current_by_name.get(name) or by_lower.get(str(name).lower())
             if current is None:
-                # Quality not present on the instance: nothing to update.
+                log.warning(
+                    "quality definition %r not found on %s; ignored",
+                    name,
+                    self.kind.split(".")[0],
+                )
                 continue
             sizes = {
                 api_field: cfg[key]

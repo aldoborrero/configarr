@@ -125,12 +125,16 @@ class HttpProvider(CurrentStateCache):
             }
         return self._tag_cache
 
-    def _resolve_tags(self, tags: Any) -> list[int]:
+    def _resolve_tags(self, tags: Any) -> list[int | str]:
         """Resolve a config ``tags`` list to numeric ids. Integers pass through;
-        string labels are looked up in the instance's existing tags. An unknown
-        label is created on apply (``_create_missing_tags``); during a read-only
-        plan it is warned about and skipped (it would be created on apply)."""
-        out: list[int] = []
+        string labels are looked up in the instance's existing tags. An unknown label
+        is created on apply (``_create_missing_tags``); during a read-only plan it is
+        warned about and kept **as its label** — dropping it would make the plan's tag
+        set shorter than what apply writes, which both hides the change (name-keyed
+        resources) and can collapse a tag-keyed resource's identity onto a sibling
+        (delay profiles), so callers must sort tags with ``key=str`` to stay
+        int/str-tolerant. The apply path resolves every label to a real id."""
+        out: list[int | str] = []
         for tag in tags or []:
             if isinstance(tag, bool):  # bool is an int subclass; reject it explicitly
                 raise ValueError(f"invalid tag {tag!r}: expected a label or id")
@@ -148,6 +152,7 @@ class HttpProvider(CurrentStateCache):
                         tag,
                         self.kind.split(".")[0],
                     )
+                    out.append(tag)
             else:
                 raise ValueError(f"invalid tag {tag!r}: expected a label (str) or id")
         return out

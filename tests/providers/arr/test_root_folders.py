@@ -22,6 +22,15 @@ def _sonarr(config):
 
 
 @responses.activate
+def test_trailing_slash_matches_server_path(plan_provider):
+    # `/movies/` in config must match the server's stripped `/movies`, not report a
+    # phantom CREATE (and then a duplicate-path apply error).
+    responses.get(f"{RADARR}/api/v3/rootfolder", json=[{"id": 1, "path": "/movies"}])
+    plan = plan_provider(_radarr([{"path": "/movies/"}]))
+    assert not plan.has_changes
+
+
+@responses.activate
 def test_absent_folders_plan_as_create(plan_provider):
     responses.get(f"{RADARR}/api/v3/rootfolder", json=[])
     plan = plan_provider(_radarr(CONFIG))
