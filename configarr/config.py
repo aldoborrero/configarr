@@ -93,6 +93,12 @@ def parse_quality_profiles(config: dict[str, Any]) -> list[dict[str, Any]]:
     profiles = config.get("profiles") or {}
     quality_profiles_section = profiles.get("quality_profiles") or {}
     profiles_config = quality_profiles_section.get("definitions") or {}
+    if quality_profiles_section and not profiles_config:
+        log.warning(
+            "profiles.quality_profiles is set but has no 'definitions:' block, so no "
+            "quality profiles will be managed — nest the profiles under "
+            "profiles.quality_profiles.definitions."
+        )
 
     for profile_name, profile_def in profiles_config.items():
         if not isinstance(profile_def, dict):

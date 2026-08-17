@@ -18,6 +18,7 @@ sends the real value from the config).
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Hashable
 from typing import Any
 
@@ -25,6 +26,8 @@ from configarr.model import Op, ResourcePlan
 from configarr.normalize import coerce_scalar
 from configarr.providers.base import Action, CurrentStateCache
 from configarr.transport import build_session
+
+log = logging.getLogger(__name__)
 
 # Documented defaults for a brand-new server (mirrors the legacy sync_server).
 # host has no default — it is required and identifies the upstream.
@@ -102,6 +105,14 @@ class SabnzbdServerProvider(CurrentStateCache):
             host = settings.get("host")
             if not host:
                 raise ValueError(f"SABnzbd server '{name}' is missing required 'host'")
+            unmanaged = [k for k in settings if k not in MANAGED_KEYS]
+            if unmanaged:
+                log.warning(
+                    "SABnzbd server '%s': ignoring unmanaged setting(s) %s — not in "
+                    "the configarr allow-list, so they are never planned or written.",
+                    name,
+                    ", ".join(sorted(unmanaged)),
+                )
             current = current_by_key.get(name)
             if current is None:
                 base = dict(SERVER_DEFAULTS)

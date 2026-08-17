@@ -72,6 +72,18 @@ def test_bool_encoded_as_one_zero():
 
 
 @responses.activate
+def test_unmanaged_key_warns_and_is_dropped(caplog):
+    # A real SABnzbd misc key outside the allow-list must not silently no-op: it is
+    # dropped from the desired payload but the user is warned it is unmanaged.
+    _mock_get_config(CURRENT_MISC)
+    cfg = {"bandwidth_max": "50M", "top_only": 1}
+    with caplog.at_level("WARNING"):
+        [desired] = _provider(cfg).build_desired()
+    assert "top_only" not in desired
+    assert any("top_only" in r.message and "unmanaged" in r.message for r in caplog.records)
+
+
+@responses.activate
 def test_update_changes_only_set_field(plan_provider):
     _mock_get_config(CURRENT_MISC)
     cfg = {"bandwidth_max": "50M"}
