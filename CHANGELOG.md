@@ -6,6 +6,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-08-17
+
 ### Fixed
 
 - A read-only `--plan` no longer drops a config `tags` label that doesn't exist on
@@ -123,7 +125,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   SABnzbd from a single `configarr.yml`. Distributed as a Nix flake and a Docker
   image on GHCR.
 
-[Unreleased]: https://github.com/aldoborrero/configarr/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/aldoborrero/configarr/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/aldoborrero/configarr/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/aldoborrero/configarr/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/aldoborrero/configarr/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/aldoborrero/configarr/compare/v0.2.0...v0.3.0
