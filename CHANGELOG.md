@@ -11,6 +11,21 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Bazarr `enabled_providers` is now written as one repeated form field per
   provider instead of a comma-joined value, which Bazarr stored as a single
   malformed list entry that matched — and thus enabled — no provider.
+- Rename reconciliation now looks up managed ids through the provider's
+  `match_key`, so a case-insensitive provider (Prowlarr download clients) whose
+  config name has any uppercase no longer misses its stored id and creates a
+  duplicate after a server-side rename.
+- SABnzbd `misc`/`servers`/`categories` config keys outside the managed
+  allow-list, and a `profiles.quality_profiles` block missing its `definitions:`
+  layer, now emit a warning instead of being silently dropped from the plan.
+- TRaSH `git` source now accepts a commit SHA as `ref` (documented but previously
+  broken — `git clone --branch` rejects a SHA); a SHA pin is fetched explicitly and
+  checked out detached.
+- A `POST` (resource create) is now retried on `429`/`503` — where the server
+  declined to process it, so nothing was created — instead of failing hard; it is
+  still never retried on connection errors or `5xx` that may have taken effect.
+- Duplicate-identity errors now name the resource kind and distinguish a repeated
+  name from two nameless resources, instead of a bare `duplicate key` message.
 
 ## [0.3.0] - 2026-07-28
 

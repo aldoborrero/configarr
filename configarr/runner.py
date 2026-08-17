@@ -89,7 +89,9 @@ def _plan_provider(
     desired = provider.build_desired()
     # Relabel any server-renamed managed resource so the plan shows it as an UPDATE
     # (rename) rather than a create-plus-orphan.
-    current, renamed = reconcile_renames(current, desired, managed_ids or {})
+    current, renamed = reconcile_renames(
+        current, desired, managed_ids or {}, key=provider.match_key
+    )
     return _diff_provider(
         provider,
         current,
@@ -199,7 +201,7 @@ def run_apply(
         # updated in place (rename) rather than duplicated. No-op when there's no
         # state or the provider isn't prunable.
         current, renamed = reconcile_renames(
-            current, desired, _managed_ids(state, planned)
+            current, desired, _managed_ids(state, planned), key=provider.match_key
         )
         plan = _diff_provider(
             provider,

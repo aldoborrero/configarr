@@ -15,44 +15,50 @@ def reconcile_renames(
     *,
     name_key: str = "name",
     id_key: str = "id",
+    key: Callable[[dict[str, Any]], Hashable] | None = None,
 ) -> tuple[list[dict[str, Any]], set[Any]]:
     """Relabel server-renamed managed resources so a name-based diff recognizes them.
 
-    ``managed_ids`` maps a name configarr manages to the service id it created. If a
-    desired name is missing from ``current`` by name but its recorded id still exists
-    on the server (under a different name), that resource was renamed out-of-band;
-    relabel a copy of it to the desired name so the diff updates it in place (renaming
-    it back) instead of creating a duplicate.
+    ``managed_ids`` maps a match key configarr manages to the service id it created.
+    When a desired resource is gone by match key but its recorded id still exists
+    under a different name, relabel that entry to the desired name so the diff renames
+    it in place instead of creating a duplicate.
 
-    Returns ``(current, renamed)``: a list usable in place of ``current`` (entries
-    copied only when relabeled), and the set of desired names that were relabeled.
-    Because relabeling makes the name match, the name change itself no longer shows
-    as a field diff — callers pass ``renamed`` to ``diff(force_update=...)`` so the
-    rename is still applied when nothing else changed.
+    ``key`` is the provider's ``match_key``; pass it whenever the match key isn't the
+    raw name (e.g. the case-insensitive Prowlarr provider) or the id lookup misses.
+
+    Returns ``(current, renamed)`` where ``renamed`` is the set of match keys
+    relabeled — callers pass it to ``diff(force_update=...)`` so the rename still
+    applies when nothing else changed.
     """
     if not managed_ids:
         return current, set()
-    by_name = {r.get(name_key) for r in current}
+    if key is None:
+        key = lambda r: r.get(name_key)  # noqa: E731
+    present = {key(r) for r in current}
     by_id = {r[id_key]: r for r in current if id_key in r}
-    desired_names = {d.get(name_key) for d in desired}
-    remapped: dict[int, Any] = {}
-    for name in desired_names:
-        if name in by_name or not isinstance(name, str):
+    desired_keys = {key(d) for d in desired}
+    remapped: dict[int, Any] = {}  # sid -> raw name to relabel the current entry to
+    renamed: set[Hashable] = set()  # match keys forced to UPDATE (name change hid)
+    for d in desired:
+        mk = key(d)
+        if mk in present or not isinstance(mk, str):
             continue
-        sid = managed_ids.get(name)
+        sid = managed_ids.get(mk)
         if sid is None:
             continue
         candidate = by_id.get(sid)
-        # Don't steal a resource that legitimately matches another desired name.
-        if candidate is not None and candidate.get(name_key) not in desired_names:
-            remapped[sid] = name
+        # Don't steal a resource that legitimately matches another desired resource.
+        if candidate is not None and key(candidate) not in desired_keys:
+            remapped[sid] = d.get(name_key)
+            renamed.add(mk)
     if not remapped:
         return current, set()
     reconciled = [
         {**r, name_key: remapped[r[id_key]]} if r.get(id_key) in remapped else r
         for r in current
     ]
-    return reconciled, set(remapped.values())
+    return reconciled, renamed
 
 
 def _field_diffs(before: dict[str, Any], after: dict[str, Any]) -> list[FieldDiff]:
@@ -84,12 +90,16 @@ def _index(
     items: list[dict[str, Any]],
     match_key: Callable[[dict[str, Any]], Hashable],
     side: str,
+    kind: str,
 ) -> dict[Hashable, dict[str, Any]]:
     out: dict[Hashable, dict[str, Any]] = {}
     for r in items:
         k = match_key(r)
         if k in out:
-            raise ValueError(f"duplicate key in {side}: {k!r}")
+            what = "two nameless resources" if k is None else f"the name {k!r}"
+            raise ValueError(
+                f"{kind}: {side} has {what} sharing one identity — rename or remove one"
+            )
         out[k] = r
     return out
 
@@ -107,8 +117,8 @@ def diff(
     force_update: set[Hashable] | None = None,
 ) -> Plan:
     force_update = force_update or set()
-    cur_by_key = _index(current, match_key, "current")
-    des_by_key = _index(desired, match_key, "desired")
+    cur_by_key = _index(current, match_key, "current", kind)
+    des_by_key = _index(desired, match_key, "desired", kind)
     plans: list[ResourcePlan] = []
     for d in desired:
         key = match_key(d)

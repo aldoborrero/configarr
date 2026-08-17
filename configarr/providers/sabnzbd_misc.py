@@ -18,6 +18,7 @@ as ``1``/``0`` to match SABnzbd's wire shape. Unmanaged server keys (e.g. the ec
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Hashable
 from typing import Any
 
@@ -25,6 +26,8 @@ from configarr.model import Op, ResourcePlan
 from configarr.normalize import coerce_scalar
 from configarr.providers.base import Action, CurrentStateCache
 from configarr.transport import build_session
+
+log = logging.getLogger(__name__)
 
 # The allow-listed misc keys this provider manages (mirrors the legacy
 # sync_misc_settings key_map, which maps config keys 1:1 to SABnzbd API keys).
@@ -96,6 +99,12 @@ class SabnzbdMiscProvider(CurrentStateCache):
     def build_desired(self) -> list[dict[str, Any]]:
         if not self.config:
             return []
+        unmanaged = [key for key in self.config if key not in MISC_KEYS]
+        if unmanaged:
+            log.warning(
+                "SABnzbd misc: ignoring setting(s) not in configarr's allow-list: %s",
+                ", ".join(sorted(unmanaged)),
+            )
         [current] = self.fetch_current()
         # Carry the current values for managed keys the user did not set.
         base = {k: current[k] for k in MISC_KEYS if k in current}

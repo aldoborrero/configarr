@@ -18,6 +18,7 @@ keeps it out of the diff; the over-current merge carries it through).
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Hashable
 from typing import Any
 
@@ -25,6 +26,8 @@ from configarr.model import Op, ResourcePlan
 from configarr.normalize import coerce_scalar
 from configarr.providers.base import Action, CurrentStateCache
 from configarr.transport import build_session
+
+log = logging.getLogger(__name__)
 
 # Documented defaults for a brand-new category (mirrors the legacy sync_category).
 CATEGORY_DEFAULTS: dict[str, Any] = {
@@ -85,6 +88,14 @@ class SabnzbdCategoryProvider(CurrentStateCache):
         desired: list[dict[str, Any]] = []
         for name, settings in self.config.items():
             settings = settings or {}
+            unmanaged = [k for k in settings if k not in MANAGED_KEYS]
+            if unmanaged:
+                log.warning(
+                    "SABnzbd category '%s': ignoring setting(s) not in configarr's "
+                    "allow-list: %s",
+                    name,
+                    ", ".join(sorted(unmanaged)),
+                )
             current = current_by_key.get(name)
             if current is None:
                 base = dict(CATEGORY_DEFAULTS)

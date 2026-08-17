@@ -12,10 +12,12 @@ module centralizes the fix so no call site has to remember it.
 - retries idempotent requests on connection errors and transient status codes
   with **exponential backoff and jitter**, honoring ``Retry-After``.
 
-Only idempotent methods are retried (urllib3's default ``allowed_methods``):
-GET/HEAD/PUT/DELETE/OPTIONS/TRACE. ``POST`` is intentionally excluded — a
-create whose response was lost must not be blindly re-sent, or a resource could
-be created twice.
+Idempotent methods (urllib3's default ``allowed_methods``:
+GET/HEAD/PUT/DELETE/OPTIONS/TRACE) retry on connection/read errors and any
+transient status. ``POST`` is not retried on connection/read errors — a create
+whose response was lost must not be blindly re-sent — but *is* retried on the
+handful of statuses that mean the server declined to process it (``429``/``503``),
+where nothing was created and a retry is safe.
 
 Defaults are overridable via the environment for slow or flaky instances:
 ``CONFIGARR_HTTP_TIMEOUT`` (seconds) and ``CONFIGARR_HTTP_RETRIES`` (count).
@@ -40,6 +42,21 @@ BACKOFF_FACTOR = 0.5
 BACKOFF_JITTER = 0.5
 # Transient status codes worth retrying (rate-limit + gateway/unavailable).
 RETRY_STATUSES = (429, 500, 502, 503, 504)
+# Safe to retry for a POST: the server declined to process it, so nothing was
+# created. 500/502/504 are excluded — a create may have taken effect before the error.
+POST_RETRY_STATUSES = (429, 503)
+
+
+class _PostAwareRetry(Retry):
+    """Like the default Retry, but also retries POST on ``POST_RETRY_STATUSES`` (never
+    on connection errors — ``allowed_methods`` excludes POST there)."""
+
+    def is_retry(
+        self, method: str, status_code: int, has_retry_after: bool = False
+    ) -> bool:
+        if method and method.upper() == "POST":
+            return bool(self.total) and status_code in POST_RETRY_STATUSES
+        return super().is_retry(method, status_code, has_retry_after)
 
 
 def _int_env(name: str, default: int) -> int:
@@ -87,11 +104,12 @@ def build_retry(
     backoff_factor: float = BACKOFF_FACTOR,
     backoff_jitter: float = BACKOFF_JITTER,
 ) -> Retry:
-    """A urllib3 Retry for idempotent requests: exponential backoff + jitter,
-    honoring ``Retry-After`` on rate limits."""
+    """A urllib3 Retry: exponential backoff + jitter, honoring ``Retry-After`` on
+    rate limits; idempotent methods retry on errors and status, POST only on
+    ``POST_RETRY_STATUSES``."""
     # backoff_jitter is supported at runtime (urllib3 >= 2.0) but missing from the
     # pinned type stub, so mypy flags the kwarg it can't see.
-    return Retry(  # type: ignore[call-arg]
+    return _PostAwareRetry(  # type: ignore[call-arg]
         total=total,
         connect=total,
         read=total,

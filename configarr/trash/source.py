@@ -22,6 +22,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
+from typing import TypeGuard
 
 from configarr.models import TrashConfig
 from configarr.trash.errors import TrashError
@@ -97,12 +98,29 @@ def _resolve_git(trash: TrashConfig) -> Path:
     return dest
 
 
+_SHA_RE = re.compile(r"[0-9a-fA-F]{7,40}")
+
+
+def _looks_like_sha(ref: str | None) -> TypeGuard[str]:
+    """True for a hex ref git treats as a commit SHA — ``clone --branch`` rejects it."""
+    return ref is not None and _SHA_RE.fullmatch(ref) is not None
+
+
 def _fresh_clone(dest: Path, url: str, ref: str | None) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     # A partial/corrupt dir (e.g. an interrupted earlier clone) would fail the
     # clone; start clean.
     if dest.exists():
         shutil.rmtree(dest)
+    if _looks_like_sha(ref):
+        # clone --branch rejects a SHA, so fetch the commit explicitly (works on any
+        # server that advertises its branch, GitHub included).
+        _git("init", "--quiet", str(dest))
+        _git("remote", "add", "origin", url, cwd=dest)
+        _git("fetch", "--depth", "1", "origin", ref, cwd=dest)
+        _git("checkout", "--quiet", "--detach", "FETCH_HEAD", cwd=dest)
+        log.info("cloning TRaSH guides %s (commit %s) -> %s", url, ref, dest)
+        return
     args = ["clone", "--depth", "1"]
     if ref:
         args += ["--branch", ref]
