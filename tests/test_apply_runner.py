@@ -213,6 +213,108 @@ def test_run_apply_surfaces_partial_state_on_failure(tmp_path):
         run_apply(config)
 
 
+class _OkProvider:
+    """Prunable provider that applies its one resource successfully (service id 7)."""
+
+    kind = "radarr.custom_format"
+    full_replace = False
+    prunable = True
+
+    def fetch_current(self):
+        return []
+
+    def build_desired(self):
+        return [{"name": "a"}]
+
+    def match_key(self, resource):
+        return resource.get("name")
+
+    def normalize(self, resource):
+        return resource
+
+    def to_action(self, plan, current, desired):
+        return Action(op=plan.op, key=plan.key, payload=desired or {})
+
+    def apply(self, action):
+        return 7
+
+
+class _BoomProvider(_OkProvider):
+    """A later provider whose write fails, aborting the run mid-way."""
+
+    kind = "radarr.quality_profile"
+    prunable = False
+
+    def build_desired(self):
+        return [{"name": "b"}]
+
+    def apply(self, action):
+        raise RuntimeError("write failed")
+
+
+class _PartialProvider(_OkProvider):
+    """Prunable provider that writes one resource, then fails on the next."""
+
+    def build_desired(self):
+        return [{"name": "ok"}, {"name": "boom"}]
+
+    def apply(self, action):
+        if action.key == "boom":
+            raise RuntimeError("write failed")
+        return 11
+
+
+def test_state_persists_completed_provider_on_midrun_failure(tmp_path, monkeypatch):
+    # A completed provider's ownership must survive a later provider's abort: the fix
+    # saves state in a finally, so the record isn't lost when the run raises.
+    import pytest
+
+    sp = tmp_path / ".configarr-state.json"
+    ok = PlannedProvider(
+        service="radarr",
+        instance="main",
+        label="custom formats",
+        provider=_OkProvider(),
+    )
+    boom = PlannedProvider(
+        service="radarr",
+        instance="main",
+        label="quality profiles",
+        provider=_BoomProvider(),
+    )
+    monkeypatch.setattr(runner, "providers_for", lambda *a, **k: [ok, boom])
+
+    with pytest.raises(RuntimeError, match="apply aborted"):
+        run_apply(config=None, state_path=sp)
+
+    st = State.load(sp)
+    assert st.managed_keys("radarr/main", "radarr.custom_format") == {"a"}
+    assert st.managed_id("radarr/main", "radarr.custom_format", "a") == 7
+
+
+def test_state_records_applied_ids_on_partial_failure(tmp_path, monkeypatch):
+    # A provider that aborts partway through still records the id it wrote before
+    # failing (ownership recorded in a finally around its apply loop).
+    import pytest
+
+    sp = tmp_path / ".configarr-state.json"
+    p = PlannedProvider(
+        service="radarr",
+        instance="main",
+        label="custom formats",
+        provider=_PartialProvider(),
+    )
+    monkeypatch.setattr(runner, "providers_for", lambda *a, **k: [p])
+
+    with pytest.raises(RuntimeError, match="apply aborted"):
+        run_apply(config=None, state_path=sp)
+
+    st = State.load(sp)
+    assert st.managed_id("radarr/main", "radarr.custom_format", "ok") == 11
+    # The resource that never got written has no recorded id.
+    assert st.managed_id("radarr/main", "radarr.custom_format", "boom") is None
+
+
 @responses.activate
 def test_prune_with_state_spares_unmanaged(tmp_path):
     # With ownership state, a CF configarr never created is NOT pruned even though
