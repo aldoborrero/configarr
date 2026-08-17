@@ -102,8 +102,7 @@ class SabnzbdMiscProvider(CurrentStateCache):
         unmanaged = [key for key in self.config if key not in MISC_KEYS]
         if unmanaged:
             log.warning(
-                "SABnzbd misc: ignoring unmanaged setting(s) %s — not in the "
-                "configarr allow-list, so they are never planned or written.",
+                "SABnzbd misc: ignoring setting(s) not in configarr's allow-list: %s",
                 ", ".join(sorted(unmanaged)),
             )
         [current] = self.fetch_current()

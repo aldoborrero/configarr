@@ -91,8 +91,8 @@ class SabnzbdCategoryProvider(CurrentStateCache):
             unmanaged = [k for k in settings if k not in MANAGED_KEYS]
             if unmanaged:
                 log.warning(
-                    "SABnzbd category '%s': ignoring unmanaged setting(s) %s — not in "
-                    "the configarr allow-list, so they are never planned or written.",
+                    "SABnzbd category '%s': ignoring setting(s) not in configarr's "
+                    "allow-list: %s",
                     name,
                     ", ".join(sorted(unmanaged)),
                 )

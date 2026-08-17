@@ -21,6 +21,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - TRaSH `git` source now accepts a commit SHA as `ref` (documented but previously
   broken — `git clone --branch` rejects a SHA); a SHA pin is fetched explicitly and
   checked out detached.
+- A `POST` (resource create) is now retried on `429`/`503` — where the server
+  declined to process it, so nothing was created — instead of failing hard; it is
+  still never retried on connection errors or `5xx` that may have taken effect.
+- Duplicate-identity errors now name the resource kind and distinguish a repeated
+  name from two nameless resources, instead of a bare `duplicate key` message.
 
 ## [0.3.0] - 2026-07-28
 

@@ -26,12 +26,25 @@ def test_retry_is_exponential_with_jitter_and_honors_retry_after():
 
 def test_post_is_not_retried_but_idempotent_methods_are():
     # A create (POST) whose response was lost must not be re-sent blindly; only
-    # idempotent methods retry. urllib3's default allowed_methods encodes this.
+    # idempotent methods retry on connection errors. urllib3's allowed_methods gates
+    # error retries and excludes POST.
     r = http.build_retry()
     assert "GET" in r.allowed_methods
     assert "PUT" in r.allowed_methods
     assert "DELETE" in r.allowed_methods
     assert "POST" not in r.allowed_methods
+
+
+def test_post_retries_only_on_declined_statuses():
+    # POST is retried on statuses that mean the server didn't process it (429/503),
+    # but not on 5xx where a create may have taken effect. Idempotent methods retry
+    # on all transient statuses.
+    r = http.build_retry()
+    assert r.is_retry("POST", 429) is True
+    assert r.is_retry("POST", 503) is True
+    assert r.is_retry("POST", 500) is False
+    assert r.is_retry("POST", 502) is False
+    assert r.is_retry("GET", 500) is True
 
 
 def test_timeout_adapter_injects_default_when_omitted(monkeypatch):

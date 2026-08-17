@@ -30,20 +30,26 @@ def test_diff_is_idempotent_on_equal_inputs():
 
 def test_diff_rejects_duplicate_keys():
     # A duplicate identity on the server side is a hard error, not a silent
-    # last-write-wins. The message names the side and the offending key.
+    # last-write-wins. The message names the kind, side and offending name.
     dup = [{"name": "a", "v": 1}, {"name": "a", "v": 2}]
-    with pytest.raises(ValueError, match=r"duplicate key in current: 'a'"):
+    with pytest.raises(ValueError, match=r"cf: current has the name 'a'"):
         diff("cf", dup, [], match_key=lambda r: r["name"], normalize=_norm)
 
 
 def test_diff_rejects_duplicate_keys_in_desired():
     # The realistic user-error path: two config entries collapse to the same
-    # match_key (e.g. two custom formats named "a", or two delay profiles with
-    # the same tag-set). The engine must refuse rather than let the second entry
-    # silently shadow the first; the message names the desired side and the key.
+    # match_key (e.g. two custom formats named "a"). The engine must refuse rather
+    # than let the second entry silently shadow the first.
     dup = [{"name": "a", "v": 1}, {"name": "a", "v": 2}]
-    with pytest.raises(ValueError, match=r"duplicate key in desired: 'a'"):
+    with pytest.raises(ValueError, match=r"cf: desired has the name 'a'"):
         diff("cf", [], dup, match_key=lambda r: r["name"], normalize=_norm)
+
+
+def test_diff_duplicate_nameless_resources_message():
+    # Two resources that both resolve to a None key (no name) name the case clearly.
+    dup = [{"v": 1}, {"v": 2}]
+    with pytest.raises(ValueError, match=r"cf: current has two nameless resources"):
+        diff("cf", dup, [], match_key=lambda r: r.get("name"), normalize=_norm)
 
 
 def test_default_diff_ignores_current_only_keys():

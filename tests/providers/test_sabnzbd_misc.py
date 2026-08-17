@@ -80,7 +80,10 @@ def test_unmanaged_key_warns_and_is_dropped(caplog):
     with caplog.at_level("WARNING"):
         [desired] = _provider(cfg).build_desired()
     assert "top_only" not in desired
-    assert any("top_only" in r.message and "unmanaged" in r.message for r in caplog.records)
+    assert any(
+        "top_only" in r.getMessage() and "allow-list" in r.getMessage()
+        for r in caplog.records
+    )
 
 
 @responses.activate

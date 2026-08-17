@@ -101,8 +101,7 @@ _SHA_RE = re.compile(r"[0-9a-fA-F]{7,40}")
 
 
 def _looks_like_sha(ref: str | None) -> bool:
-    """True when ``ref`` is a hex string git would treat as a commit SHA rather than
-    a branch/tag name — ``git clone --branch`` rejects those."""
+    """True for a hex ref git treats as a commit SHA — ``clone --branch`` rejects it."""
     return ref is not None and _SHA_RE.fullmatch(ref) is not None
 
 
@@ -113,9 +112,8 @@ def _fresh_clone(dest: Path, url: str, ref: str | None) -> None:
     if dest.exists():
         shutil.rmtree(dest)
     if _looks_like_sha(ref):
-        # `git clone --branch` only accepts branch/tag names, so a commit-SHA pin
-        # (documented as a valid `ref`) must be fetched explicitly. Servers that
-        # advertise the commit's branch — GitHub included — allow this shallow fetch.
+        # clone --branch rejects a SHA, so fetch the commit explicitly (works on any
+        # server that advertises its branch, GitHub included).
         _git("init", "--quiet", str(dest))
         _git("remote", "add", "origin", url, cwd=dest)
         _git("fetch", "--depth", "1", "origin", ref, cwd=dest)

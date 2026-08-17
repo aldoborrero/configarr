@@ -19,24 +19,17 @@ def reconcile_renames(
 ) -> tuple[list[dict[str, Any]], set[Any]]:
     """Relabel server-renamed managed resources so a name-based diff recognizes them.
 
-    ``managed_ids`` maps the *match key* configarr manages to the service id it
-    created (that is how ``state`` records ids via ``match_key``). If a desired
-    resource is missing from ``current`` by match key but its recorded id still exists
-    on the server (under a different name), that resource was renamed out-of-band;
-    relabel a copy of it to the desired name so the diff updates it in place (renaming
-    it back) instead of creating a duplicate.
+    ``managed_ids`` maps a match key configarr manages to the service id it created.
+    When a desired resource is gone by match key but its recorded id still exists
+    under a different name, relabel that entry to the desired name so the diff renames
+    it in place instead of creating a duplicate.
 
-    ``key`` is the provider's ``match_key``. It must be supplied whenever ``match_key``
-    is not the raw ``name_key`` value — e.g. the case-insensitive Prowlarr
-    download-client provider lower-cases the name, so ``managed_ids`` is keyed by the
-    lower-cased name and looking it up by the raw name silently misses.
+    ``key`` is the provider's ``match_key``; pass it whenever the match key isn't the
+    raw name (e.g. the case-insensitive Prowlarr provider) or the id lookup misses.
 
-    Returns ``(current, renamed)``: a list usable in place of ``current`` (entries
-    copied only when relabeled), and the set of *match keys* that were relabeled.
-    Because relabeling makes the name match, the name change itself no longer shows
-    as a field diff — callers pass ``renamed`` to ``diff(force_update=...)`` (which
-    compares against ``match_key``) so the rename is still applied when nothing else
-    changed.
+    Returns ``(current, renamed)`` where ``renamed`` is the set of match keys
+    relabeled — callers pass it to ``diff(force_update=...)`` so the rename still
+    applies when nothing else changed.
     """
     if not managed_ids:
         return current, set()
@@ -97,12 +90,16 @@ def _index(
     items: list[dict[str, Any]],
     match_key: Callable[[dict[str, Any]], Hashable],
     side: str,
+    kind: str,
 ) -> dict[Hashable, dict[str, Any]]:
     out: dict[Hashable, dict[str, Any]] = {}
     for r in items:
         k = match_key(r)
         if k in out:
-            raise ValueError(f"duplicate key in {side}: {k!r}")
+            what = "two nameless resources" if k is None else f"the name {k!r}"
+            raise ValueError(
+                f"{kind}: {side} has {what} sharing one identity — rename or remove one"
+            )
         out[k] = r
     return out
 
@@ -120,8 +117,8 @@ def diff(
     force_update: set[Hashable] | None = None,
 ) -> Plan:
     force_update = force_update or set()
-    cur_by_key = _index(current, match_key, "current")
-    des_by_key = _index(desired, match_key, "desired")
+    cur_by_key = _index(current, match_key, "current", kind)
+    des_by_key = _index(desired, match_key, "desired", kind)
     plans: list[ResourcePlan] = []
     for d in desired:
         key = match_key(d)
