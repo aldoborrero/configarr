@@ -199,6 +199,21 @@ class LingarrConfig(BaseModel):
         return v.rstrip("/")
 
 
+class SeerrConfig(BaseModel):
+    """Configuration for a Seerr instance (media request portal)."""
+
+    name: str
+    base_url: str
+    api_key: str
+    radarr: dict[str, dict[str, Any]] = {}
+    sonarr: dict[str, dict[str, Any]] = {}
+
+    @field_validator("base_url")
+    @classmethod
+    def strip_trailing_slash(cls, v: str) -> str:
+        return v.rstrip("/")
+
+
 class ConfigarrConfig(BaseModel):
     """Root configuration containing all service instances."""
 
@@ -208,3 +223,4 @@ class ConfigarrConfig(BaseModel):
     bazarr: list[BazarrConfig] = []
     sabnzbd: list[SabnzbdConfig] = []
     lingarr: list[LingarrConfig] = []
+    seerr: list[SeerrConfig] = []

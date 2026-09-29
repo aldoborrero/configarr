@@ -684,6 +684,125 @@ misc:
 
 ---
 
+## Seerr
+
+Path prefix `seerr.instances.<name>`. Top-level keys (from `parse_seerr_instance`
++ `SeerrConfig`): `base_url`, `api_key`, `radarr`, `sonarr`.
+
+What is managed here is the **Radarr/Sonarr instances registered inside Seerr** —
+the servers it dispatches approved requests to, stored under
+`/api/v1/settings/radarr` and `/api/v1/settings/sonarr`. Instances are diffed by
+**`name`** (the map key), the only stable user-facing identity: Seerr assigns the
+numeric `id` on create.
+
+Three behaviours of Seerr's API shape these keys:
+
+- **The write routes do not validate.** Both handlers do `req.body as
+  RadarrSettings` — a bare TypeScript cast — and persist the object verbatim, so a
+  misspelled key is *stored* (and then ignored by every consumer) and a missing one
+  is simply absent rather than defaulted. The provider therefore builds every key
+  from its own allow-list with Seerr's UI defaults filled in, and an **unknown key
+  is a hard error** (`ValueError`), as is a value outside an enum's options.
+- **Seerr stores a quality profile by id and by name** (`activeProfileId` +
+  `activeProfileName`) and looks up neither. You write the profile **name**, and the
+  ids come from `POST /api/v1/settings/<kind>/test` — the same connection probe
+  Seerr's own modal uses, which reports the target *arr's quality profiles, root
+  folders and tags. Going through Seerr rather than straight to the *arr is
+  deliberate: what has to reach the *arr is Seerr, not configarr. A wrong profile,
+  root folder or tag fails the plan instead of silently producing requests the *arr
+  rejects later.
+- **`seerr-api.yml` lags the code.** The published OpenAPI spec — and therefore the
+  generated `seerr` PyPI client — is missing `tags`, `tagRequests`, `seriesType`,
+  `animeSeriesType`, `animeTags`, `monitorNewItems` and `overrideRule`. The keys
+  below follow `DVRSettings`/`RadarrSettings`/`SonarrSettings` in
+  `server/lib/settings`, and the defaults and enum options follow the
+  `RadarrModal`/`SonarrModal` forms.
+
+Seerr's `X-Api-Key` resolves to user id 1, the owner account. Before its setup
+wizard has created that owner, every `/api/v1/settings/*` route answers `403`; the
+provider raises a `RuntimeError` naming that cause rather than trying to complete
+the wizard (a plan stays read-only).
+
+### Radarr / Sonarr instances — `radarr`, `sonarr`
+
+A map keyed by the instance name as it appears in Seerr. `hostname`, `api_key`,
+`quality_profile` and `root_folder` are **required** — a missing one raises
+`ValueError` and aborts the run.
+
+| key | type | default | Seerr field | meaning |
+|---|---|---|---|---|
+| `hostname` | string | **none** | `hostname` | **required** |
+| `port` | int | `7878` / `8989` | `port` | per kind |
+| `api_key` | string | **none** | `apiKey` | **required** — the *arr's key |
+| `quality_profile` | string | **none** | `activeProfileId` + `activeProfileName` | **required**; resolved by name via Seerr's probe |
+| `root_folder` | string | **none** | `activeDirectory` | **required**; must exist on the target *arr |
+| `use_ssl` | bool | `false` | `useSsl` | also selects the scheme Seerr probes with |
+| `base_url` | string | `""` | `baseUrl` | the *arr's URL base, when it has one |
+| `is_4k` | bool | `false` | `is4k` | |
+| `is_default` | bool | `false` | `isDefault` | setting it clears the previous default **of the same `is_4k`** |
+| `external_url` | string | `""` | `externalUrl` | link shown in Seerr's UI |
+| `sync_enabled` | bool | `false` | `syncEnabled` | |
+| `prevent_search` | bool | `false` | `preventSearch` | |
+| `tags` | list | `[]` | `tags` | tag **labels or ids**; labels resolved via the probe |
+| `tag_requests` | bool | `false` | `tagRequests` | tag each item with the requesting user |
+
+Radarr only:
+
+| key | type | default | Seerr field | options |
+|---|---|---|---|---|
+| `minimum_availability` | string | `released` | `minimumAvailability` | `announced`, `inCinemas`, `released` |
+
+Sonarr only:
+
+| key | type | default | Seerr field | options |
+|---|---|---|---|---|
+| `season_folders` | bool | `false` | `enableSeasonFolders` | |
+| `series_type` | string | `standard` | `seriesType` | `standard`, `daily` |
+| `monitor_new_items` | string | `all` | `monitorNewItems` | `all`, `none` |
+| `anime_quality_profile` | string | unset | `activeAnimeProfileId` + `activeAnimeProfileName` | |
+| `anime_root_folder` | string | unset | `activeAnimeDirectory` | |
+| `anime_series_type` | string | `anime` | `animeSeriesType` | `anime`, `standard` |
+| `anime_tags` | list | unset | `animeTags` | labels or ids |
+
+The `anime_*` keys send anime to a different profile and library **within the same
+Sonarr**; omit `anime_quality_profile` and `anime_root_folder` to leave the pair
+unset. Routing anime to a *separate* Sonarr is Seerr's override rules, which are
+not managed.
+
+**Not managed:** `overrideRule` (Seerr's separate override-rule resource) and the
+`activeLanguageProfileId` pair (Sonarr v3 only — Seerr's probe returns language
+profiles solely for major version ≤ 3). Only the keys above are compared;
+`normalize()` drops `id`, `overrideRule` and any field Seerr echoes but no longer
+writes, so they do not show as drift.
+
+```yaml
+seerr:
+  instances:
+    main:
+      base_url: http://seerr:5055
+      api_key: ${SEERR_API_KEY}
+      radarr:
+        radarr:
+          hostname: radarr
+          api_key: ${RADARR_API_KEY}
+          quality_profile: WEB-1080p
+          root_folder: /media/movies
+          minimum_availability: released
+          is_default: true
+      sonarr:
+        sonarr:
+          hostname: sonarr
+          api_key: ${SONARR_API_KEY}
+          quality_profile: WEB-1080p
+          root_folder: /media/tv
+          season_folders: true
+          anime_quality_profile: Anime-1080p
+          anime_root_folder: /media/anime/shows
+          is_default: true
+```
+
+---
+
 ## Recipes
 
 Minimal, valid snippets using only verified keys. Each block is a fragment of a
@@ -893,7 +1012,8 @@ it after a code change, re-check the three layers and the inventory:
   internal `upgrade.*` / `min_format_score` shape). `base_url`/`api_key` are read
   by subscript here (hence required).
 - **`configarr/models.py`** — the Pydantic models
-  (`ArrServiceConfig`, `ProwlarrConfig`, `BazarrConfig`, `SabnzbdConfig`) are the
+  (`ArrServiceConfig`, `ProwlarrConfig`, `BazarrConfig`, `SabnzbdConfig`,
+  `SeerrConfig`) are the
   top-level **section contract and defaults** (mostly `dict[str, Any]` passthrough;
   only `TrashConfig` is strict); the registry reads these as attributes.
 - **`configarr/providers/*.py`** — each `ResourceProvider` reads the **inner
@@ -902,4 +1022,10 @@ it after a code change, re-check the three layers and the inventory:
 - **`configarr/registry.py`** — every `Registration` in `REGISTRY` is the
   **authoritative list of resources** and fixes their order; if a new one appears,
   add a section here.
+
+One trap worth stating explicitly: for **Seerr**, its published `seerr-api.yml` is
+*not* a usable reference — it lags the server's own TypeScript interfaces and omits
+several fields configarr writes. Verify Seerr keys against `server/lib/settings`
+(the interfaces) and `src/components/Settings/{Radarr,Sonarr}Modal` (defaults and
+`<select>` options) in the Seerr repo.
 

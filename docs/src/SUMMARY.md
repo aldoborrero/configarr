@@ -21,6 +21,7 @@
 - [Bazarr](services/bazarr.md)
 - [SABnzbd](services/sabnzbd.md)
 - [Lingarr](services/lingarr.md)
+- [Seerr](services/seerr.md)
 
 # Reference
 
