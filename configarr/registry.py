@@ -34,6 +34,10 @@ from configarr.providers.prowlarr.indexers import IndexerProvider
 from configarr.providers.sabnzbd.categories import SabnzbdCategoryProvider
 from configarr.providers.sabnzbd.misc import SabnzbdMiscProvider
 from configarr.providers.sabnzbd.servers import SabnzbdServerProvider
+from configarr.providers.seerr.instances import (
+    SeerrRadarrProvider,
+    SeerrSonarrProvider,
+)
 from configarr.scope import in_scope
 
 
@@ -365,6 +369,24 @@ REGISTRY: list[Registration] = [
         label="arr integration",
         factory=lambda inst: LingarrSettingsProvider(
             inst.base_url, inst.api_key, inst.integration, "lingarr.integration"
+        ),
+    ),
+    # Seerr's registered *arr instances. Radarr before Sonarr is cosmetic — they are
+    # independent lists behind separate routes.
+    Registration(
+        kind="seerr.radarr",
+        service="seerr",
+        label="radarr instances",
+        factory=lambda inst: SeerrRadarrProvider(
+            inst.base_url, inst.api_key, inst.radarr, "seerr.radarr"
+        ),
+    ),
+    Registration(
+        kind="seerr.sonarr",
+        service="seerr",
+        label="sonarr instances",
+        factory=lambda inst: SeerrSonarrProvider(
+            inst.base_url, inst.api_key, inst.sonarr, "seerr.sonarr"
         ),
     ),
 ]

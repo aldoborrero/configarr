@@ -14,6 +14,7 @@ from configarr.models import (
     LingarrConfig,
     ProwlarrConfig,
     SabnzbdConfig,
+    SeerrConfig,
 )
 from configarr.providers.base import ResourceProvider
 from configarr.registry import REGISTRY, providers_for
@@ -62,6 +63,13 @@ def _full_config() -> ConfigarrConfig:
             LingarrConfig(
                 name="l",
                 base_url="http://l.test",
+            )
+        ],
+        seerr=[
+            SeerrConfig(
+                name="se",
+                base_url="http://se.test",
+                api_key="k",
             )
         ],
     )

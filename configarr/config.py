@@ -17,6 +17,7 @@ from configarr.models import (
     ProwlarrConfig,
     RadarrConfig,
     SabnzbdConfig,
+    SeerrConfig,
     SonarrConfig,
 )
 from configarr.schema import SERVICE_NAMES, unknown_keys
@@ -206,6 +207,17 @@ def parse_lingarr_instance(name: str, config: dict[str, Any]) -> LingarrConfig:
     )
 
 
+def parse_seerr_instance(name: str, config: dict[str, Any]) -> SeerrConfig:
+    """Parse a Seerr instance configuration."""
+    return SeerrConfig(
+        name=name,
+        base_url=config["base_url"],
+        api_key=config["api_key"],
+        radarr=config.get("radarr") or {},
+        sonarr=config.get("sonarr") or {},
+    )
+
+
 # Per-service instance parser, keyed by service name. Must cover every name in
 # schema.SERVICE_NAMES — parse_config builds the config by mapping each service
 # through its parser, and a ConfigarrConfig field is required for each (a
@@ -217,6 +229,7 @@ _PARSERS: dict[str, Callable[[str, dict[str, Any]], Any]] = {
     "bazarr": parse_bazarr_instance,
     "sabnzbd": parse_sabnzbd_instance,
     "lingarr": parse_lingarr_instance,
+    "seerr": parse_seerr_instance,
 }
 
 
