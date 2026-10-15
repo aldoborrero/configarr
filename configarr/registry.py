@@ -25,6 +25,14 @@ from configarr.providers.bazarr.language_profiles import (
 )
 from configarr.providers.bazarr.providers import BazarrProviderProvider
 from configarr.providers.bazarr.settings import BazarrSettingsProvider
+from configarr.providers.cleanuparr.collections import (
+    CleanuparrArrInstanceProvider,
+    CleanuparrDownloadClientProvider,
+)
+from configarr.providers.cleanuparr.sections import (
+    CleanuparrArrSettingsProvider,
+    CleanuparrSectionProvider,
+)
 from configarr.providers.lingarr.settings import LingarrSettingsProvider
 from configarr.providers.prowlarr.applications import ApplicationProvider
 from configarr.providers.prowlarr.download_clients import (
@@ -365,6 +373,79 @@ REGISTRY: list[Registration] = [
         label="arr integration",
         factory=lambda inst: LingarrSettingsProvider(
             inst.base_url, inst.api_key, inst.integration, "lingarr.integration"
+        ),
+    ),  # Cleanuparr: general first, then what the cleaners act on (arr instances and
+    # download clients), then the cleaner sections themselves. The sections are
+    # full-replace PUTs merged over current (see providers/cleanuparr/sections.py).
+    Registration(
+        kind="cleanuparr.general",
+        service="cleanuparr",
+        label="general settings",
+        factory=lambda inst: CleanuparrSectionProvider(
+            inst.base_url, inst.api_key, inst.general, "cleanuparr.general", "general"
+        ),
+    ),
+    Registration(
+        kind="cleanuparr.arr_settings",
+        service="cleanuparr",
+        label="arr settings",
+        factory=lambda inst: CleanuparrArrSettingsProvider(
+            inst.base_url, inst.api_key, inst.arr, "cleanuparr.arr_settings"
+        ),
+    ),
+    Registration(
+        kind="cleanuparr.arr_instance",
+        service="cleanuparr",
+        label="arr instances",
+        factory=lambda inst: CleanuparrArrInstanceProvider(
+            inst.base_url, inst.api_key, inst.arr, "cleanuparr.arr_instance"
+        ),
+    ),
+    Registration(
+        kind="cleanuparr.download_client",
+        service="cleanuparr",
+        label="download clients",
+        factory=lambda inst: CleanuparrDownloadClientProvider(
+            inst.base_url,
+            inst.api_key,
+            inst.download_clients,
+            "cleanuparr.download_client",
+        ),
+    ),
+    Registration(
+        kind="cleanuparr.queue_cleaner",
+        service="cleanuparr",
+        label="queue cleaner",
+        factory=lambda inst: CleanuparrSectionProvider(
+            inst.base_url,
+            inst.api_key,
+            inst.queue_cleaner,
+            "cleanuparr.queue_cleaner",
+            "queue_cleaner",
+        ),
+    ),
+    Registration(
+        kind="cleanuparr.download_cleaner",
+        service="cleanuparr",
+        label="download cleaner",
+        factory=lambda inst: CleanuparrSectionProvider(
+            inst.base_url,
+            inst.api_key,
+            inst.download_cleaner,
+            "cleanuparr.download_cleaner",
+            "download_cleaner",
+        ),
+    ),
+    Registration(
+        kind="cleanuparr.malware_blocker",
+        service="cleanuparr",
+        label="malware blocker",
+        factory=lambda inst: CleanuparrSectionProvider(
+            inst.base_url,
+            inst.api_key,
+            inst.malware_blocker,
+            "cleanuparr.malware_blocker",
+            "malware_blocker",
         ),
     ),
 ]

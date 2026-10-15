@@ -52,6 +52,7 @@ The only ordering that is load-bearing:
 | **Prowlarr** | Indexers → Applications → Download Clients |
 | **SABnzbd** | Servers → Categories → Misc Settings |
 | **Bazarr** | General Settings → Sonarr Connection → Radarr Connection → Providers → Language Profiles |
+| **Cleanuparr** | General → Arr Settings → Arr Instances → Download Clients → Queue Cleaner → Download Cleaner → Malware Blocker |
 
 ## Practical implications
 

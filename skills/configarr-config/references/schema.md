@@ -41,7 +41,8 @@ before quality profiles** within an instance.
 ## Top-level conventions
 
 - Every service nests under `<service>.instances.<name>`, where `<service>` is one
-  of `radarr`, `sonarr`, `prowlarr`, `bazarr`, `sabnzbd`, and `<name>` is your
+  of `radarr`, `sonarr`, `prowlarr`, `bazarr`, `sabnzbd`, `lingarr`,
+  `cleanuparr`, and `<name>` is your
   chosen instance label.
 - **`base_url` and `api_key` are REQUIRED on every instance.** `config.py` reads
   them with subscript access (`config["base_url"]`), so omitting either raises.
@@ -681,6 +682,76 @@ misc:
   bandwidth_max: 50M
   pre_check: true
 ```
+
+---
+
+## Cleanuparr
+
+Path prefix `cleanuparr.instances.<name>`. Top-level keys (from
+`parse_cleanuparr_instance` + `CleanuparrConfig`): `base_url`, `api_key` (the key
+from Cleanuparr's *Account* page, sent as `X-Api-Key`), `general`,
+`queue_cleaner`, `download_cleaner`, `malware_blocker`, `download_clients`, `arr`.
+
+Keys are written **snake_case** and mapped onto Cleanuparr's camelCase API fields
+by a loose match against what the server returns (`rolling_size_mb` →
+`rollingSizeMB`); a key the server does not return is sent as plain camelCase.
+Enum values may be written in any case (`exclude` == `Exclude`); the server's
+spelling is kept, so they do not diff.
+
+Secrets (`api_key`, `password`) come back masked (`••••••••`) and are **not
+diffed**: they are sent on create and on any update of their object, and an update
+without one configured keeps the stored value. A changed secret alone does not
+show in a plan.
+
+### Sections — `general`, `queue_cleaner`, `download_cleaner`, `malware_blocker`
+
+Free-form nested maps over Cleanuparr's own settings objects
+(`GET/PUT /api/configuration/<section>`). Cleanuparr's PUT is **full-replace** —
+an omitted field is reset to its default — so configarr merges the configured keys
+over the current object and writes the whole result back: unset settings keep
+their current values. Plans list changes as dotted paths
+(`failedImport.maxStrikes: 0 -> 3`). The download cleaner's per-client sub-configs
+(seeding rules, unlinked/dead-torrent/orphaned-files settings) are separate
+endpoints and are **not** managed.
+
+```yaml
+queue_cleaner:
+  enabled: true
+  failed_import:
+    max_strikes: 3
+    pattern_mode: exclude
+malware_blocker:
+  enabled: true
+  sonarr:
+    enabled: true
+```
+
+### Download clients — `download_clients`
+
+A map keyed by client name (CRUD, prunable under `--prune`).
+
+| key | type | meaning |
+|---|---|---|
+| `type` | string | **required for a new client**: `qbittorrent`, `deluge`, `transmission`, `utorrent`, `rtorrent`, `sabnzbd`. Cleanuparr locks it after creation — a different `type` for an existing client raises |
+| `enabled` | bool | default `true` for a new client |
+| `host` | string | client URL |
+| `username` / `password` | string | secret `password` (see above) |
+| `api_key` | string | secret; SABnzbd and API-key qBittorrent |
+| `url_base` | string | e.g. `/transmission/` |
+| `external_url` | string | link shown in the UI |
+| `download_directory_source` / `download_directory_target` | string | path mapping |
+
+### Arr — `arr`
+
+A map keyed by arr type: `sonarr`, `radarr`, `lidarr`, `readarr`, `whisparr`,
+`sportarr`, `lazylibrarian` (anything else raises).
+
+| key | type | meaning |
+|---|---|---|
+| `failed_import_max_strikes` | int | the per-arr setting (`-1` = use the queue cleaner's) |
+| `instances` | map | instances keyed by name (CRUD, prunable): `url`, `api_key` (secret), `version` (number, e.g. `4` for Sonarr v4), `enabled` (default `true`), `external_url`. A new instance needs `url`, `api_key` and `version` |
+
+Cleanuparr stores `url` with a trailing slash; URLs compare without one.
 
 ---
 

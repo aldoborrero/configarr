@@ -6,6 +6,17 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Cleanuparr support: manage a Cleanuparr instance under
+  `cleanuparr.instances.<name>` — its `general`, `queue_cleaner`,
+  `download_cleaner` and `malware_blocker` settings, its `download_clients`
+  (including SABnzbd, new in Cleanuparr 2.10.10) and its *arr instances and
+  per-arr settings under `arr:`. Settings sections are merged over the current
+  object because Cleanuparr's PUT is full-replace; download clients and arr
+  instances are name-keyed and prunable. Keys are snake_case and mapped onto the
+  API's camelCase fields; masked secrets are sent but not diffed.
+
 ## [0.4.2] - 2026-08-17
 
 ### Fixed
