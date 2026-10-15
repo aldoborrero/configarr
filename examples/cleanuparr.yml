@@ -29,10 +29,21 @@ cleanuparr:
           type: transmission
           host: http://transmission:9091
           url_base: /transmission/
+          seeding_rules:
+            cleanup-imported:
+              categories: [sonarr, radarr]
+              max_ratio: 1
+              max_seed_time: 48
         SABnzbd:
           type: sabnzbd
           host: http://sabnzbd:8080
           api_key: ${SABNZBD_API_KEY}
+          orphaned_files:
+            enabled: true
+            scan_directories: [/downloads/complete]
+            orphaned_directory: /downloads/orphaned
+            min_file_age_hours: 48
+            purge_after_hours: 168
 
       arr:
         sonarr:

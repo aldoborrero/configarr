@@ -6,6 +6,19 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Cleanuparr per-client download-cleaner settings, declared on each
+  `download_clients.<name>`: `orphaned_files`, `unlinked`, `dead_torrent` and
+  `seeding_rules` (name-keyed, prunable per client). Settings a client type does
+  not support (e.g. seeding rules on SABnzbd) are rejected at plan time.
+
+### Fixed
+
+- `--prune` with a state file never deleted resources whose match key is
+  composite (Cleanuparr arr instances): the state stores keys as strings, and the
+  ownership check compared the raw tuple. It now matches the stored string form.
+
 ## [0.5.0] - 2026-10-15
 
 ### Added

@@ -740,6 +740,39 @@ A map keyed by client name (CRUD, prunable under `--prune`).
 | `url_base` | string | e.g. `/transmission/` |
 | `external_url` | string | link shown in the UI |
 | `download_directory_source` / `download_directory_target` | string | path mapping |
+| `orphaned_files` / `unlinked` / `dead_torrent` | map | per-client download-cleaner settings (below) |
+| `seeding_rules` | map | per-client seeding rules (below) |
+
+#### Per-client download cleaner — `download_clients.<name>.{orphaned_files,unlinked,dead_torrent}`
+
+One settings object each per client (`PUT /api/{orphaned-files,unlinked,dead-torrent}-config/{clientId}`),
+merged over the current object like the sections. Support depends on the client
+type (Cleanuparr's capability table) and an unsupported setting raises at plan
+time: usenet (`sabnzbd`) supports only `orphaned_files`; `dead_torrent` needs a
+seeders-capable torrent client (not `rtorrent`).
+
+| setting | keys |
+|---|---|
+| `orphaned_files` | `enabled`, `scan_directories` (list), `orphaned_directory`, `exclude_patterns` (list), `min_file_age_hours` (default 24), `purge_after_hours` |
+| `unlinked` | `enabled`, `target_category` (default `cleanuparr-unlinked`), `use_tag`, `ignored_root_dirs` (list), `categories` (list) |
+| `dead_torrent` | `enabled`, `target_category` (default `cleanuparr-dead`), `use_tag`, `max_strikes`, `categories` (list) |
+
+#### Seeding rules — `download_clients.<name>.seeding_rules`
+
+A map keyed by rule name (CRUD; under `--prune`, rules not listed are deleted —
+only on clients that declare `seeding_rules`, so `seeding_rules: {}` removes a
+client's rules and omitting the key leaves them alone). Torrent clients only.
+
+| key | default | meaning |
+|---|---|---|
+| `categories` | `[]` | client categories the rule applies to |
+| `tracker_patterns` / `tags_any` / `tags_all` | `[]` | further filters |
+| `priority` | next free | evaluation order; must be unique per client |
+| `privacy_type` | `public` | `public`, `private` or `both` |
+| `max_ratio` / `max_seed_time` (hours) / `max_inactive_days` | `-1` | limits; `-1` = no limit |
+| `min_seed_time` (hours) / `min_seeders` | `0` | |
+| `delete_source_files` | `true` | |
+| `action` | `delete` | what to do when a limit is hit |
 
 ### Arr — `arr`
 
