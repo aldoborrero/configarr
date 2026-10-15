@@ -152,10 +152,13 @@ class BazarrProviderProvider(CurrentStateCache):
             files.append(
                 (f"settings-{bazarr_name}-{field}", (None, _form_value(value)))
             )
-        # enabled_providers is additively managed: re-read the live list and add this
-        # provider, leaving every other enabled provider in place.
+        # enabled_providers is managed per provider: re-read the live list and add
+        # (or, for ``enabled: false``, remove) only this provider, leaving every
+        # other enabled provider in place.
         enabled = self._enabled_list(self._get_settings())
-        if bazarr_name not in enabled:
+        if action.payload.get(ENABLED_KEY, True) is False:
+            enabled = [name for name in enabled if name != bazarr_name]
+        elif bazarr_name not in enabled:
             enabled.append(bazarr_name)
         for name in enabled:
             files.append(("settings-general-enabled_providers", (None, name)))

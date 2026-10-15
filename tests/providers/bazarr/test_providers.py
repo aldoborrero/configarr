@@ -204,3 +204,33 @@ def test_form_value_encodes_lists_comma_joined():
     assert _form_value(True) == "true"
     assert _form_value([True, "x"]) == "true,x"
     assert _form_value("plain") == "plain"
+
+
+@responses.activate
+def test_enabled_false_removes_the_provider_from_enabled_providers(
+    plan_provider, apply_changes
+):
+    # A configured `enabled: false` must actually disable the provider: apply used
+    # to always (re-)add it to enabled_providers, so a disable never took effect.
+    settings = {s: dict(v) for s, v in CURRENT_SETTINGS.items()}
+    settings["general"] = {"enabled_providers": ["opensubtitlescom", "whisperai"]}
+    _mock_get_settings(settings)
+    _mock_post_settings()
+    p = _provider({"whisperai": {"enabled": False}})
+    plan = plan_provider(p)
+    assert [r.op for r in plan.resources] == [Op.UPDATE]
+    apply_changes(p, plan)
+    post = [c for c in responses.calls if c.request.method == "POST"][-1]
+    body = post.request.body
+    rendered = body.decode() if isinstance(body, bytes) else str(body)
+    assert rendered.count('name="settings-general-enabled_providers"') == 1
+    assert "opensubtitlescom" in rendered
+    assert "whisperai" not in rendered
+    assert "settings-whisperai-enabled" not in rendered
+
+
+@responses.activate
+def test_already_disabled_provider_with_enabled_false_is_noop(plan_provider):
+    _mock_get_settings()  # whisperai is not in enabled_providers
+    plan = plan_provider(_provider({"whisperai": {"enabled": False}}))
+    assert not plan.has_changes
