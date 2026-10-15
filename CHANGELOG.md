@@ -6,6 +6,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Bazarr providers: `enabled: false` never took effect — the plan showed the
+  `enabled: True -> False` change, but apply always re-added the provider to
+  `general.enabled_providers`. It is now removed from the list (other enabled
+  providers untouched).
+
 ## [0.5.1] - 2026-10-15
 
 ### Added
