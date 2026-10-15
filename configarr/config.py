@@ -12,6 +12,7 @@ import yaml
 from configarr.models import (
     ArrServiceConfig,
     BazarrConfig,
+    CleanuparrConfig,
     ConfigarrConfig,
     LingarrConfig,
     ProwlarrConfig,
@@ -206,6 +207,21 @@ def parse_lingarr_instance(name: str, config: dict[str, Any]) -> LingarrConfig:
     )
 
 
+def parse_cleanuparr_instance(name: str, config: dict[str, Any]) -> CleanuparrConfig:
+    """Parse a Cleanuparr instance configuration."""
+    return CleanuparrConfig(
+        name=name,
+        base_url=config["base_url"],
+        api_key=config["api_key"],
+        general=config.get("general"),
+        queue_cleaner=config.get("queue_cleaner"),
+        download_cleaner=config.get("download_cleaner"),
+        malware_blocker=config.get("malware_blocker"),
+        download_clients=config.get("download_clients") or {},
+        arr=config.get("arr") or {},
+    )
+
+
 # Per-service instance parser, keyed by service name. Must cover every name in
 # schema.SERVICE_NAMES — parse_config builds the config by mapping each service
 # through its parser, and a ConfigarrConfig field is required for each (a
@@ -217,6 +233,7 @@ _PARSERS: dict[str, Callable[[str, dict[str, Any]], Any]] = {
     "bazarr": parse_bazarr_instance,
     "sabnzbd": parse_sabnzbd_instance,
     "lingarr": parse_lingarr_instance,
+    "cleanuparr": parse_cleanuparr_instance,
 }
 
 

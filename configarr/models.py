@@ -199,6 +199,27 @@ class LingarrConfig(BaseModel):
         return v.rstrip("/")
 
 
+class CleanuparrConfig(BaseModel):
+    """Configuration for a Cleanuparr instance."""
+
+    name: str
+    base_url: str
+    api_key: str
+    general: dict[str, Any] | None = None
+    queue_cleaner: dict[str, Any] | None = None
+    download_cleaner: dict[str, Any] | None = None
+    malware_blocker: dict[str, Any] | None = None
+    download_clients: dict[str, dict[str, Any]] = {}
+    # arr type (sonarr, radarr, …) -> {failed_import_max_strikes?, instances: {name: …}}
+    arr: dict[str, dict[str, Any]] = {}
+
+    @field_validator("base_url")
+    @classmethod
+    def strip_trailing_slash(cls, v: str) -> str:
+        """Remove trailing slash from base_url."""
+        return v.rstrip("/")
+
+
 class ConfigarrConfig(BaseModel):
     """Root configuration containing all service instances."""
 
@@ -208,3 +229,4 @@ class ConfigarrConfig(BaseModel):
     bazarr: list[BazarrConfig] = []
     sabnzbd: list[SabnzbdConfig] = []
     lingarr: list[LingarrConfig] = []
+    cleanuparr: list[CleanuparrConfig] = []

@@ -1,6 +1,7 @@
 from configarr.models import (
     ArrServiceConfig,
     BazarrConfig,
+    CleanuparrConfig,
     ConfigarrConfig,
     LingarrConfig,
     ProwlarrConfig,
@@ -191,3 +192,26 @@ def test_instance_filter_narrows_to_one_instance():
     planned = list(providers_for(config, instance="uhd"))
 
     assert {p.instance for p in planned} == {"uhd"}
+
+
+def test_cleanuparr_providers_are_cleanuparr_only_and_ordered():
+    config = ConfigarrConfig(
+        radarr=[_radarr("hd")],
+        cleanuparr=[
+            CleanuparrConfig(name="main", base_url="http://c.test", api_key="k")
+        ],
+    )
+
+    planned = list(providers_for(config))
+    kinds = [p.provider.kind for p in planned if p.service == "cleanuparr"]
+
+    assert kinds == [
+        "cleanuparr.general",
+        "cleanuparr.arr_settings",
+        "cleanuparr.arr_instance",
+        "cleanuparr.download_client",
+        "cleanuparr.queue_cleaner",
+        "cleanuparr.download_cleaner",
+        "cleanuparr.malware_blocker",
+    ]
+    assert _instances_for_kind(planned, "cleanuparr.queue_cleaner") == ["main"]

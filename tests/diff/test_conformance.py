@@ -10,6 +10,7 @@ sonarr/prowlarr/sabnzbd/bazarr providers."""
 from configarr.models import (
     ArrServiceConfig,
     BazarrConfig,
+    CleanuparrConfig,
     ConfigarrConfig,
     LingarrConfig,
     ProwlarrConfig,
@@ -62,6 +63,13 @@ def _full_config() -> ConfigarrConfig:
             LingarrConfig(
                 name="l",
                 base_url="http://l.test",
+            )
+        ],
+        cleanuparr=[
+            CleanuparrConfig(
+                name="c",
+                base_url="http://c.test",
+                api_key="k",
             )
         ],
     )

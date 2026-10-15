@@ -1,0 +1,49 @@
+# Cleanuparr example — settings sections, download clients and *arr instances.
+#
+# Keys are snake_case (mapped onto Cleanuparr's camelCase API). Settings sections
+# are merged over Cleanuparr's current values, so set only what you want to pin.
+
+cleanuparr:
+  instances:
+    main:
+      base_url: http://localhost:11011
+      api_key: ${CLEANUPARR_API_KEY}
+
+      general:
+        dry_run: false
+
+      queue_cleaner:
+        enabled: true
+        failed_import:
+          max_strikes: 3
+
+      malware_blocker:
+        enabled: true
+        sonarr:
+          enabled: true
+        radarr:
+          enabled: true
+
+      download_clients:
+        Transmission:
+          type: transmission
+          host: http://transmission:9091
+          url_base: /transmission/
+        SABnzbd:
+          type: sabnzbd
+          host: http://sabnzbd:8080
+          api_key: ${SABNZBD_API_KEY}
+
+      arr:
+        sonarr:
+          instances:
+            Sonarr:
+              url: http://sonarr:8989
+              api_key: ${SONARR_API_KEY}
+              version: 4
+        radarr:
+          instances:
+            Radarr:
+              url: http://radarr:7878
+              api_key: ${RADARR_API_KEY}
+              version: 6

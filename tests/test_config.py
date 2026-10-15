@@ -69,3 +69,33 @@ lingarr:
     assert inst.api_key == ""  # optional — AUTH_ENABLED=false
     assert inst.translation == {"service_type": "localai"}
     assert inst.integration == {"sonarr_url": "http://sonarr.test:8989"}
+
+
+def test_parse_config_carries_cleanuparr_sections(tmp_path):
+    _write(
+        tmp_path,
+        """
+cleanuparr:
+  instances:
+    main:
+      base_url: http://cleanuparr.test:11011/
+      api_key: k
+      queue_cleaner:
+        enabled: true
+      download_clients:
+        SABnzbd:
+          type: sabnzbd
+      arr:
+        sonarr:
+          failed_import_max_strikes: 3
+""",
+    )
+
+    config = parse_config(tmp_path / "configarr.yml")
+
+    inst = config.cleanuparr[0]
+    assert inst.base_url == "http://cleanuparr.test:11011"
+    assert inst.queue_cleaner == {"enabled": True}
+    assert inst.download_clients == {"SABnzbd": {"type": "sabnzbd"}}
+    assert inst.arr == {"sonarr": {"failed_import_max_strikes": 3}}
+    assert inst.general is None
