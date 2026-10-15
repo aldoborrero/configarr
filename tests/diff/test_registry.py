@@ -210,6 +210,8 @@ def test_cleanuparr_providers_are_cleanuparr_only_and_ordered():
         "cleanuparr.arr_settings",
         "cleanuparr.arr_instance",
         "cleanuparr.download_client",
+        "cleanuparr.client_settings",
+        "cleanuparr.seeding_rule",
         "cleanuparr.queue_cleaner",
         "cleanuparr.download_cleaner",
         "cleanuparr.malware_blocker",

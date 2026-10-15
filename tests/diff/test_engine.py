@@ -121,3 +121,21 @@ def test_full_replace_is_unchanged_when_desired_covers_current():
         full_replace=True,
     )
     assert plan.resources[0].op is Op.UNCHANGED
+
+
+def test_prune_matches_composite_keys_by_their_persisted_string_form():
+    # State stores keys as str(key); a tuple match key must still be recognized as
+    # owned, otherwise --prune silently never deletes composite-keyed resources.
+    current = [{"arr": "sonarr", "name": "Old"}, {"arr": "sonarr", "name": "Foreign"}]
+    plan = diff(
+        "k",
+        current,
+        [],
+        match_key=lambda r: (r["arr"], r["name"]),
+        normalize=lambda r: r,
+        prune=True,
+        managed_keys={str(("sonarr", "Old"))},
+    )
+    assert [(r.key, r.op) for r in plan.resources if r.changed] == [
+        (("sonarr", "Old"), Op.DELETE)
+    ]

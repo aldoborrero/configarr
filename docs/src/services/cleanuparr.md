@@ -48,9 +48,8 @@ malware_blocker:
     enabled: true
 ```
 
-> [!NOTE]
-> The download cleaner's per-client settings (seeding rules, unlinked, dead-torrent
-> and orphaned-files configs) live on separate endpoints and are not managed yet.
+Per-client download-cleaner settings live on the client itself — see
+[Download clients](#download-clients).
 
 ## Download clients
 
@@ -68,6 +67,40 @@ download_clients:
     host: http://sabnzbd:8080
     api_key: ${SABNZBD_API_KEY}
 ```
+
+### Per-client cleanup
+
+Each download client can also carry its own download-cleaner settings:
+`orphaned_files` (move files no job or \*arr claims into a quarantine folder),
+`unlinked`, `dead_torrent`, and `seeding_rules` (when to remove finished torrents).
+What a client supports depends on its type — SABnzbd only has `orphaned_files` —
+and configarr rejects an unsupported one before touching anything.
+
+```yaml
+download_clients:
+  Transmission:
+    type: transmission
+    host: http://transmission:9091
+    seeding_rules:
+      cleanup-imported-public:
+        categories: [sonarr, radarr]
+        privacy_type: both
+        max_ratio: 1
+        max_seed_time: 48 # hours
+  SABnzbd:
+    type: sabnzbd
+    host: http://sabnzbd:8080
+    api_key: ${SABNZBD_API_KEY}
+    orphaned_files:
+      enabled: true
+      scan_directories: [/media/downloads/complete]
+      orphaned_directory: /media/downloads/orphaned
+      min_file_age_hours: 48
+      purge_after_hours: 168
+```
+
+With `--prune`, seeding rules not listed are deleted — but only on clients that
+declare `seeding_rules`; leave the key out to keep a client's rules untouched.
 
 ## \*arr instances
 

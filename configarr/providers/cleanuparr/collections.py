@@ -21,6 +21,7 @@ from typing import Any, ClassVar
 from configarr.normalize import coerce_scalar
 from configarr.plan import Op, ResourcePlan
 from configarr.providers.base import Action, CurrentStateCache
+from configarr.providers.cleanuparr.cleaner import NESTED_KEYS
 from configarr.providers.cleanuparr.common import (
     SECRET_PLACEHOLDER,
     cleanuparr_session,
@@ -44,6 +45,8 @@ class _CleanuparrCollection(CurrentStateCache):
     FIELDS: ClassVar[Mapping[str, str]] = {}
     SECRETS: ClassVar[frozenset[str]] = frozenset()
     DEFAULTS: ClassVar[Mapping[str, Any]] = {}
+    # Config keys owned by another provider (not warned about as unknown).
+    NESTED: ClassVar[frozenset[str]] = frozenset()
     noun = "resource"
 
     def __init__(self, base_url: str, api_key: str, kind: str) -> None:
@@ -74,7 +77,9 @@ class _CleanuparrCollection(CurrentStateCache):
         current_by_key = {self.match_key(c): c for c in self.fetch_current()}
         desired: list[dict[str, Any]] = []
         for key, settings, identity in self._entries():
-            unknown = sorted(k for k in settings if k not in self.FIELDS)
+            unknown = sorted(
+                k for k in settings if k not in self.FIELDS and k not in self.NESTED
+            )
             if unknown:
                 log.warning(
                     "Cleanuparr %s '%s': ignoring unknown setting(s): %s",
@@ -170,6 +175,8 @@ class CleanuparrDownloadClientProvider(_CleanuparrCollection):
     }
     SECRETS: ClassVar[frozenset[str]] = frozenset({"password", "apiKey"})
     DEFAULTS: ClassVar[Mapping[str, Any]] = {"enabled": True}
+    # orphaned_files / unlinked / dead_torrent / seeding_rules (cleaner.py).
+    NESTED: ClassVar[frozenset[str]] = NESTED_KEYS
 
     def __init__(self, base_url: str, api_key: str, config: Any, kind: str) -> None:
         super().__init__(base_url, api_key, kind)

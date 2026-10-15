@@ -146,7 +146,13 @@ def diff(
         for key in cur_by_key:
             if key in des_by_key:
                 continue
-            if managed_keys is not None and key not in managed_keys:
+            # State persists keys as str(key) (JSON has no tuples), so a composite
+            # key like ("sonarr", "Sonarr") is matched by its string form too.
+            if (
+                managed_keys is not None
+                and key not in managed_keys
+                and str(key) not in managed_keys
+            ):
                 continue
             plans.append(ResourcePlan(kind, key, Op.DELETE))
     return Plan(resources=plans)

@@ -25,6 +25,10 @@ from configarr.providers.bazarr.language_profiles import (
 )
 from configarr.providers.bazarr.providers import BazarrProviderProvider
 from configarr.providers.bazarr.settings import BazarrSettingsProvider
+from configarr.providers.cleanuparr.cleaner import (
+    CleanuparrClientSettingsProvider,
+    CleanuparrSeedingRuleProvider,
+)
 from configarr.providers.cleanuparr.collections import (
     CleanuparrArrInstanceProvider,
     CleanuparrDownloadClientProvider,
@@ -410,6 +414,29 @@ REGISTRY: list[Registration] = [
             inst.api_key,
             inst.download_clients,
             "cleanuparr.download_client",
+        ),
+    ),
+    # Per-client download-cleaner settings, after the clients they belong to.
+    Registration(
+        kind="cleanuparr.client_settings",
+        service="cleanuparr",
+        label="download client cleaner settings",
+        factory=lambda inst: CleanuparrClientSettingsProvider(
+            inst.base_url,
+            inst.api_key,
+            inst.download_clients,
+            "cleanuparr.client_settings",
+        ),
+    ),
+    Registration(
+        kind="cleanuparr.seeding_rule",
+        service="cleanuparr",
+        label="seeding rules",
+        factory=lambda inst: CleanuparrSeedingRuleProvider(
+            inst.base_url,
+            inst.api_key,
+            inst.download_clients,
+            "cleanuparr.seeding_rule",
         ),
     ),
     Registration(
