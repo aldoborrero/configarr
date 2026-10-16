@@ -37,6 +37,7 @@ from configarr.providers.cleanuparr.sections import (
     CleanuparrArrSettingsProvider,
     CleanuparrSectionProvider,
 )
+from configarr.providers.lingarr.onboarding import LingarrOnboardingProvider
 from configarr.providers.lingarr.settings import LingarrSettingsProvider
 from configarr.providers.prowlarr.applications import ApplicationProvider
 from configarr.providers.prowlarr.download_clients import (
@@ -363,12 +364,25 @@ REGISTRY: list[Registration] = [
     # Lingarr's flat settings store, split into two logical groups. Both hit the same
     # /api/setting endpoints; each owns its own known-key set (translation before
     # integration is cosmetic — they're independent singletons).
+    # Onboarding first: a fresh Lingarr 403s every settings call until it has run.
+    Registration(
+        kind="lingarr.onboarding",
+        service="lingarr",
+        label="onboarding",
+        factory=lambda inst: LingarrOnboardingProvider(
+            inst.base_url, inst.api_key, inst.onboarding, "lingarr.onboarding"
+        ),
+    ),
     Registration(
         kind="lingarr.translation",
         service="lingarr",
         label="translation settings",
         factory=lambda inst: LingarrSettingsProvider(
-            inst.base_url, inst.api_key, inst.translation, "lingarr.translation"
+            inst.base_url,
+            inst.api_key,
+            inst.translation,
+            "lingarr.translation",
+            onboarding_managed=inst.onboarding is not None,
         ),
     ),
     Registration(
@@ -376,7 +390,11 @@ REGISTRY: list[Registration] = [
         service="lingarr",
         label="arr integration",
         factory=lambda inst: LingarrSettingsProvider(
-            inst.base_url, inst.api_key, inst.integration, "lingarr.integration"
+            inst.base_url,
+            inst.api_key,
+            inst.integration,
+            "lingarr.integration",
+            onboarding_managed=inst.onboarding is not None,
         ),
     ),
     Registration(
@@ -384,7 +402,23 @@ REGISTRY: list[Registration] = [
         service="lingarr",
         label="automated translation",
         factory=lambda inst: LingarrSettingsProvider(
-            inst.base_url, inst.api_key, inst.automation, "lingarr.automation"
+            inst.base_url,
+            inst.api_key,
+            inst.automation,
+            "lingarr.automation",
+            onboarding_managed=inst.onboarding is not None,
+        ),
+    ),
+    Registration(
+        kind="lingarr.validation",
+        service="lingarr",
+        label="subtitle validation",
+        factory=lambda inst: LingarrSettingsProvider(
+            inst.base_url,
+            inst.api_key,
+            inst.validation,
+            "lingarr.validation",
+            onboarding_managed=inst.onboarding is not None,
         ),
     ),  # Cleanuparr: general first, then what the cleaners act on (arr instances and
     # download clients), then the cleaner sections themselves. The sections are

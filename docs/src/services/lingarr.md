@@ -16,9 +16,18 @@ you set — every other Lingarr setting is left untouched.
 
 ## Connect
 
-`AUTH_ENABLED=false` needs no credential, so `api_key` is optional. The settings API
-returns `403` until Lingarr's onboarding has run once; configarr surfaces that as a
-clear error rather than completing it (a plan stays read-only).
+`AUTH_ENABLED=false` needs no credential, so `api_key` is optional; when set, it is
+sent as `X-Api-Key` (Lingarr's API-key auth).
+
+A fresh Lingarr answers `403` on every settings call until its first-run
+onboarding has run. Add `onboarding:` and configarr completes it — reported in the
+plan as `onboarded: False -> True` and only POSTed on apply, before any other group.
+Without it, the `403` is a clear error.
+
+```yaml
+onboarding:
+  enable_user_auth: false # what Lingarr's first-run wizard asks
+```
 
 ```yaml
 lingarr:
@@ -106,3 +115,36 @@ Known keys: `automation_enabled`, `translation_schedule`,
 `max_translations_per_run`, `translation_cycle`, `movie_schedule`,
 `show_schedule`, `movie_age_threshold`, `show_age_threshold`. Like the other
 groups, configarr owns only the keys you set.
+
+## Subtitle validation
+
+The sanity checks Lingarr runs on a subtitle file before translating it.
+
+```yaml
+validation:
+  subtitle_validation_enabled: true
+  subtitle_validation_maxfilesizebytes: 2097152
+```
+
+Known keys: `subtitle_validation_enabled`, `subtitle_validation_maxfilesizebytes`,
+`subtitle_validation_maxsubtitlelength`, `subtitle_validation_minsubtitlelength`,
+`subtitle_validation_mindurationms`, `subtitle_validation_maxdurationsecs`.
+
+## Several instances
+
+Each instance has its own Sonarr/Radarr (Lingarr is single-instance per arr), so
+run one Lingarr per library and share the translation backend with a YAML anchor:
+
+```yaml
+lingarr:
+  instances:
+    anime:
+      base_url: http://lingarr-anime:9876
+      translation: &translation
+        service_type: localai
+        local_ai_model: deepseek/deepseek-v4-flash
+    tv:
+      base_url: http://lingarr:9876
+      onboarding: {}
+      translation: *translation
+```

@@ -23,12 +23,15 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import Hashable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from configarr.normalize import coerce_scalar, redact_secret_fields
 from configarr.plan import Op, ResourcePlan
 from configarr.providers.base import Action, CurrentStateCache
 from configarr.transport import build_session
+
+if TYPE_CHECKING:
+    import requests
 
 log = logging.getLogger(__name__)
 
@@ -86,6 +89,7 @@ TRANSLATION_KEYS: frozenset[str] = frozenset(
         "proofread_user_prompt",
         "ai_context_before",
         "ai_context_after",
+        "ai_context_use_translated",
         "fix_overlapping_subtitles",
         "strip_subtitle_formatting",
         "preserve_line_breaks",
@@ -120,12 +124,35 @@ AUTOMATION_KEYS: frozenset[str] = frozenset(
     }
 )
 
+# Subtitle sanity checks Lingarr applies before translating a file.
+VALIDATION_KEYS: frozenset[str] = frozenset(
+    {
+        "subtitle_validation_enabled",
+        "subtitle_validation_maxfilesizebytes",
+        "subtitle_validation_maxsubtitlelength",
+        "subtitle_validation_minsubtitlelength",
+        "subtitle_validation_mindurationms",
+        "subtitle_validation_maxdurationsecs",
+    }
+)
+
 _KNOWN_KEYS = {
     "lingarr.translation": TRANSLATION_KEYS,
     "lingarr.integration": INTEGRATION_KEYS,
     "lingarr.automation": AUTOMATION_KEYS,
+    "lingarr.validation": VALIDATION_KEYS,
 }
 _SINGLETON = "settings"
+
+
+def lingarr_session(api_key: str) -> requests.Session:
+    """A session that authenticates the way Lingarr's LingarrAuthorize expects
+    (``X-Api-Key``) whenever a key is configured. With ``AUTH_ENABLED=false`` no
+    key is needed and none is sent."""
+    session = build_session()
+    if api_key:
+        session.headers["X-Api-Key"] = api_key
+    return session
 
 
 def _encode(value: Any) -> str:
@@ -157,13 +184,23 @@ def _canonicalize(value: Any) -> Any:
 class LingarrSettingsProvider(CurrentStateCache):
     """Diffs one group of Lingarr's flat settings store (singleton, UPDATE-only)."""
 
-    def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
+    def __init__(
+        self,
+        base_url: str,
+        api_key: str,
+        config: Any,
+        kind: str,
+        onboarding_managed: bool = False,
+    ):
         self.kind = kind
+        # When configarr also completes onboarding (lingarr.onboarding runs first),
+        # a pre-onboarding 403 just means "nothing set yet" rather than an error.
+        self.onboarding_managed = onboarding_managed
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.config = config or {}
         self.known_keys = _KNOWN_KEYS[kind]
-        self._session = build_session()
+        self._session = lingarr_session(api_key)
 
     def _managed(self) -> list[str]:
         return [key for key in self.config if key in self.known_keys]
@@ -179,10 +216,12 @@ class LingarrSettingsProvider(CurrentStateCache):
             f"{self.base_url}/api/setting/multiple/get", json=keys
         )
         if resp.status_code == 403:
+            if self.onboarding_managed:
+                return [{}]
             raise RuntimeError(
                 "Lingarr settings API returned 403 — onboarding is not complete. "
-                "POST /api/auth/onboarding once (AUTH_ENABLED=false handles auth) "
-                "before configarr can manage its settings."
+                "Add `onboarding: {enable_user_auth: false}` to this instance so "
+                "configarr completes it, or finish the first-run wizard in the UI."
             )
         resp.raise_for_status()
         return [resp.json() or {}]

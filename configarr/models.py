@@ -192,6 +192,9 @@ class LingarrConfig(BaseModel):
     translation: dict[str, Any] | None = None
     integration: dict[str, Any] | None = None
     automation: dict[str, Any] | None = None
+    validation: dict[str, Any] | None = None
+    # First-run onboarding ({enable_user_auth: bool}); None = don't manage it.
+    onboarding: dict[str, Any] | None = None
 
     @field_validator("base_url")
     @classmethod
