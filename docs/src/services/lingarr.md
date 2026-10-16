@@ -86,3 +86,23 @@ lingarr:
         radarr_url: http://radarr:7878
         radarr_api_key: ${RADARR_API_KEY}
 ```
+
+## Automation
+
+Lingarr's scheduled file-mode translation: on its cron it walks the shows and
+movies of its Sonarr/Radarr and translates the subtitle files it finds from the
+source to the target languages, up to a per-run cap.
+
+```yaml
+automation:
+  automation_enabled: true
+  translation_schedule: "0 3 * * *" # cron
+  max_translations_per_run: 25
+  show_age_threshold: 0 # hours a file must exist before it is translated
+  movie_age_threshold: 0
+```
+
+Known keys: `automation_enabled`, `translation_schedule`,
+`max_translations_per_run`, `translation_cycle`, `movie_schedule`,
+`show_schedule`, `movie_age_threshold`, `show_age_threshold`. Like the other
+groups, configarr owns only the keys you set.
