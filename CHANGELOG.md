@@ -6,8 +6,18 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Lingarr: a configured `api_key` was never sent; it now goes out as `X-Api-Key`,
+  so instances with authentication enabled can be managed.
+
 ### Added
 
+- Lingarr `onboarding`: completes a fresh instance's first-run onboarding (plan
+  shows `onboarded: False -> True`, apply POSTs it before any other group); until
+  then the settings groups read as empty instead of failing.
+- Lingarr `validation` group (`subtitle_validation_*`) and the
+  `ai_context_use_translated` translation key (Lingarr 1.4).
 - Lingarr `automation` group: manage scheduled file-mode translation
   (`automation_enabled`, `translation_schedule`, `max_translations_per_run`, the
   per-type schedules and age thresholds) under `lingarr.instances.<name>.automation`.

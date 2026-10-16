@@ -205,6 +205,9 @@ def parse_lingarr_instance(name: str, config: dict[str, Any]) -> LingarrConfig:
         translation=config.get("translation"),
         integration=config.get("integration"),
         automation=config.get("automation"),
+        validation=config.get("validation"),
+        # `onboarding:` with no body still means "complete it" (with defaults).
+        onboarding=(config.get("onboarding") or {}) if "onboarding" in config else None,
     )
 
 

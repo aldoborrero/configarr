@@ -78,6 +78,8 @@ _LINGARR_INSTANCE: dict[str, Any] = {
     "translation": _OBJ,
     "integration": _OBJ,
     "automation": _OBJ,
+    "validation": _OBJ,
+    "onboarding": _OBJ,
 }
 
 _CLEANUPARR_INSTANCE: dict[str, Any] = {

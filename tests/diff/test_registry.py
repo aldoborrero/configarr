@@ -177,6 +177,8 @@ def test_lingarr_settings_are_lingarr_only():
     assert _instances_for_kind(planned, "lingarr.translation") == ["main"]
     assert _instances_for_kind(planned, "lingarr.integration") == ["main"]
     assert _instances_for_kind(planned, "lingarr.automation") == ["main"]
+    assert _instances_for_kind(planned, "lingarr.validation") == ["main"]
+    assert _instances_for_kind(planned, "lingarr.onboarding") == ["main"]
     assert _instances_for_kind(planned, "radarr.translation") == []
 
 
