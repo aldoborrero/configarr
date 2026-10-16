@@ -378,6 +378,14 @@ REGISTRY: list[Registration] = [
         factory=lambda inst: LingarrSettingsProvider(
             inst.base_url, inst.api_key, inst.integration, "lingarr.integration"
         ),
+    ),
+    Registration(
+        kind="lingarr.automation",
+        service="lingarr",
+        label="automated translation",
+        factory=lambda inst: LingarrSettingsProvider(
+            inst.base_url, inst.api_key, inst.automation, "lingarr.automation"
+        ),
     ),  # Cleanuparr: general first, then what the cleaners act on (arr instances and
     # download clients), then the cleaner sections themselves. The sections are
     # full-replace PUTs merged over current (see providers/cleanuparr/sections.py).

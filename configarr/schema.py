@@ -77,6 +77,7 @@ _LINGARR_INSTANCE: dict[str, Any] = {
     "include": _INCLUDE,
     "translation": _OBJ,
     "integration": _OBJ,
+    "automation": _OBJ,
 }
 
 _CLEANUPARR_INSTANCE: dict[str, Any] = {

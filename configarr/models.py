@@ -191,6 +191,7 @@ class LingarrConfig(BaseModel):
     api_key: str = ""
     translation: dict[str, Any] | None = None
     integration: dict[str, Any] | None = None
+    automation: dict[str, Any] | None = None
 
     @field_validator("base_url")
     @classmethod

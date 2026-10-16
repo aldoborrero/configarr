@@ -1,3 +1,5 @@
+import json
+
 import pytest
 import responses
 
@@ -140,3 +142,35 @@ def test_integration_group_manages_arr_keys():
         kind="lingarr.integration",
     ).build_desired()
     assert desired == {"sonarr_url": "http://sonarr:8989", "sonarr_api_key": "k"}
+
+
+@responses.activate
+def test_automation_group_writes_its_keys_as_strings(plan_provider, apply_changes):
+    _mock_get(
+        {
+            "automation_enabled": "false",
+            "translation_schedule": "0 4 * * *",
+            "max_translations_per_run": "10",
+        }
+    )
+    responses.post(f"{LIN}/api/setting/multiple/set", json={})
+    provider = _provider(
+        {"automation_enabled": True, "max_translations_per_run": 25},
+        kind="lingarr.automation",
+    )
+    plan = plan_provider(provider)
+    assert [r.op for r in plan.resources] == [Op.UPDATE]
+    apply_changes(provider, plan)
+    body = json.loads(responses.calls[-1].request.body)
+    assert body == {"automation_enabled": "true", "max_translations_per_run": "25"}
+
+
+@responses.activate
+def test_translation_key_in_automation_group_is_dropped(caplog):
+    _mock_get({"automation_enabled": "false"})
+    with caplog.at_level("WARNING"):
+        [desired] = _provider(
+            {"automation_enabled": True, "ai_prompt": "x"}, kind="lingarr.automation"
+        ).build_desired()
+    assert desired == {"automation_enabled": "true"}
+    assert any("ai_prompt" in r.getMessage() for r in caplog.records)

@@ -6,6 +6,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Lingarr `automation` group: manage scheduled file-mode translation
+  (`automation_enabled`, `translation_schedule`, `max_translations_per_run`, the
+  per-type schedules and age thresholds) under `lingarr.instances.<name>.automation`.
+
 ## [0.5.2] - 2026-10-16
 
 ### Fixed

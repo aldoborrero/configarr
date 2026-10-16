@@ -3,9 +3,9 @@
 Lingarr keeps all settings as one flat ``key -> value`` store (no per-object id or
 name), read via ``POST /api/setting/multiple/get`` (a JSON list of keys) and written
 via ``POST /api/setting/multiple/set`` (a JSON ``{key: value}`` map of strings). This
-provider owns one logical group of that store — ``lingarr.translation`` or
-``lingarr.integration`` — as a singleton (``match_key`` is a fixed sentinel, the only
-op is UPDATE).
+provider owns one logical group of that store — ``lingarr.translation``,
+``lingarr.integration`` or ``lingarr.automation`` — as a singleton (``match_key``
+is a fixed sentinel, the only op is UPDATE).
 
 It is an over-current provider: build_desired emits only the keys the user set (that
 Lingarr knows), and the diff compares those against their current values, so every
@@ -105,9 +105,25 @@ TRANSLATION_KEYS: frozenset[str] = frozenset(
     }
 )
 
+# Scheduled file-mode translation (Lingarr's AutomatedTranslationJob): whether it
+# runs, its cron, the per-run cap, and the per-type schedules/age thresholds.
+AUTOMATION_KEYS: frozenset[str] = frozenset(
+    {
+        "automation_enabled",
+        "translation_schedule",
+        "max_translations_per_run",
+        "translation_cycle",
+        "movie_schedule",
+        "show_schedule",
+        "movie_age_threshold",
+        "show_age_threshold",
+    }
+)
+
 _KNOWN_KEYS = {
     "lingarr.translation": TRANSLATION_KEYS,
     "lingarr.integration": INTEGRATION_KEYS,
+    "lingarr.automation": AUTOMATION_KEYS,
 }
 _SINGLETON = "settings"
 

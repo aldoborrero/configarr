@@ -204,6 +204,7 @@ def parse_lingarr_instance(name: str, config: dict[str, Any]) -> LingarrConfig:
         api_key=config.get("api_key", ""),
         translation=config.get("translation"),
         integration=config.get("integration"),
+        automation=config.get("automation"),
     )
 
 
