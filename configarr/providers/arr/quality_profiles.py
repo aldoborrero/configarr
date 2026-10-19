@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import copy
 import logging
-from collections.abc import Hashable, Iterator
+from collections.abc import Hashable, Iterable, Iterator
 from typing import Any
 
 from configarr.build import merge_full_replace
@@ -78,10 +78,21 @@ class QualityProfileProvider(HttpProvider):
 
     full_replace = True
 
-    def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
+    def __init__(
+        self,
+        base_url: str,
+        api_key: str,
+        config: Any,
+        kind: str,
+        pending_formats: Iterable[str] = (),
+    ):
         super().__init__(base_url, api_key)
         self.kind = kind
         self.config = config or []
+        # Custom formats this instance declares. On a plan they may not exist yet
+        # (the custom-format provider creates them first on apply), so a score keyed
+        # to one is shown as pending instead of being dropped as unknown.
+        self.pending_formats = set(pending_formats)
         self._schema_cache: dict[str, Any] | None = None
         self._language_cache: list[dict[str, Any]] | None = None
 
@@ -272,11 +283,24 @@ class QualityProfileProvider(HttpProvider):
             {**fi, "score": scores.get(fi.get("name"), 0)}
             for fi in schema.get("formatItems", [])
         ]
-        # A score keyed to a custom format that doesn't exist on this instance never
-        # lands in formatItems and would otherwise vanish silently — warn (mirrors the
-        # unmatched-quality-name warning above).
+        # A score keyed to a custom format declared in this same config but not yet
+        # created (only on a plan: apply syncs custom formats first, so by then the
+        # schema offers it) becomes a pending formatItem with no server id, so the
+        # plan shows the score it will get instead of 0. to_action never sends one.
         offered = {fi.get("name") for fi in schema.get("formatItems", [])}
-        unknown = [name for name in scores if name not in offered]
+        format_items += [
+            {"format": None, "name": name, "score": score}
+            for name, score in scores.items()
+            if name not in offered and name in self.pending_formats
+        ]
+        # A score keyed to a custom format that exists neither on the instance nor
+        # in the config never lands in formatItems and would otherwise vanish
+        # silently — warn (mirrors the unmatched-quality-name warning above).
+        unknown = [
+            name
+            for name in scores
+            if name not in offered and name not in self.pending_formats
+        ]
         if unknown:
             log.warning(
                 "quality profile %r: scores for CFs not on %s, ignored: %s",
@@ -329,12 +353,24 @@ class QualityProfileProvider(HttpProvider):
 
     def normalize(self, resource: dict[str, Any]) -> dict[str, Any]:
         language = resource.get("language")
+        # Server formats compare by id; a pending one (no id yet, see _build_profile)
+        # by name, so it shows up in the diff as the score it will get.
         format_items = sorted(
             (
                 {"format": fi.get("format"), "score": fi.get("score", 0)}
+                if fi.get("format") is not None
+                else {
+                    "format": None,
+                    "name": fi.get("name"),
+                    "score": fi.get("score", 0),
+                }
                 for fi in resource.get("formatItems", [])
             ),
-            key=lambda fi: (fi["format"] is None, fi["format"]),
+            key=lambda fi: (
+                fi["format"] is None,
+                fi["format"] if fi["format"] is not None else 0,
+                fi.get("name") or "",
+            ),
         )
         return {
             "upgradeAllowed": bool(resource.get("upgradeAllowed", False)),
@@ -357,10 +393,11 @@ class QualityProfileProvider(HttpProvider):
         assert plan.op in (Op.CREATE, Op.UPDATE), (
             f"to_action: unexpected op {plan.op!r}"
         )
+        desired = _without_pending_formats(desired or {})
         if plan.op is Op.CREATE:
-            payload = {k: v for k, v in (desired or {}).items() if k != "id"}
+            payload = {k: v for k, v in desired.items() if k != "id"}
             return Action(op=plan.op, key=plan.key, payload=payload)
-        payload = {**(desired or {}), "id": (current or {})["id"]}
+        payload = {**desired, "id": (current or {})["id"]}
         return Action(op=plan.op, key=plan.key, payload=payload)
 
     def apply(self, action: Action) -> None:
@@ -372,3 +409,16 @@ class QualityProfileProvider(HttpProvider):
         else:
             raise NotImplementedError(f"apply: unsupported op {action.op!r}")
         self.invalidate_current()
+
+
+def _without_pending_formats(profile: dict[str, Any]) -> dict[str, Any]:
+    """Drop pending formatItems (no server id). On apply they never occur — the
+    custom formats exist by the time profiles are built — but a payload must never
+    carry a null format id, so strip them defensively."""
+    items = profile.get("formatItems")
+    if not items or all(fi.get("format") is not None for fi in items):
+        return profile
+    return {
+        **profile,
+        "formatItems": [fi for fi in items if fi.get("format") is not None],
+    }

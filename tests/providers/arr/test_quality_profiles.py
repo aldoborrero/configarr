@@ -293,3 +293,84 @@ def test_plan_fetches_current_once(plan_provider):
     responses.get(f"{BASE}/api/v3/language", json=LANGUAGES)
     plan_provider(_provider(CONFIG))
     assert current.call_count == 1
+
+
+# A score for a custom format the same config declares but that does not exist on
+# the instance yet: on a plan the custom-format provider has not created it, so the
+# profile must show the score it will get (pending) instead of dropping it to 0.
+def _pending_provider(config, pending=("Castellano",)):
+    return QualityProfileProvider(
+        base_url=BASE,
+        api_key="k",
+        config=config,
+        kind="radarr.quality_profile",
+        pending_formats=pending,
+    )
+
+
+@responses.activate
+def test_score_for_same_run_cf_is_pending_not_dropped(caplog):
+    responses.get(f"{BASE}/api/v3/qualityprofile", json=[])
+    responses.get(f"{BASE}/api/v3/qualityprofile/schema", json=SCHEMA)
+    config = [{**CONFIG[0], "custom_format_scores": {"x265": 100, "Castellano": 500}}]
+    with caplog.at_level("WARNING"):
+        [desired] = _pending_provider(config).build_desired()
+    pending = [fi for fi in desired["formatItems"] if fi["format"] is None]
+    assert pending == [{"format": None, "name": "Castellano", "score": 500}]
+    assert "ignored" not in caplog.text
+
+
+@responses.activate
+def test_pending_score_shows_in_plan_diff(plan_provider):
+    current = {**EXISTING}
+    responses.get(f"{BASE}/api/v3/qualityprofile", json=[current])
+    responses.get(f"{BASE}/api/v3/qualityprofile/schema", json=SCHEMA)
+    config = [{**CONFIG[0], "custom_format_scores": {"x265": 100, "Castellano": 500}}]
+    plan = plan_provider(_pending_provider(config))
+    [resource] = plan.resources
+    assert resource.op is Op.UPDATE
+    [fmt] = [d for d in resource.field_diffs if d.path == "formatItems"]
+    assert {"format": None, "name": "Castellano", "score": 500} in fmt.after
+
+
+@responses.activate
+def test_score_for_undeclared_cf_still_warns(caplog):
+    responses.get(f"{BASE}/api/v3/qualityprofile", json=[])
+    responses.get(f"{BASE}/api/v3/qualityprofile/schema", json=SCHEMA)
+    config = [{**CONFIG[0], "custom_format_scores": {"x265": 100, "Nope": 5}}]
+    with caplog.at_level("WARNING"):
+        [desired] = _pending_provider(config).build_desired()
+    assert all(fi["format"] is not None for fi in desired["formatItems"])
+    assert "Nope" in caplog.text and "ignored" in caplog.text
+
+
+@responses.activate
+def test_pending_formats_never_reach_the_payload(plan_provider):
+    responses.get(f"{BASE}/api/v3/qualityprofile", json=[EXISTING])
+    responses.get(f"{BASE}/api/v3/qualityprofile/schema", json=SCHEMA)
+    config = [{**CONFIG[0], "custom_format_scores": {"x265": 100, "Castellano": 500}}]
+    provider = _pending_provider(config)
+    plan = plan_provider(provider)
+    [resource] = plan.resources
+    [desired] = provider.build_desired()
+    action = provider.to_action(resource, EXISTING, desired)
+    assert all(fi["format"] is not None for fi in action.payload["formatItems"])
+
+
+@responses.activate
+def test_score_resolves_once_cf_exists():
+    # On apply the custom-format provider has already created the CF, so the schema
+    # offers it with a real id and nothing is pending.
+    schema = {
+        **SCHEMA,
+        "formatItems": [
+            *SCHEMA["formatItems"],
+            {"format": 12, "name": "Castellano", "score": 0},
+        ],
+    }
+    responses.get(f"{BASE}/api/v3/qualityprofile", json=[])
+    responses.get(f"{BASE}/api/v3/qualityprofile/schema", json=schema)
+    config = [{**CONFIG[0], "custom_format_scores": {"x265": 100, "Castellano": 500}}]
+    [desired] = _pending_provider(config).build_desired()
+    scores = {fi["format"]: fi["score"] for fi in desired["formatItems"]}
+    assert scores == {10: 100, 11: 0, 12: 500}
