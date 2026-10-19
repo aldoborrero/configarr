@@ -87,7 +87,11 @@ REGISTRY: list[Registration] = [
         service="radarr",
         label="quality profiles",
         factory=lambda inst: QualityProfileProvider(
-            inst.base_url, inst.api_key, inst.quality_profiles, "radarr.quality_profile"
+            inst.base_url,
+            inst.api_key,
+            inst.quality_profiles,
+            "radarr.quality_profile",
+            pending_formats=inst.custom_formats or {},
         ),
     ),
     Registration(
@@ -104,7 +108,11 @@ REGISTRY: list[Registration] = [
         service="sonarr",
         label="quality profiles",
         factory=lambda inst: QualityProfileProvider(
-            inst.base_url, inst.api_key, inst.quality_profiles, "sonarr.quality_profile"
+            inst.base_url,
+            inst.api_key,
+            inst.quality_profiles,
+            "sonarr.quality_profile",
+            pending_formats=inst.custom_formats or {},
         ),
     ),
     Registration(
