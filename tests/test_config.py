@@ -99,3 +99,36 @@ cleanuparr:
     assert inst.download_clients == {"SABnzbd": {"type": "sabnzbd"}}
     assert inst.arr == {"sonarr": {"failed_import_max_strikes": 3}}
     assert inst.general is None
+
+
+def test_parse_config_carries_tranga_sections(tmp_path):
+    _write(
+        tmp_path,
+        """
+tranga:
+  instances:
+    main:
+      base_url: https://api.tranga.test/
+      settings:
+        download_language: es
+      file_libraries:
+        Manga:
+          base_path: /Manga
+      library_connectors:
+        - type: kavita
+          base_url: http://kavita:5000
+          api_key: k
+""",
+    )
+
+    config = parse_config(tmp_path / "configarr.yml")
+
+    inst = config.tranga[0]
+    assert inst.base_url == "https://api.tranga.test"
+    assert inst.api_key == ""  # optional — Tranga's API has no auth
+    assert inst.settings == {"download_language": "es"}
+    assert inst.file_libraries == {"Manga": {"base_path": "/Manga"}}
+    assert inst.library_connectors == [
+        {"type": "kavita", "base_url": "http://kavita:5000", "api_key": "k"}
+    ]
+    assert inst.notification_connectors == {}

@@ -19,6 +19,7 @@ from configarr.models import (
     RadarrConfig,
     SabnzbdConfig,
     SonarrConfig,
+    TrangaConfig,
 )
 from configarr.schema import SERVICE_NAMES, unknown_keys
 
@@ -226,6 +227,19 @@ def parse_cleanuparr_instance(name: str, config: dict[str, Any]) -> CleanuparrCo
     )
 
 
+def parse_tranga_instance(name: str, config: dict[str, Any]) -> TrangaConfig:
+    """Parse a Tranga instance configuration."""
+    return TrangaConfig(
+        name=name,
+        base_url=config["base_url"],
+        api_key=config.get("api_key") or "",
+        settings=config.get("settings"),
+        file_libraries=config.get("file_libraries") or {},
+        library_connectors=config.get("library_connectors") or [],
+        notification_connectors=config.get("notification_connectors") or {},
+    )
+
+
 # Per-service instance parser, keyed by service name. Must cover every name in
 # schema.SERVICE_NAMES — parse_config builds the config by mapping each service
 # through its parser, and a ConfigarrConfig field is required for each (a
@@ -238,6 +252,7 @@ _PARSERS: dict[str, Callable[[str, dict[str, Any]], Any]] = {
     "sabnzbd": parse_sabnzbd_instance,
     "lingarr": parse_lingarr_instance,
     "cleanuparr": parse_cleanuparr_instance,
+    "tranga": parse_tranga_instance,
 }
 
 

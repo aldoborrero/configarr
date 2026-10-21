@@ -42,9 +42,10 @@ before quality profiles** within an instance.
 
 - Every service nests under `<service>.instances.<name>`, where `<service>` is one
   of `radarr`, `sonarr`, `prowlarr`, `bazarr`, `sabnzbd`, `lingarr`,
-  `cleanuparr`, and `<name>` is your
+  `cleanuparr`, `tranga`, and `<name>` is your
   chosen instance label.
-- **`base_url` and `api_key` are REQUIRED on every instance.** `config.py` reads
+- **`base_url` and `api_key` are REQUIRED on every instance** — except `tranga`,
+  whose API has no authentication, so its `api_key` is optional. `config.py` reads
   them with subscript access (`config["base_url"]`), so omitting either raises.
   `base_url` has a trailing slash stripped automatically.
 - **`${VAR}` substitution** is applied to all string values. Missing variables
@@ -785,6 +786,85 @@ A map keyed by arr type: `sonarr`, `radarr`, `lidarr`, `readarr`, `whisparr`,
 | `instances` | map | instances keyed by name (CRUD, prunable): `url`, `api_key` (secret), `version` (number, e.g. `4` for Sonarr v4), `enabled` (default `true`), `external_url`. A new instance needs `url`, `api_key` and `version` |
 
 Cleanuparr stores `url` with a trailing slash; URLs compare without one.
+
+---
+
+## Tranga
+
+Path prefix `tranga.instances.<name>` (Tranga v2, `/v2/...` API). Top-level keys
+(from `parse_tranga_instance` + `TrangaConfig`): `base_url` (the **API** URL, not
+the web UI), `api_key` (**optional** — Tranga's API has no authentication; when set
+it is sent as `X-Api-Key`, for an auth proxy in front of it), `settings`,
+`file_libraries`, `library_connectors`, `notification_connectors`. Manga
+subscriptions are data, not config, and are not managed.
+
+Tranga creates with `PUT`, which is not idempotent there, so creates are sent
+**once, without retries**.
+
+### Settings — `settings`
+
+Over-current singleton read from `GET /v2/Settings`. Tranga has no bulk write: each
+setting has its own endpoint, and apply makes one call per setting that changed.
+
+| key | API field | write |
+|---|---|---|
+| `user_agent` | `userAgent` | `PATCH /v2/Settings/UserAgent` (JSON string) |
+| `image_compression` | `imageCompression` | `PATCH /v2/Settings/ImageCompressionLevel/{1..100}`; outside 1..100 raises |
+| `black_white_images` | `blackWhiteImages` | `PATCH /v2/Settings/BWImages/{bool}` |
+| `flaresolverr_url` | `flareSolverrUrl` | `PATCH /v2/Settings/FlareSolverr/Url`; `""` clears it (`DELETE`) |
+| `chapter_naming_scheme` | `chapterNamingScheme` | `PATCH /v2/Settings/ChapterNamingScheme` (placeholders `%M %V %C %T %A %I %i %Y`, `?X(...)` conditionals) |
+| `download_language` | `downloadLanguage` | `PATCH /v2/Settings/DownloadLanguage/{lang}` (e.g. `en`, `es`) |
+| `library_refresh_setting` | `libraryRefreshSetting` | `AfterAllFinished`, `AfterMangaFinished`, `AfterEveryChapter`, `WhileDownloading` (any case, `_` ignored); `PATCH /v2/Settings/LibraryRefresh` |
+| `refresh_library_while_downloading_every_minutes` | `refreshLibraryWhileDownloadingEveryMinutes` | int; written together with `library_refresh_setting` |
+
+`max_concurrent_downloads`, `max_concurrent_workers` and `work_cycle_timeout_ms` are
+returned but have no write endpoint: configuring one **raises**. Other unknown keys
+are warned about and ignored.
+
+### File libraries — `file_libraries`
+
+A map keyed by library name (CRUD, prunable): `base_path` (directory inside the
+Tranga container; required for a new library). A path change is a `PATCH` in place.
+Tranga ships with one library named `Default FileLibrary` — key your entry by that
+name to manage it rather than creating a second one. **Deleting a library
+un-assigns its manga** (Tranga sets their library to null), so prune with care.
+
+### Library connectors — `library_connectors`
+
+A **list** of Kavita/Komga servers Tranga asks to rescan after downloads, keyed by
+`(type, base_url)` (create/delete only, prunable).
+
+| key | meaning |
+|---|---|
+| `type` | `kavita` or `komga` (any case) |
+| `base_url` | server URL as Tranga reaches it; trailing `/` ignored |
+| `api_key` | **required for a new connector**: the Kavita user's API key (Kavita: *User settings → API key*; Tranga authenticates via `/api/Plugin/authenticate`) or a Komga API key (`X-API-Key`). Not username/password |
+
+Tranga never returns the key and has no update endpoint, so an existing connector
+is always `UNCHANGED`; a changed key is not detected. To rotate it, remove the
+entry, apply with `--prune`, and add it back. Tranga tests the credentials on
+create and answers `401` when they are wrong.
+
+### Notification connectors — `notification_connectors`
+
+A map keyed by connector name (CRUD, prunable). Tranga stores every connector as a
+generic webhook; `%title` and `%text` in `url`, `body` and header values are
+replaced when a notification is sent.
+
+| key | meaning |
+|---|---|
+| `type` | `generic` (default) or `gotify` |
+| `url` | required |
+| `http_method` | generic; default `POST` |
+| `body` | generic; required |
+| `headers` | generic; map of header → value |
+| `app_token` / `priority` | gotify; `priority` default `5` |
+
+`type: gotify` is expanded the same way Tranga's own Gotify endpoint does
+(`<url>/message`, `X-Gotify-Key` header), so a connector created in the UI diffs
+clean against it. Header values are fingerprinted in plans (they usually carry the
+credential). There is no update endpoint: a changed connector is **deleted and
+recreated** under the same name.
 
 ---
 

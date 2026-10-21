@@ -6,6 +6,15 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Tranga (v2) support: manage a Tranga instance under `tranga.instances.<name>` —
+  its `settings` (one API call per changed setting), `file_libraries` (name-keyed,
+  patched in place), `library_connectors` (Kavita/Komga, keyed by type and URL,
+  create/delete only) and `notification_connectors` (generic webhooks plus a
+  `type: gotify` shortcut; replaced on change). All collections are prunable.
+  Tranga's API has no authentication, so `api_key` is optional for this service.
+
 ## [0.6.0] - 2026-10-16
 
 ### Fixed

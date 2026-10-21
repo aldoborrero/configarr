@@ -22,6 +22,7 @@
 - [SABnzbd](services/sabnzbd.md)
 - [Lingarr](services/lingarr.md)
 - [Cleanuparr](services/cleanuparr.md)
+- [Tranga](services/tranga.md)
 
 # Reference
 

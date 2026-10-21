@@ -6,6 +6,7 @@ from configarr.models import (
     LingarrConfig,
     ProwlarrConfig,
     SabnzbdConfig,
+    TrangaConfig,
 )
 from configarr.registry import providers_for
 
@@ -220,3 +221,21 @@ def test_cleanuparr_providers_are_cleanuparr_only_and_ordered():
         "cleanuparr.malware_blocker",
     ]
     assert _instances_for_kind(planned, "cleanuparr.queue_cleaner") == ["main"]
+
+
+def test_tranga_providers_are_tranga_only_and_ordered():
+    config = ConfigarrConfig(
+        radarr=[_radarr("hd")],
+        tranga=[TrangaConfig(name="main", base_url="http://t.test")],
+    )
+
+    planned = list(providers_for(config))
+    kinds = [p.provider.kind for p in planned if p.service == "tranga"]
+
+    assert kinds == [
+        "tranga.settings",
+        "tranga.file_library",
+        "tranga.library_connector",
+        "tranga.notification_connector",
+    ]
+    assert _instances_for_kind(planned, "tranga.settings") == ["main"]
