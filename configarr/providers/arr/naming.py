@@ -75,8 +75,15 @@ class NamingProvider(HttpProvider):
 
     full_replace = True
 
-    def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
-        super().__init__(base_url, api_key)
+    def __init__(
+        self,
+        base_url: str,
+        api_key: str,
+        config: Any,
+        kind: str,
+        api_prefix: str | None = None,
+    ):
+        super().__init__(base_url, api_key, api_prefix)
         self.kind = kind
         self.config = config or {}
         self._fields = _SERVICE_FIELDS[kind.split(".")[0]]
@@ -86,7 +93,7 @@ class NamingProvider(HttpProvider):
 
     def _load_current(self) -> list[dict[str, Any]]:
         # Singleton: wrap the one object so the engine can index it like any list.
-        return [self._get("/api/v3/config/naming").json()]
+        return [self._get(f"{self.api_prefix}/config/naming").json()]
 
     def _overrides(self) -> dict[str, Any]:
         out: dict[str, Any] = {}
@@ -127,5 +134,5 @@ class NamingProvider(HttpProvider):
         if action.op is not Op.UPDATE:
             raise NotImplementedError(f"apply: unsupported op {action.op!r}")
         naming_id = action.payload["id"]
-        self._put(f"/api/v3/config/naming/{naming_id}", json=action.payload)
+        self._put(f"{self.api_prefix}/config/naming/{naming_id}", json=action.payload)
         self.invalidate_current()

@@ -101,15 +101,25 @@ class HttpProvider(CurrentStateCache):
     # Set by every subclass; declared here so shared helpers (e.g. tag resolution)
     # can reference it.
     kind: str
-    # Tag endpoint for label->id resolution; Prowlarr providers override to v1.
+    # API base path the resource endpoints are joined under. Radarr/Sonarr serve
+    # ``/api/v3``; the Readarr-lineage Bookshelf serves the same resources on
+    # ``/api/v1``, so the shared arr providers take it as a constructor argument.
+    api_prefix = "/api/v3"
+    # Tag endpoint for label->id resolution; Prowlarr providers override to v1, and
+    # a constructor ``api_prefix`` re-derives it.
     _tag_path = "/api/v3/tag"
     # The runner flips this on for the apply path so an unknown tag label is
     # created; during a read-only plan it stays False (a missing label is only
     # warned about — it would be created on apply).
     _create_missing_tags = False
 
-    def __init__(self, base_url: str, api_key: str) -> None:
+    def __init__(
+        self, base_url: str, api_key: str, api_prefix: str | None = None
+    ) -> None:
         self.base_url = base_url.rstrip("/")
+        if api_prefix is not None:
+            self.api_prefix = api_prefix.rstrip("/")
+            self._tag_path = f"{self.api_prefix}/tag"
         self._session = build_session()
         self._session.headers["X-Api-Key"] = api_key
         self._tag_cache: dict[str, int] | None = None
@@ -213,8 +223,15 @@ class FieldProvider(HttpProvider):
 
     full_replace = True
 
-    def __init__(self, base_url: str, api_key: str, config: Any, kind: str) -> None:
-        super().__init__(base_url, api_key)
+    def __init__(
+        self,
+        base_url: str,
+        api_key: str,
+        config: Any,
+        kind: str,
+        api_prefix: str | None = None,
+    ) -> None:
+        super().__init__(base_url, api_key, api_prefix)
         self.kind = kind
         self.config = config or {}
         self._secret_names: set[str] = set()
