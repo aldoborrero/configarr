@@ -94,6 +94,14 @@ _CLEANUPARR_INSTANCE: dict[str, Any] = {
     "arr": _OBJ,
 }
 
+_KAVITA_INSTANCE: dict[str, Any] = {
+    "base_url": _STR,
+    "api_key": _STR,
+    "include": _INCLUDE,
+    "settings": _OBJ,
+    "libraries": _ARR,
+}
+
 SERVICES: dict[str, dict[str, Any]] = {
     "radarr": _ARR_INSTANCE,
     "sonarr": _ARR_INSTANCE,
@@ -102,6 +110,7 @@ SERVICES: dict[str, dict[str, Any]] = {
     "sabnzbd": _SABNZBD_INSTANCE,
     "lingarr": _LINGARR_INSTANCE,
     "cleanuparr": _CLEANUPARR_INSTANCE,
+    "kavita": _KAVITA_INSTANCE,
 }
 # The canonical service list. Everything that enumerates services — the config
 # parser, the CLI --service choices and scope validation — derives from this so a

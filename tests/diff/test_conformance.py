@@ -12,6 +12,7 @@ from configarr.models import (
     BazarrConfig,
     CleanuparrConfig,
     ConfigarrConfig,
+    KavitaConfig,
     LingarrConfig,
     ProwlarrConfig,
     SabnzbdConfig,
@@ -69,6 +70,13 @@ def _full_config() -> ConfigarrConfig:
             CleanuparrConfig(
                 name="c",
                 base_url="http://c.test",
+                api_key="k",
+            )
+        ],
+        kavita=[
+            KavitaConfig(
+                name="kv",
+                base_url="http://kv.test",
                 api_key="k",
             )
         ],

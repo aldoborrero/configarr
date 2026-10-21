@@ -99,3 +99,33 @@ cleanuparr:
     assert inst.download_clients == {"SABnzbd": {"type": "sabnzbd"}}
     assert inst.arr == {"sonarr": {"failed_import_max_strikes": 3}}
     assert inst.general is None
+
+
+def test_parse_config_carries_kavita_settings_and_libraries(tmp_path):
+    _write(
+        tmp_path,
+        """
+kavita:
+  instances:
+    main:
+      base_url: https://kavita.test/
+      api_key: k
+      settings:
+        enable_opds: true
+        oidc:
+          provider_name: Zitadel
+      libraries:
+        - name: Libros
+          type: book
+          folders: [/data/books]
+""",
+    )
+
+    config = parse_config(tmp_path / "configarr.yml")
+
+    inst = config.kavita[0]
+    assert inst.base_url == "https://kavita.test"
+    assert inst.settings == {"enable_opds": True, "oidc": {"provider_name": "Zitadel"}}
+    assert inst.libraries == [
+        {"name": "Libros", "type": "book", "folders": ["/data/books"]}
+    ]

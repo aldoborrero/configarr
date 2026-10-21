@@ -6,6 +6,17 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Kavita support: manage a Kavita instance under `kavita.instances.<name>` — its
+  server `settings` (including `oidc` and `smtp`) and its `libraries` (name-keyed,
+  prunable). `api_key` is a Kavita auth key, exchanged for a JWT via
+  `/api/plugin/authenticate`. Settings are merged over the current DTO because
+  Kavita's POST replaces it whole; enums are written by name. The OIDC secret is
+  compared by length only (Kavita masks it) and the SMTP password by fingerprint,
+  so neither appears in a plan; an OIDC authority/client/secret/scope change warns
+  that Kavita must be restarted.
+
 ## [0.6.0] - 2026-10-16
 
 ### Fixed

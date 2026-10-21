@@ -42,7 +42,7 @@ before quality profiles** within an instance.
 
 - Every service nests under `<service>.instances.<name>`, where `<service>` is one
   of `radarr`, `sonarr`, `prowlarr`, `bazarr`, `sabnzbd`, `lingarr`,
-  `cleanuparr`, and `<name>` is your
+  `cleanuparr`, `kavita`, and `<name>` is your
   chosen instance label.
 - **`base_url` and `api_key` are REQUIRED on every instance.** `config.py` reads
   them with subscript access (`config["base_url"]`), so omitting either raises.
@@ -785,6 +785,87 @@ A map keyed by arr type: `sonarr`, `radarr`, `lidarr`, `readarr`, `whisparr`,
 | `instances` | map | instances keyed by name (CRUD, prunable): `url`, `api_key` (secret), `version` (number, e.g. `4` for Sonarr v4), `enabled` (default `true`), `external_url`. A new instance needs `url`, `api_key` and `version` |
 
 Cleanuparr stores `url` with a trailing slash; URLs compare without one.
+
+---
+
+## Kavita
+
+Path prefix `kavita.instances.<name>`. Top-level keys (from
+`parse_kavita_instance` + `KavitaConfig`): `base_url`, `api_key` (a Kavita **auth
+key**, exchanged for a JWT with `POST /api/plugin/authenticate?apiKey=…&pluginName=configarr`
+and sent as `Authorization: Bearer …`; use an admin's), `settings`, `libraries`.
+
+Keys are written **snake_case** and mapped onto Kavita's camelCase fields by a loose
+match against what the server returns. Kavita serializes enums as integers;
+configarr takes them **by name** (case, `_`, `-` and spaces ignored) or as the raw
+integer, and plans show names.
+
+### Server settings — `settings`
+
+A free-form map over Kavita's `ServerSettingDto` (`GET /api/settings`,
+`POST /api/settings`). The POST takes the **whole** DTO, so configarr merges the
+configured keys over the current object and posts the result: unset settings keep
+their values. Plans list dotted paths (`oidcConfig.providerName`).
+
+| key | type | meaning |
+|---|---|---|
+| `host_name` | string | public URL (Kavita drops a trailing slash) |
+| `logging_level` | string | `Trace`, `Debug`, `Information`, `Warning`, `Critical` |
+| `enable_opds` / `enable_folder_watching` / `allow_stat_collection` | bool | |
+| `task_scan` / `task_backup` / `task_cleanup` / `task_cbl_sync` | string | `daily`, `weekly`, `disabled` or a cron expression |
+| `total_backups` / `total_logs` | int | 1–30 |
+| `on_deck_progress_days` / `on_deck_update_days` | int | |
+| `cache_size` | int | MB |
+| `encode_media_as` | enum | `png`, `webp`, `avif` |
+| `cover_image_size` | enum | `default`, `medium`, `large`, `xlarge` |
+| `pdf_render_resolution` | enum | `default`, `high`, `ultra` |
+| `base_url` / `bookmarks_directory` / `port` / `ip_addresses` | | passed through (Kavita ignores port/IPs in Docker) |
+| `smtp` (or `smtp_config`) | map | `sender_address`, `sender_display_name`, `user_name`, `password`, `host`, `port`, `enable_ssl`, `size_limit`, `customized_templates` |
+| `oidc` (or `oidc_config`) | map | see below |
+
+`oidc` keys: `authority`, `client_id`, `secret`, `provision_accounts`,
+`require_verified_email`, `sync_user_settings`, `roles_prefix`, `roles_claim`,
+`custom_scopes` (list), `default_roles` (list), `default_libraries` (list of library
+names or ids; names resolve against the instance's libraries),
+`default_age_restriction` (enum: `unknown`, `everyone`, `teen`, `mature`, …, or
+the int), `default_include_unknowns`, `auto_login`,
+`disable_password_authentication`, `provider_name`. `enabled` is **derived** by
+Kavita from `authority` and is ignored (with a warning if it contradicts it).
+
+Read-only keys (`cache_directory`, `install_version`, `install_id`,
+`first_install_*`, `stats_api_hits`) are ignored with a warning.
+
+Secrets: `oidc.secret` comes back as `"*" * len(secret)` and Kavita keeps the stored
+secret when it gets that mask back. configarr sends the configured secret, or the
+mask when none is configured, and compares **lengths only**. `smtp.password` comes
+back in clear text and is compared by fingerprint. Neither enters a plan. Changing
+the OIDC `authority`, `client_id`, `secret` or `custom_scopes` logs a warning that
+**Kavita must be restarted** (its OIDC handler is built at startup), and a new
+authority unlinks every user's OIDC login.
+
+### Libraries — `libraries`
+
+A list keyed by `name` (create/update, prunable under `--prune`; a delete drops the
+library's series from Kavita's DB, not the files). Create is `POST /api/library/create`,
+update is `POST /api/library/update` (both take the full `UpdateLibraryDto`) and
+delete is `DELETE /api/library/delete?libraryId=`.
+
+| key | type | meaning |
+|---|---|---|
+| `name` | string | identity |
+| `type` | enum | **required for a new library**: `manga`, `comic` (flexible), `comic_vine`, `book`, `image`, `light_novel` |
+| `folders` | list | **required for a new library**; compared as a set |
+| `file_group_types` | list | `archive`, `epub`, `pdf`, `images`; default by type (manga: archive+images, comic: archive, book: epub+pdf, light novel: epub, image: images) |
+| `exclude_patterns` | list | globs; compared as a set |
+| `folder_watching` / `include_in_dashboard` / `include_in_search` | bool | default `true` |
+| `manage_collections` / `manage_reading_lists` | bool | default `false` |
+| `allow_scrobbling` / `allow_metadata_matching` / `enable_metadata` | bool | default `true` (`allow_scrobbling` defaults `false` for `comic`) |
+| `remove_prefix_for_sort_name` / `inherit_web_links_from_first_chapter` | bool | default `false` |
+| `default_language` | string | |
+| `metadata_provider` | enum | `hardcover`, `mangabaka`, `comic_book_roundup`; must suit the type (an invalid one raises). It defaults to the first valid one, and is reset to that when a type change invalidates the current one |
+
+A create is followed by an update with the same body, because Kavita's create
+ignores some fields.
 
 ---
 

@@ -3,6 +3,7 @@ from configarr.models import (
     BazarrConfig,
     CleanuparrConfig,
     ConfigarrConfig,
+    KavitaConfig,
     LingarrConfig,
     ProwlarrConfig,
     SabnzbdConfig,
@@ -220,3 +221,16 @@ def test_cleanuparr_providers_are_cleanuparr_only_and_ordered():
         "cleanuparr.malware_blocker",
     ]
     assert _instances_for_kind(planned, "cleanuparr.queue_cleaner") == ["main"]
+
+
+def test_kavita_providers_are_kavita_only_and_libraries_first():
+    config = ConfigarrConfig(
+        radarr=[_radarr("hd")],
+        kavita=[KavitaConfig(name="main", base_url="http://kv.test", api_key="k")],
+    )
+
+    planned = list(providers_for(config))
+    kinds = [p.provider.kind for p in planned if p.service == "kavita"]
+
+    assert kinds == ["kavita.library", "kavita.settings"]
+    assert _instances_for_kind(planned, "kavita.settings") == ["main"]

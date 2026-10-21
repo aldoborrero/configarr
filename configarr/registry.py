@@ -37,6 +37,8 @@ from configarr.providers.cleanuparr.sections import (
     CleanuparrArrSettingsProvider,
     CleanuparrSectionProvider,
 )
+from configarr.providers.kavita.libraries import KavitaLibraryProvider
+from configarr.providers.kavita.settings import KavitaSettingsProvider
 from configarr.providers.lingarr.onboarding import LingarrOnboardingProvider
 from configarr.providers.lingarr.settings import LingarrSettingsProvider
 from configarr.providers.prowlarr.applications import ApplicationProvider
@@ -523,6 +525,24 @@ REGISTRY: list[Registration] = [
             inst.malware_blocker,
             "cleanuparr.malware_blocker",
             "malware_blocker",
+        ),
+    ),
+    # Kavita: libraries first, so settings can name a library created in the same
+    # run (oidc.default_libraries resolves names to ids).
+    Registration(
+        kind="kavita.library",
+        service="kavita",
+        label="libraries",
+        factory=lambda inst: KavitaLibraryProvider(
+            inst.base_url, inst.api_key, inst.libraries, "kavita.library"
+        ),
+    ),
+    Registration(
+        kind="kavita.settings",
+        service="kavita",
+        label="server settings",
+        factory=lambda inst: KavitaSettingsProvider(
+            inst.base_url, inst.api_key, inst.settings, "kavita.settings"
         ),
     ),
 ]

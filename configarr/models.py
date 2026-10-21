@@ -224,6 +224,23 @@ class CleanuparrConfig(BaseModel):
         return v.rstrip("/")
 
 
+class KavitaConfig(BaseModel):
+    """Configuration for a Kavita instance."""
+
+    name: str
+    base_url: str
+    # A Kavita auth key, exchanged for a JWT via /api/plugin/authenticate.
+    api_key: str
+    settings: dict[str, Any] | None = None
+    libraries: list[dict[str, Any]] = []
+
+    @field_validator("base_url")
+    @classmethod
+    def strip_trailing_slash(cls, v: str) -> str:
+        """Remove trailing slash from base_url."""
+        return v.rstrip("/")
+
+
 class ConfigarrConfig(BaseModel):
     """Root configuration containing all service instances."""
 
@@ -234,3 +251,4 @@ class ConfigarrConfig(BaseModel):
     sabnzbd: list[SabnzbdConfig] = []
     lingarr: list[LingarrConfig] = []
     cleanuparr: list[CleanuparrConfig] = []
+    kavita: list[KavitaConfig] = []
