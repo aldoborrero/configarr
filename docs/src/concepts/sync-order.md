@@ -53,6 +53,7 @@ The only ordering that is load-bearing:
 | **SABnzbd** | Servers → Categories → Misc Settings |
 | **Bazarr** | General Settings → Sonarr Connection → Radarr Connection → Providers → Language Profiles |
 | **Cleanuparr** | General → Arr Settings → Arr Instances → Download Clients → Queue Cleaner → Download Cleaner → Malware Blocker |
+| **Bookshelf** | Custom Formats → Quality Profiles → Metadata Profiles → Root Folders → Naming → Delay Profiles → Download Clients |
 
 ## Practical implications
 

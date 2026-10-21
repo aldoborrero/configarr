@@ -10,6 +10,7 @@ sonarr/prowlarr/sabnzbd/bazarr providers."""
 from configarr.models import (
     ArrServiceConfig,
     BazarrConfig,
+    BookshelfConfig,
     CleanuparrConfig,
     ConfigarrConfig,
     LingarrConfig,
@@ -69,6 +70,13 @@ def _full_config() -> ConfigarrConfig:
             CleanuparrConfig(
                 name="c",
                 base_url="http://c.test",
+                api_key="k",
+            )
+        ],
+        bookshelf=[
+            BookshelfConfig(
+                name="books",
+                base_url="http://books.test",
                 api_key="k",
             )
         ],

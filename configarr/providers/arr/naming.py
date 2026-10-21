@@ -67,6 +67,15 @@ _SERVICE_FIELDS: dict[str, dict[str, tuple[str, dict[str, Any] | None]]] = {
         "season_folder_format": ("seasonFolderFormat", None),
         "specials_folder_format": ("specialsFolderFormat", None),
     },
+    # Bookshelf (Readarr, /api/v1): book/author formats; colon replacement is an
+    # int like Sonarr's (NzbDrone.Core.Organizer.ColonReplacementFormat).
+    "bookshelf": {
+        "rename_books": ("renameBooks", None),
+        "replace_illegal_characters": ("replaceIllegalCharacters", None),
+        "colon_replacement": ("colonReplacementFormat", _COLON_SONARR),
+        "standard_book_format": ("standardBookFormat", None),
+        "author_folder_format": ("authorFolderFormat", None),
+    },
 }
 
 

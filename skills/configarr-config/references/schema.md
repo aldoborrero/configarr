@@ -35,14 +35,15 @@ Custom Formats, Quality Profiles, Quality Definitions, Naming, Root Folders, Del
 Profiles, Release Profiles (Sonarr-only), Download Clients, Notifications (arr);
 Indexers, Applications, Download Clients (prowlarr); Servers, Categories, Misc
 Settings (sabnzbd); General/Sonarr/Radarr Settings, Providers, Language Profiles
-(bazarr). `REGISTRY` order is fixed; the one real invariant is **custom formats
+(bazarr); Custom Formats, Quality Profiles, Metadata Profiles, Root Folders,
+Naming, Delay Profiles, Download Clients (bookshelf). `REGISTRY` order is fixed; the one real invariant is **custom formats
 before quality profiles** within an instance.
 
 ## Top-level conventions
 
 - Every service nests under `<service>.instances.<name>`, where `<service>` is one
   of `radarr`, `sonarr`, `prowlarr`, `bazarr`, `sabnzbd`, `lingarr`,
-  `cleanuparr`, and `<name>` is your
+  `cleanuparr`, `bookshelf`, and `<name>` is your
   chosen instance label.
 - **`base_url` and `api_key` are REQUIRED on every instance.** `config.py` reads
   them with subscript access (`config["base_url"]`), so omitting either raises.
@@ -785,6 +786,157 @@ A map keyed by arr type: `sonarr`, `radarr`, `lidarr`, `readarr`, `whisparr`,
 | `instances` | map | instances keyed by name (CRUD, prunable): `url`, `api_key` (secret), `version` (number, e.g. `4` for Sonarr v4), `enabled` (default `true`), `external_url`. A new instance needs `url`, `api_key` and `version` |
 
 Cleanuparr stores `url` with a trailing slash; URLs compare without one.
+
+---
+
+## Bookshelf
+
+[Bookshelf](https://github.com/pennydreadful/bookshelf) is a maintained revival
+of Readarr. It serves the Readarr API on **`/api/v1`** (Radarr/Sonarr are on
+`/api/v3`); configarr drives it with the same arr providers plus a Readarr-only
+metadata-profile provider. Path prefix `bookshelf.instances.<name>`.
+
+Top-level sections (from `parse_bookshelf_instance` + `BookshelfConfig`):
+
+| YAML path | wraps | notes |
+|---|---|---|
+| `base_url` | — | required |
+| `api_key` | — | required |
+| `custom_formats.definitions` | map | as for Radarr/Sonarr |
+| `profiles.quality_profiles.definitions` | map | as for Radarr/Sonarr, with Readarr's qualities |
+| `profiles.metadata_profiles.definitions` | map | **Bookshelf-only**, keyed by profile name |
+| `profiles.delay_profiles` | list | as for Radarr/Sonarr |
+| `settings.root_folders` | list | richer than Radarr/Sonarr (below) |
+| `settings.media_management` | map | naming config (book keys below) |
+| `download_clients.definitions` | map | as for Radarr/Sonarr |
+
+Not available: `trash` (TRaSH-Guides publishes nothing for Readarr; a `trash:`
+block is a **parse error**), `profiles.release_profiles` (Readarr's have no name to
+match on), `profiles.quality_definitions`, `notifications`, `import_lists`
+(their Readarr field sets differ from what the shared providers compare).
+
+Sync order within an instance: custom formats, quality profiles, metadata
+profiles, root folders, naming, delay profiles, download clients. Both profile
+kinds come before root folders because a root folder references them by name.
+
+### Custom formats, quality profiles, delay profiles, download clients
+
+Same keys and behaviour as the Radarr/Sonarr sections above. Differences:
+
+- **Qualities** are book formats: `Unknown Text`, `PDF`, `MOBI`, `EPUB`, `AZW3`,
+  `Unknown Audio`, `MP3`, `M4B`, `FLAC`. Set `upgrade_until_quality` to one of
+  them (or a group you define); the `WEBDL-1080p` default does not exist here, so
+  it falls back to the server's default cutoff.
+- `language` on a quality profile is Radarr-only and ignored.
+- Download-client category fields are named `musicCategory` /
+  `musicImportedCategory` in Readarr's schema (a Lidarr inheritance), e.g.
+  `settings: {musicCategory: books}`.
+
+### Metadata profiles — `profiles.metadata_profiles.definitions`
+
+A map keyed by profile name (create, update, prunable under `--prune`). A new
+profile starts from `/metadataprofile/schema`; an existing one keeps its server
+values for keys you do not set.
+
+| key | type | server default | meaning |
+|---|---|---|---|
+| `min_popularity` | number | `0` | minimum popularity |
+| `min_pages` | int | `0` | minimum page count |
+| `allowed_languages` | list or comma string | `eng` | ISO 639 codes; compared as a set |
+| `skip_missing_date` | bool | `false` | skip books without a release date |
+| `skip_missing_isbn` | bool | `false` | skip books without an ISBN |
+| `skip_parts_and_sets` | bool | `false` | skip "Part 1 of …" and box sets |
+| `skip_series_secondary` | bool | `false` | skip secondary series entries |
+| `ignored` | list | `[]` | terms whose matching books are ignored |
+
+The built-in `None` profile is reserved: it is never planned or pruned, and naming
+a profile `None` is an error. Bookshelf refuses to delete a profile still used by
+an author, an import list or a root folder's default; a prune that hits one fails
+with that reason and the profile name.
+
+### Root folders — `settings.root_folders`
+
+A list matched by `path` (trailing slash ignored). Unlike Radarr/Sonarr, an
+existing folder is **updated in place** when its defaults change (Readarr has
+`PUT /rootfolder/{id}`). Not prunable.
+
+| key | type | default | meaning |
+|---|---|---|---|
+| `path` | string | — | **required**; the folder's identity, cannot change |
+| `name` | string | last path component | display name |
+| `default_quality_profile` | string or id | — | **required to create**; quality profile name |
+| `default_metadata_profile` | string or id | — | **required to create**; metadata profile name |
+| `default_monitor` | string | `all` | books monitored for a new author: `all`, `future`, `missing`, `existing`, `latest`, `first`, `none` |
+| `default_new_item_monitor` | string | `all` | books added later: `all`, `none`, `new` |
+| `default_tags` | list | `[]` | tag labels or ids |
+
+Profile names are resolved to ids on the instance. A name that does not exist yet
+(a profile the same config creates) is shown by name in a plan and must resolve
+on apply. Calibre-library settings are not managed; an existing folder keeps them.
+
+### Naming — `settings.media_management`
+
+| key | type | meaning |
+|---|---|---|
+| `rename_books` | bool | rename on import |
+| `replace_illegal_characters` | bool | replace illegal filename chars |
+| `colon_replacement` | string | `delete`, `dash`, `spaceDash`, `spaceDashSpace`, `smart` |
+| `standard_book_format` | string | book file format |
+| `author_folder_format` | string | author folder format |
+
+```yaml
+bookshelf:
+  instances:
+    main:
+      base_url: https://bookshelf.example.com
+      api_key: ${BOOKSHELF_API_KEY}
+      profiles:
+        quality_profiles:
+          definitions:
+            eBook:
+              upgrade_until_quality: EPUB
+              qualities: [EPUB, AZW3, MOBI]
+        metadata_profiles:
+          definitions:
+            Standard:
+              min_popularity: 0
+              allowed_languages: [spa, eng]
+              skip_missing_isbn: false
+      settings:
+        root_folders:
+          - name: Libros
+            path: /hdd/books
+            default_quality_profile: eBook
+            default_metadata_profile: Standard
+        media_management:
+          rename_books: true
+          standard_book_format: "{Book Title}"
+          author_folder_format: "{Author Name}"
+      download_clients:
+        definitions:
+          SABnzbd:
+            implementation: Sabnzbd
+            settings:
+              host: sabnzbd
+              apiKey: ${SABNZBD_API_KEY}
+              musicCategory: books
+```
+
+Prowlarr syncs indexers to Bookshelf through its **`Readarr`** application:
+
+```yaml
+prowlarr:
+  instances:
+    main:
+      applications:
+        definitions:
+          Bookshelf:
+            implementation: Readarr
+            settings:
+              prowlarrUrl: http://prowlarr:9696
+              baseUrl: http://bookshelf:8787
+              apiKey: ${BOOKSHELF_API_KEY}
+```
 
 ---
 

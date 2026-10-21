@@ -6,6 +6,19 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Bookshelf (the Readarr revival) as a new `bookshelf:` service: custom formats,
+  quality profiles, metadata profiles (Readarr-only, prunable), root folders with
+  their default profiles referenced by name and updated in place, naming, delay
+  profiles and download clients, all on Readarr's `/api/v1`. A `trash:` block on a
+  Bookshelf instance is rejected (TRaSH publishes no Readarr guides).
+
+### Changed
+
+- The shared Radarr/Sonarr providers take an API path prefix (default `/api/v3`),
+  so Readarr-lineage services reuse them on `/api/v1`.
+
 ## [0.6.0] - 2026-10-16
 
 ### Fixed

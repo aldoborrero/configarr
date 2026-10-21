@@ -13,6 +13,7 @@ for the exhaustive, source-verified reference.
 | [`bazarr.yml`](bazarr.yml) | Bazarr: Sonarr/Radarr connections, providers, language profiles. |
 | [`sabnzbd.yml`](sabnzbd.yml) | SABnzbd: servers, categories, misc settings. |
 | [`cleanuparr.yml`](cleanuparr.yml) | Cleanuparr: settings sections, download clients, *arr instances. |
+| [`bookshelf.yml`](bookshelf.yml) | Bookshelf (Readarr revival): quality and metadata profiles, root folders, naming, download clients. |
 | [`trash.yml`](trash.yml) | Radarr: import custom formats + quality definitions from a TRaSH-Guides checkout by `trash_id`. |
 | [`full.yml`](full.yml) | Every service in one file, including a multi-instance setup. |
 | [`.env.example`](.env.example) | Secrets referenced by the examples via `${VAR}`. |
