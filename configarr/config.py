@@ -14,6 +14,7 @@ from configarr.models import (
     BazarrConfig,
     CleanuparrConfig,
     ConfigarrConfig,
+    KapowarrConfig,
     LingarrConfig,
     ProwlarrConfig,
     RadarrConfig,
@@ -226,6 +227,19 @@ def parse_cleanuparr_instance(name: str, config: dict[str, Any]) -> CleanuparrCo
     )
 
 
+def parse_kapowarr_instance(name: str, config: dict[str, Any]) -> KapowarrConfig:
+    """Parse a Kapowarr instance configuration."""
+    return KapowarrConfig(
+        name=name,
+        base_url=config["base_url"],
+        api_key=config["api_key"],
+        settings=config.get("settings"),
+        root_folders=config.get("root_folders") or [],
+        download_clients=config.get("download_clients") or {},
+        credentials=config.get("credentials") or {},
+    )
+
+
 # Per-service instance parser, keyed by service name. Must cover every name in
 # schema.SERVICE_NAMES — parse_config builds the config by mapping each service
 # through its parser, and a ConfigarrConfig field is required for each (a
@@ -238,6 +252,7 @@ _PARSERS: dict[str, Callable[[str, dict[str, Any]], Any]] = {
     "sabnzbd": parse_sabnzbd_instance,
     "lingarr": parse_lingarr_instance,
     "cleanuparr": parse_cleanuparr_instance,
+    "kapowarr": parse_kapowarr_instance,
 }
 
 

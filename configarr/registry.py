@@ -37,6 +37,12 @@ from configarr.providers.cleanuparr.sections import (
     CleanuparrArrSettingsProvider,
     CleanuparrSectionProvider,
 )
+from configarr.providers.kapowarr.collections import (
+    KapowarrCredentialProvider,
+    KapowarrDownloadClientProvider,
+    KapowarrRootFolderProvider,
+)
+from configarr.providers.kapowarr.settings import KapowarrSettingsProvider
 from configarr.providers.lingarr.onboarding import LingarrOnboardingProvider
 from configarr.providers.lingarr.settings import LingarrSettingsProvider
 from configarr.providers.prowlarr.applications import ApplicationProvider
@@ -523,6 +529,44 @@ REGISTRY: list[Registration] = [
             inst.malware_blocker,
             "cleanuparr.malware_blocker",
             "malware_blocker",
+        ),
+    ),
+    # Kapowarr: settings first (the download folder must not overlap a root
+    # folder, and root folders are checked against it), then root folders, the
+    # external download clients and the download-service credentials.
+    Registration(
+        kind="kapowarr.settings",
+        service="kapowarr",
+        label="settings",
+        factory=lambda inst: KapowarrSettingsProvider(
+            inst.base_url, inst.api_key, inst.settings, "kapowarr.settings"
+        ),
+    ),
+    Registration(
+        kind="kapowarr.root_folder",
+        service="kapowarr",
+        label="root folders",
+        factory=lambda inst: KapowarrRootFolderProvider(
+            inst.base_url, inst.api_key, inst.root_folders, "kapowarr.root_folder"
+        ),
+    ),
+    Registration(
+        kind="kapowarr.download_client",
+        service="kapowarr",
+        label="download clients",
+        factory=lambda inst: KapowarrDownloadClientProvider(
+            inst.base_url,
+            inst.api_key,
+            inst.download_clients,
+            "kapowarr.download_client",
+        ),
+    ),
+    Registration(
+        kind="kapowarr.credential",
+        service="kapowarr",
+        label="credentials",
+        factory=lambda inst: KapowarrCredentialProvider(
+            inst.base_url, inst.api_key, inst.credentials, "kapowarr.credential"
         ),
     ),
 ]

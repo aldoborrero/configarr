@@ -42,7 +42,7 @@ before quality profiles** within an instance.
 
 - Every service nests under `<service>.instances.<name>`, where `<service>` is one
   of `radarr`, `sonarr`, `prowlarr`, `bazarr`, `sabnzbd`, `lingarr`,
-  `cleanuparr`, and `<name>` is your
+  `cleanuparr`, `kapowarr`, and `<name>` is your
   chosen instance label.
 - **`base_url` and `api_key` are REQUIRED on every instance.** `config.py` reads
   them with subscript access (`config["base_url"]`), so omitting either raises.
@@ -785,6 +785,91 @@ A map keyed by arr type: `sonarr`, `radarr`, `lidarr`, `readarr`, `whisparr`,
 | `instances` | map | instances keyed by name (CRUD, prunable): `url`, `api_key` (secret), `version` (number, e.g. `4` for Sonarr v4), `enabled` (default `true`), `external_url`. A new instance needs `url`, `api_key` and `version` |
 
 Cleanuparr stores `url` with a trailing slash; URLs compare without one.
+
+---
+
+## Kapowarr
+
+Path prefix `kapowarr.instances.<name>`. Top-level keys (from
+`parse_kapowarr_instance` + `KapowarrConfig`): `base_url` (include any URL base),
+`api_key` (Settings → General; sent as the `api_key` **query parameter**, the only
+form Kapowarr accepts), `settings`, `root_folders`, `download_clients`,
+`credentials`. Source-verified against Kapowarr V1.3.2 (`frontend/api.py`).
+
+Secrets: values Kapowarr echoes in **clear text** (`comicvine_api_key`, client
+`password`/`api_token`, Pixeldrain `api_key`) are compared by fingerprint, so a
+change shows in a plan without the value. Values echoed **masked** (`********`:
+settings `auth_username`, `auth_password`, `proxy_password`; Mega `password`) are
+never diffed.
+
+### Settings — `settings`
+
+A flat map of Kapowarr's own setting names (the keys of `GET /api/settings`, e.g.
+`comicvine_api_key`, `flaresolverr_base_url`, `download_folder`,
+`rename_downloaded_files`, `volume_folder_naming`, `file_naming`, `convert`,
+`format_preference` (list), `seeding_handling` (`copy`/`complete`),
+`concurrent_direct_downloads`, `proxy_type`, …). `PUT /api/settings` is
+**partial**: only keys whose value differs are sent (plus any configured masked
+key). A key the server does not return is skipped with a warning; `api_key` raises
+(Kapowarr only regenerates it). Comparison follows Kapowarr's storage: folders with
+a trailing `/`, `flaresolverr_base_url` without one (and `http://` added),
+`url_base` `/`-prefixed. Kapowarr validates on save (folders must exist, ComicVine
+key and FlareSolverr are tested); `host`/`port`/`url_base` or proxy changes restart
+its server.
+
+### Root folders — `root_folders`
+
+A list of `{path: ...}` (`POST`/`DELETE /api/rootfolder`), matched by path ignoring
+a trailing slash; create/delete only, prunable. The folder must exist and may not
+overlap the download folder or another root folder.
+
+### Download clients — `download_clients`
+
+Kapowarr's external clients (`/api/externalclients`), a map keyed by **title**;
+prunable. `PUT` is full-replace, so an update carries current values for every key
+not set.
+
+| key | type | meaning |
+|---|---|---|
+| `client_type` | string | **required for a new client**: `Transmission` or `qBittorrent` (any case). Cannot change afterwards (raises) |
+| `base_url` | string | **required for a new client**; compared without trailing slash, `http://` added if missing |
+| `enabled` | bool | default `true` for a new client |
+| `username` / `password` | string | client login (`password` fingerprinted) |
+| `api_token` | string | fingerprinted; unused by the V1.3.2 clients |
+
+Kapowarr tests the connection on every create/update and refuses a client with
+queued downloads to be updated or deleted.
+
+### Credentials — `credentials`
+
+Download-service logins (`/api/credentials`), a map keyed by **source**; prunable.
+`mega`: `email` + `password` (both required); `pixeldrain`: `api_key` (required).
+Any other source raises. No update endpoint: a change POSTs the new credential,
+then DELETEs the old one. One credential per source is managed; two on the server
+for the same source is an identity clash error.
+
+```yaml
+kapowarr:
+  instances:
+    main:
+      base_url: http://kapowarr:5656
+      api_key: ${KAPOWARR_API_KEY}
+      settings:
+        comicvine_api_key: ${COMICVINE_API_KEY}
+        flaresolverr_base_url: http://flaresolverr:8191
+      root_folders:
+        - path: /comics
+      download_clients:
+        Transmission:
+          client_type: Transmission
+          base_url: http://transmission:9091
+          username: ${TRANSMISSION_USERNAME}
+          password: ${TRANSMISSION_PASSWORD}
+      credentials:
+        mega:
+          email: ${MEGA_EMAIL}
+          password: ${MEGA_PASSWORD}
+```
 
 ---
 

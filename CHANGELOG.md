@@ -6,6 +6,14 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Kapowarr support under `kapowarr.instances.<name>`: `settings` (partial PUT;
+  only changed keys are sent), `root_folders`, `download_clients` (external
+  Transmission/qBittorrent clients, keyed by title) and `credentials` (Mega,
+  Pixeldrain; keyed by source). The collections are prunable. Clear-text
+  secrets are compared by fingerprint, and masked ones are not diffed.
+
 ## [0.6.0] - 2026-10-16
 
 ### Fixed

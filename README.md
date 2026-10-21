@@ -12,6 +12,7 @@ Configuration manager for *arr applications, SABnzbd, Lingarr, and Cleanuparr. D
 - **SABnzbd**: Servers, categories, misc settings
 - **Lingarr**: Translation backend + Sonarr/Radarr integration settings
 - **Cleanuparr**: General, queue/download cleaner and malware blocker settings, download clients, *arr instances
+- **Kapowarr**: Settings, root folders, torrent clients, download-service credentials
 - **Multi-instance**: Configure multiple instances of each service
 - **Environment variables**: `${VAR}` substitution in config values
 - **Plan & apply**: preview the diff with `--plan`; sync applies only what changed, with opt-in `--prune` to remove unmanaged resources
@@ -54,7 +55,7 @@ docker run --rm \
 
 ```
 --config PATH    Path to configarr.yml (default: ./configarr.yml)
---service NAME   Only process a specific service (radarr, sonarr, prowlarr, bazarr, sabnzbd, lingarr, cleanuparr)
+--service NAME   Only process a specific service (radarr, sonarr, prowlarr, bazarr, sabnzbd, lingarr, cleanuparr, kapowarr)
 --instance NAME  Only process a specific instance
 --plan           Preview the diff without writing (alias: --dry-run)
 --prune          Also delete unmanaged resources (sync is additive by default)
