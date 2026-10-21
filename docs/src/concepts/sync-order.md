@@ -54,6 +54,7 @@ The only ordering that is load-bearing:
 | **Bazarr** | General Settings → Sonarr Connection → Radarr Connection → Providers → Language Profiles |
 | **Cleanuparr** | General → Arr Settings → Arr Instances → Download Clients → Queue Cleaner → Download Cleaner → Malware Blocker |
 | **Kavita** | Libraries → Server Settings |
+| **Kapowarr** | Settings → Root Folders → Download Clients → Credentials |
 
 ## Practical implications
 

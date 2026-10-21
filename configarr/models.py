@@ -241,6 +241,26 @@ class KavitaConfig(BaseModel):
         return v.rstrip("/")
 
 
+class KapowarrConfig(BaseModel):
+    """Configuration for a Kapowarr instance."""
+
+    name: str
+    base_url: str
+    api_key: str
+    settings: dict[str, Any] | None = None
+    root_folders: list[dict[str, Any]] = []
+    # title -> client settings
+    download_clients: dict[str, dict[str, Any]] = {}
+    # source (mega, pixeldrain) -> credential fields
+    credentials: dict[str, dict[str, Any]] = {}
+
+    @field_validator("base_url")
+    @classmethod
+    def strip_trailing_slash(cls, v: str) -> str:
+        """Remove trailing slash from base_url."""
+        return v.rstrip("/")
+
+
 class ConfigarrConfig(BaseModel):
     """Root configuration containing all service instances."""
 
@@ -252,3 +272,4 @@ class ConfigarrConfig(BaseModel):
     lingarr: list[LingarrConfig] = []
     cleanuparr: list[CleanuparrConfig] = []
     kavita: list[KavitaConfig] = []
+    kapowarr: list[KapowarrConfig] = []

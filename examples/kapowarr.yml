@@ -1,0 +1,23 @@
+# Kapowarr: settings, root folders, an external torrent client and a
+# direct-download credential. See docs/src/services/kapowarr.md.
+kapowarr:
+  instances:
+    main:
+      base_url: http://kapowarr:5656
+      api_key: ${KAPOWARR_API_KEY}
+      settings:
+        comicvine_api_key: ${COMICVINE_API_KEY}
+        flaresolverr_base_url: http://flaresolverr:8191
+        download_folder: /downloads
+        rename_downloaded_files: true
+      root_folders:
+        - path: /comics
+      download_clients:
+        Transmission:
+          client_type: Transmission
+          base_url: http://transmission:9091
+          username: ${TRANSMISSION_USERNAME}
+          password: ${TRANSMISSION_PASSWORD}
+      credentials:
+        pixeldrain:
+          api_key: ${PIXELDRAIN_API_KEY}

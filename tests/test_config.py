@@ -129,3 +129,41 @@ kavita:
     assert inst.libraries == [
         {"name": "Libros", "type": "book", "folders": ["/data/books"]}
     ]
+
+
+def test_parse_config_carries_kapowarr_sections(tmp_path):
+    _write(
+        tmp_path,
+        """
+kapowarr:
+  instances:
+    main:
+      base_url: http://kapowarr.test:5656/
+      api_key: k
+      settings:
+        flaresolverr_base_url: http://flaresolverr:8191
+      root_folders:
+        - path: /comics
+      download_clients:
+        Transmission:
+          client_type: Transmission
+          base_url: http://transmission:9091
+      credentials:
+        pixeldrain:
+          api_key: pd
+""",
+    )
+
+    config = parse_config(tmp_path / "configarr.yml")
+
+    inst = config.kapowarr[0]
+    assert inst.base_url == "http://kapowarr.test:5656"
+    assert inst.settings == {"flaresolverr_base_url": "http://flaresolverr:8191"}
+    assert inst.root_folders == [{"path": "/comics"}]
+    assert inst.download_clients == {
+        "Transmission": {
+            "client_type": "Transmission",
+            "base_url": "http://transmission:9091",
+        }
+    }
+    assert inst.credentials == {"pixeldrain": {"api_key": "pd"}}

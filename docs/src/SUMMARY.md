@@ -23,6 +23,7 @@
 - [Lingarr](services/lingarr.md)
 - [Cleanuparr](services/cleanuparr.md)
 - [Kavita](services/kavita.md)
+- [Kapowarr](services/kapowarr.md)
 
 # Reference
 
