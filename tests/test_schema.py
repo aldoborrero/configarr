@@ -20,6 +20,7 @@ def test_schema_structure_and_serializable():
         "cleanuparr",
         "kavita",
         "kapowarr",
+        "tranga",
     }
     assert s["additionalProperties"] is False
     inst = s["properties"]["radarr"]["properties"]["instances"]["additionalProperties"]
@@ -96,3 +97,11 @@ def test_parse_config_strict_raises_on_unknown_key(tmp_path):
     )
     with pytest.raises(ValueError, match="unrecognized config keys"):
         parse_config(cfg, strict=True)
+
+
+def test_tranga_api_key_is_optional():
+    s = build_json_schema()
+    inst = s["properties"]["tranga"]["properties"]["instances"]["additionalProperties"]
+    assert inst["required"] == ["base_url"]
+    assert inst["properties"]["api_key"] == {"type": "string"}
+    assert inst["properties"]["library_connectors"] == {"type": "array"}

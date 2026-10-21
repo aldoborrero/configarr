@@ -55,6 +55,12 @@ from configarr.providers.prowlarr.indexers import IndexerProvider
 from configarr.providers.sabnzbd.categories import SabnzbdCategoryProvider
 from configarr.providers.sabnzbd.misc import SabnzbdMiscProvider
 from configarr.providers.sabnzbd.servers import SabnzbdServerProvider
+from configarr.providers.tranga.collections import (
+    TrangaFileLibraryProvider,
+    TrangaLibraryConnectorProvider,
+    TrangaNotificationConnectorProvider,
+)
+from configarr.providers.tranga.settings import TrangaSettingsProvider
 from configarr.scope import in_scope
 
 
@@ -587,6 +593,46 @@ REGISTRY: list[Registration] = [
         label="credentials",
         factory=lambda inst: KapowarrCredentialProvider(
             inst.base_url, inst.api_key, inst.credentials, "kapowarr.credential"
+        ),
+    ),
+    # Tranga: settings, then the file libraries downloads land in, then the
+    # connectors that act on finished downloads (library scans, notifications).
+    Registration(
+        kind="tranga.settings",
+        service="tranga",
+        label="settings",
+        factory=lambda inst: TrangaSettingsProvider(
+            inst.base_url, inst.api_key, inst.settings, "tranga.settings"
+        ),
+    ),
+    Registration(
+        kind="tranga.file_library",
+        service="tranga",
+        label="file libraries",
+        factory=lambda inst: TrangaFileLibraryProvider(
+            inst.base_url, inst.api_key, inst.file_libraries, "tranga.file_library"
+        ),
+    ),
+    Registration(
+        kind="tranga.library_connector",
+        service="tranga",
+        label="library connectors",
+        factory=lambda inst: TrangaLibraryConnectorProvider(
+            inst.base_url,
+            inst.api_key,
+            inst.library_connectors,
+            "tranga.library_connector",
+        ),
+    ),
+    Registration(
+        kind="tranga.notification_connector",
+        service="tranga",
+        label="notification connectors",
+        factory=lambda inst: TrangaNotificationConnectorProvider(
+            inst.base_url,
+            inst.api_key,
+            inst.notification_connectors,
+            "tranga.notification_connector",
         ),
     ),
 ]

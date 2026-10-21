@@ -261,6 +261,29 @@ class KapowarrConfig(BaseModel):
         return v.rstrip("/")
 
 
+class TrangaConfig(BaseModel):
+    """Configuration for a Tranga (v2) instance."""
+
+    name: str
+    base_url: str
+    # Tranga's API has no authentication; sent as X-Api-Key only when set (for an
+    # auth proxy in front of it).
+    api_key: str = ""
+    settings: dict[str, Any] | None = None
+    # library name -> {base_path}
+    file_libraries: dict[str, dict[str, Any]] = {}
+    # [{type: kavita|komga, base_url, api_key}]
+    library_connectors: list[dict[str, Any]] = []
+    # connector name -> {url, http_method, body, headers} | {type: gotify, …}
+    notification_connectors: dict[str, dict[str, Any]] = {}
+
+    @field_validator("base_url")
+    @classmethod
+    def strip_trailing_slash(cls, v: str) -> str:
+        """Remove trailing slash from base_url."""
+        return v.rstrip("/")
+
+
 class ConfigarrConfig(BaseModel):
     """Root configuration containing all service instances."""
 
@@ -273,3 +296,4 @@ class ConfigarrConfig(BaseModel):
     cleanuparr: list[CleanuparrConfig] = []
     kavita: list[KavitaConfig] = []
     kapowarr: list[KapowarrConfig] = []
+    tranga: list[TrangaConfig] = []

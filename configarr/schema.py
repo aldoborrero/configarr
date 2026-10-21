@@ -23,6 +23,8 @@ from configarr.models import TrashConfig
 _STR = "string"
 _OBJ = "object"  # a passthrough object (definitions maps, settings blocks, …)
 _ARR = "array"
+# A string key that may be omitted (e.g. Tranga's api_key: its API has no auth).
+_OPT_STR = "optional-string"
 _TRASH = "trash"
 _INCLUDE = "include"
 
@@ -112,6 +114,16 @@ _KAPOWARR_INSTANCE: dict[str, Any] = {
     "credentials": _OBJ,
 }
 
+_TRANGA_INSTANCE: dict[str, Any] = {
+    "base_url": _STR,
+    "api_key": _OPT_STR,
+    "include": _INCLUDE,
+    "settings": _OBJ,
+    "file_libraries": _OBJ,
+    "library_connectors": _ARR,
+    "notification_connectors": _OBJ,
+}
+
 SERVICES: dict[str, dict[str, Any]] = {
     "radarr": _ARR_INSTANCE,
     "sonarr": _ARR_INSTANCE,
@@ -122,6 +134,7 @@ SERVICES: dict[str, dict[str, Any]] = {
     "cleanuparr": _CLEANUPARR_INSTANCE,
     "kavita": _KAVITA_INSTANCE,
     "kapowarr": _KAPOWARR_INSTANCE,
+    "tranga": _TRANGA_INSTANCE,
 }
 # The canonical service list. Everything that enumerates services — the config
 # parser, the CLI --service choices and scope validation — derives from this so a
@@ -214,7 +227,7 @@ def _object_schema(spec: dict[str, Any]) -> dict[str, Any]:
         "properties": {key: _leaf_schema(sub) for key, sub in spec.items()},
         "additionalProperties": False,
     }
-    required = [k for k in _REQUIRED if k in spec]
+    required = [k for k in _REQUIRED if spec.get(k) == _STR]
     if required:
         node["required"] = required
     return node
@@ -223,7 +236,7 @@ def _object_schema(spec: dict[str, Any]) -> dict[str, Any]:
 def _leaf_schema(sub: Any) -> dict[str, Any]:
     if isinstance(sub, dict):
         return _object_schema(sub)
-    if sub == _STR:
+    if sub in (_STR, _OPT_STR):
         return {"type": "string"}
     if sub == _ARR:
         return {"type": "array"}

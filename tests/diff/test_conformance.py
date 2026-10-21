@@ -17,6 +17,7 @@ from configarr.models import (
     LingarrConfig,
     ProwlarrConfig,
     SabnzbdConfig,
+    TrangaConfig,
 )
 from configarr.providers.base import ResourceProvider
 from configarr.registry import REGISTRY, providers_for
@@ -88,6 +89,7 @@ def _full_config() -> ConfigarrConfig:
                 api_key="k",
             )
         ],
+        tranga=[TrangaConfig(name="t", base_url="http://t.test")],
     )
 
 

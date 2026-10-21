@@ -55,6 +55,7 @@ The only ordering that is load-bearing:
 | **Cleanuparr** | General → Arr Settings → Arr Instances → Download Clients → Queue Cleaner → Download Cleaner → Malware Blocker |
 | **Kavita** | Libraries → Server Settings |
 | **Kapowarr** | Settings → Root Folders → Download Clients → Credentials |
+| **Tranga** | Settings → File Libraries → Library Connectors → Notification Connectors |
 
 ## Practical implications
 

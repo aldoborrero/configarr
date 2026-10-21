@@ -24,6 +24,7 @@
 - [Cleanuparr](services/cleanuparr.md)
 - [Kavita](services/kavita.md)
 - [Kapowarr](services/kapowarr.md)
+- [Tranga](services/tranga.md)
 
 # Reference
 
