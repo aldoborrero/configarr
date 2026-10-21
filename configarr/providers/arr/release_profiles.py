@@ -47,8 +47,15 @@ class ReleaseProfileProvider(HttpProvider):
 
     full_replace = True
 
-    def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
-        super().__init__(base_url, api_key)
+    def __init__(
+        self,
+        base_url: str,
+        api_key: str,
+        config: Any,
+        kind: str,
+        api_prefix: str | None = None,
+    ):
+        super().__init__(base_url, api_key, api_prefix)
         self.kind = kind
         self.config = config or []
 
@@ -56,7 +63,9 @@ class ReleaseProfileProvider(HttpProvider):
         return resource.get("name")
 
     def _load_current(self) -> list[dict[str, Any]]:
-        data: list[dict[str, Any]] = self._get("/api/v3/releaseprofile").json()
+        data: list[dict[str, Any]] = self._get(
+            f"{self.api_prefix}/releaseprofile"
+        ).json()
         return data
 
     @staticmethod
@@ -111,10 +120,10 @@ class ReleaseProfileProvider(HttpProvider):
 
     def apply(self, action: Action) -> None:
         if action.op is Op.CREATE:
-            self._post("/api/v3/releaseprofile", json=action.payload)
+            self._post(f"{self.api_prefix}/releaseprofile", json=action.payload)
         elif action.op is Op.UPDATE:
             rp_id = action.payload["id"]
-            self._put(f"/api/v3/releaseprofile/{rp_id}", json=action.payload)
+            self._put(f"{self.api_prefix}/releaseprofile/{rp_id}", json=action.payload)
         else:
             raise NotImplementedError(f"apply: unsupported op {action.op!r}")
         self.invalidate_current()

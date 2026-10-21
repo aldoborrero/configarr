@@ -10,10 +10,11 @@ sonarr/prowlarr/sabnzbd/bazarr providers."""
 from configarr.models import (
     ArrServiceConfig,
     BazarrConfig,
+    BookshelfConfig,
     CleanuparrConfig,
     ConfigarrConfig,
-    KavitaConfig,
     KapowarrConfig,
+    KavitaConfig,
     LingarrConfig,
     ProwlarrConfig,
     SabnzbdConfig,
@@ -90,6 +91,13 @@ def _full_config() -> ConfigarrConfig:
             )
         ],
         tranga=[TrangaConfig(name="t", base_url="http://t.test")],
+        bookshelf=[
+            BookshelfConfig(
+                name="books",
+                base_url="http://books.test",
+                api_key="k",
+            )
+        ],
     )
 
 

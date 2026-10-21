@@ -12,10 +12,11 @@ import yaml
 from configarr.models import (
     ArrServiceConfig,
     BazarrConfig,
+    BookshelfConfig,
     CleanuparrConfig,
     ConfigarrConfig,
-    KavitaConfig,
     KapowarrConfig,
+    KavitaConfig,
     LingarrConfig,
     ProwlarrConfig,
     RadarrConfig,
@@ -266,6 +267,32 @@ def parse_tranga_instance(name: str, config: dict[str, Any]) -> TrangaConfig:
     )
 
 
+def parse_bookshelf_instance(name: str, config: dict[str, Any]) -> BookshelfConfig:
+    """Parse a Bookshelf instance configuration. Same nesting as Radarr/Sonarr, plus
+    ``profiles.metadata_profiles.definitions``; ``trash:`` is rejected outright."""
+    if config.get("trash") is not None:
+        raise ValueError(
+            f"bookshelf instance '{name}': the TRaSH-Guides import is not available "
+            "for Bookshelf (TRaSH publishes no Readarr guides); remove the 'trash:' "
+            "block and declare custom formats and quality profiles directly"
+        )
+    profiles = config.get("profiles") or {}
+    return BookshelfConfig(
+        name=name,
+        base_url=config["base_url"],
+        api_key=config["api_key"],
+        custom_formats=(config.get("custom_formats") or {}).get("definitions", {}),
+        quality_profiles=parse_quality_profiles(config),
+        metadata_profiles=(profiles.get("metadata_profiles") or {}).get(
+            "definitions", {}
+        ),
+        naming_config=(config.get("settings") or {}).get("media_management"),
+        delay_profiles=profiles.get("delay_profiles"),
+        root_folders=(config.get("settings") or {}).get("root_folders"),
+        download_clients=(config.get("download_clients") or {}).get("definitions", {}),
+    )
+
+
 # Per-service instance parser, keyed by service name. Must cover every name in
 # schema.SERVICE_NAMES — parse_config builds the config by mapping each service
 # through its parser, and a ConfigarrConfig field is required for each (a
@@ -281,6 +308,7 @@ _PARSERS: dict[str, Callable[[str, dict[str, Any]], Any]] = {
     "kavita": parse_kavita_instance,
     "kapowarr": parse_kapowarr_instance,
     "tranga": parse_tranga_instance,
+    "bookshelf": parse_bookshelf_instance,
 }
 
 

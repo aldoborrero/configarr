@@ -24,8 +24,15 @@ class NotificationProvider(FieldProvider):
 
     prunable = True
 
-    def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
-        super().__init__(base_url, api_key, config, kind)
+    def __init__(
+        self,
+        base_url: str,
+        api_key: str,
+        config: Any,
+        kind: str,
+        api_prefix: str | None = None,
+    ):
+        super().__init__(base_url, api_key, config, kind, api_prefix)
         self.is_sonarr = kind.startswith("sonarr")
         self._schema_cache: dict[str, dict[str, Any]] | None = None
 
@@ -33,12 +40,12 @@ class NotificationProvider(FieldProvider):
         if self._schema_cache is None:
             self._schema_cache = {
                 s["implementation"]: s
-                for s in self._get("/api/v3/notification/schema").json()
+                for s in self._get(f"{self.api_prefix}/notification/schema").json()
             }
         return self._schema_cache
 
     def _load_current(self) -> list[dict[str, Any]]:
-        data: list[dict[str, Any]] = self._get("/api/v3/notification").json()
+        data: list[dict[str, Any]] = self._get(f"{self.api_prefix}/notification").json()
         return data
 
     def _event_flags(self, definition: dict[str, Any]) -> dict[str, Any]:
@@ -104,4 +111,4 @@ class NotificationProvider(FieldProvider):
         return out
 
     def apply(self, action: Action) -> int | None:
-        return self._apply_force_save("/api/v3/notification", action)
+        return self._apply_force_save(f"{self.api_prefix}/notification", action)

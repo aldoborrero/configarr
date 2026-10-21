@@ -25,6 +25,8 @@ from configarr.providers.bazarr.language_profiles import (
 )
 from configarr.providers.bazarr.providers import BazarrProviderProvider
 from configarr.providers.bazarr.settings import BazarrSettingsProvider
+from configarr.providers.bookshelf.metadata_profiles import MetadataProfileProvider
+from configarr.providers.bookshelf.root_folders import BookshelfRootFolderProvider
 from configarr.providers.cleanuparr.cleaner import (
     CleanuparrClientSettingsProvider,
     CleanuparrSeedingRuleProvider,
@@ -37,14 +39,14 @@ from configarr.providers.cleanuparr.sections import (
     CleanuparrArrSettingsProvider,
     CleanuparrSectionProvider,
 )
-from configarr.providers.kavita.libraries import KavitaLibraryProvider
-from configarr.providers.kavita.settings import KavitaSettingsProvider
 from configarr.providers.kapowarr.collections import (
     KapowarrCredentialProvider,
     KapowarrDownloadClientProvider,
     KapowarrRootFolderProvider,
 )
 from configarr.providers.kapowarr.settings import KapowarrSettingsProvider
+from configarr.providers.kavita.libraries import KavitaLibraryProvider
+from configarr.providers.kavita.settings import KavitaSettingsProvider
 from configarr.providers.lingarr.onboarding import LingarrOnboardingProvider
 from configarr.providers.lingarr.settings import LingarrSettingsProvider
 from configarr.providers.prowlarr.applications import ApplicationProvider
@@ -84,6 +86,9 @@ class PlannedProvider:
     label: str
     provider: ResourceProvider
 
+
+# Bookshelf serves the Readarr API, one version below Radarr/Sonarr's /api/v3.
+BOOKSHELF_API = "/api/v1"
 
 REGISTRY: list[Registration] = [
     Registration(
@@ -633,6 +638,95 @@ REGISTRY: list[Registration] = [
             inst.api_key,
             inst.notification_connectors,
             "tranga.notification_connector",
+        ),
+    ),
+    # Bookshelf (Readarr revival): the shared arr providers on /api/v1, plus the
+    # Readarr-only metadata profiles. Custom formats before quality profiles (as for
+    # radarr/sonarr), and both profile kinds before root folders, whose defaults
+    # reference them by name.
+    Registration(
+        kind="bookshelf.custom_format",
+        service="bookshelf",
+        label="custom formats",
+        factory=lambda inst: CustomFormatProvider(
+            inst.base_url,
+            inst.api_key,
+            inst.custom_formats,
+            "bookshelf.custom_format",
+            api_prefix=BOOKSHELF_API,
+        ),
+    ),
+    Registration(
+        kind="bookshelf.quality_profile",
+        service="bookshelf",
+        label="quality profiles",
+        factory=lambda inst: QualityProfileProvider(
+            inst.base_url,
+            inst.api_key,
+            inst.quality_profiles,
+            "bookshelf.quality_profile",
+            pending_formats=inst.custom_formats or {},
+            api_prefix=BOOKSHELF_API,
+        ),
+    ),
+    Registration(
+        kind="bookshelf.metadata_profile",
+        service="bookshelf",
+        label="metadata profiles",
+        factory=lambda inst: MetadataProfileProvider(
+            inst.base_url,
+            inst.api_key,
+            inst.metadata_profiles,
+            "bookshelf.metadata_profile",
+            api_prefix=BOOKSHELF_API,
+        ),
+    ),
+    Registration(
+        kind="bookshelf.root_folder",
+        service="bookshelf",
+        label="root folders",
+        factory=lambda inst: BookshelfRootFolderProvider(
+            inst.base_url,
+            inst.api_key,
+            inst.root_folders,
+            "bookshelf.root_folder",
+            api_prefix=BOOKSHELF_API,
+        ),
+    ),
+    Registration(
+        kind="bookshelf.naming",
+        service="bookshelf",
+        label="naming",
+        factory=lambda inst: NamingProvider(
+            inst.base_url,
+            inst.api_key,
+            inst.naming_config,
+            "bookshelf.naming",
+            api_prefix=BOOKSHELF_API,
+        ),
+    ),
+    Registration(
+        kind="bookshelf.delay_profile",
+        service="bookshelf",
+        label="delay profiles",
+        factory=lambda inst: DelayProfileProvider(
+            inst.base_url,
+            inst.api_key,
+            inst.delay_profiles,
+            "bookshelf.delay_profile",
+            api_prefix=BOOKSHELF_API,
+        ),
+    ),
+    Registration(
+        kind="bookshelf.download_client",
+        service="bookshelf",
+        label="download clients",
+        factory=lambda inst: DownloadClientProvider(
+            inst.base_url,
+            inst.api_key,
+            inst.download_clients,
+            "bookshelf.download_client",
+            api_prefix=BOOKSHELF_API,
         ),
     ),
 ]

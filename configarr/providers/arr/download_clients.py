@@ -24,20 +24,29 @@ class DownloadClientProvider(FieldProvider):
 
     prunable = True
 
-    def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
-        super().__init__(base_url, api_key, config, kind)
+    def __init__(
+        self,
+        base_url: str,
+        api_key: str,
+        config: Any,
+        kind: str,
+        api_prefix: str | None = None,
+    ):
+        super().__init__(base_url, api_key, config, kind, api_prefix)
         self._schema_cache: dict[str, dict[str, Any]] | None = None
 
     def _schema(self) -> dict[str, dict[str, Any]]:
         if self._schema_cache is None:
             self._schema_cache = {
                 s["implementation"]: s
-                for s in self._get("/api/v3/downloadclient/schema").json()
+                for s in self._get(f"{self.api_prefix}/downloadclient/schema").json()
             }
         return self._schema_cache
 
     def _load_current(self) -> list[dict[str, Any]]:
-        data: list[dict[str, Any]] = self._get("/api/v3/downloadclient").json()
+        data: list[dict[str, Any]] = self._get(
+            f"{self.api_prefix}/downloadclient"
+        ).json()
         return data
 
     def build_desired(self) -> list[dict[str, Any]]:
@@ -92,4 +101,4 @@ class DownloadClientProvider(FieldProvider):
         }
 
     def apply(self, action: Action) -> int | None:
-        return self._apply_force_save("/api/v3/downloadclient", action)
+        return self._apply_force_save(f"{self.api_prefix}/downloadclient", action)

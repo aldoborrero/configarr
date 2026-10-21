@@ -21,6 +21,7 @@ def test_schema_structure_and_serializable():
         "kavita",
         "kapowarr",
         "tranga",
+        "bookshelf",
     }
     assert s["additionalProperties"] is False
     inst = s["properties"]["radarr"]["properties"]["instances"]["additionalProperties"]

@@ -25,6 +25,7 @@
 - [Kavita](services/kavita.md)
 - [Kapowarr](services/kapowarr.md)
 - [Tranga](services/tranga.md)
+- [Bookshelf](services/bookshelf.md)
 
 # Reference
 

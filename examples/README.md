@@ -16,6 +16,7 @@ for the exhaustive, source-verified reference.
 | [`kavita.yml`](kavita.yml) | Kavita: server settings (incl. OIDC), libraries. |
 | [`kapowarr.yml`](kapowarr.yml) | Kapowarr: settings, root folders, torrent clients, download-service credentials. |
 | [`tranga.yml`](tranga.yml) | Tranga: settings, file libraries, Kavita/Komga and notification connectors. |
+| [`bookshelf.yml`](bookshelf.yml) | Bookshelf (Readarr revival): quality and metadata profiles, root folders, naming, download clients. |
 | [`trash.yml`](trash.yml) | Radarr: import custom formats + quality definitions from a TRaSH-Guides checkout by `trash_id`. |
 | [`full.yml`](full.yml) | Every service in one file, including a multi-instance setup. |
 | [`.env.example`](.env.example) | Secrets referenced by the examples via `${VAR}`. |

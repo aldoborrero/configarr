@@ -85,8 +85,9 @@ class QualityProfileProvider(HttpProvider):
         config: Any,
         kind: str,
         pending_formats: Iterable[str] = (),
+        api_prefix: str | None = None,
     ):
-        super().__init__(base_url, api_key)
+        super().__init__(base_url, api_key, api_prefix)
         self.kind = kind
         self.config = config or []
         # Custom formats this instance declares. On a plan they may not exist yet
@@ -98,7 +99,9 @@ class QualityProfileProvider(HttpProvider):
 
     def _schema(self) -> dict[str, Any]:
         if self._schema_cache is None:
-            self._schema_cache = self._get("/api/v3/qualityprofile/schema").json()
+            self._schema_cache = self._get(
+                f"{self.api_prefix}/qualityprofile/schema"
+            ).json()
         return self._schema_cache
 
     def _resolve_language(self, name: str) -> dict[str, Any] | None:
@@ -108,7 +111,7 @@ class QualityProfileProvider(HttpProvider):
         language untouched (falling back to current/schema).
         """
         if self._language_cache is None:
-            self._language_cache = self._get("/api/v3/language").json()
+            self._language_cache = self._get(f"{self.api_prefix}/language").json()
         for lang in self._language_cache:
             lang_name = lang.get("name")
             if lang_name and lang_name.lower() == name.lower():
@@ -122,7 +125,9 @@ class QualityProfileProvider(HttpProvider):
         return resource.get("name")
 
     def _load_current(self) -> list[dict[str, Any]]:
-        data: list[dict[str, Any]] = self._get("/api/v3/qualityprofile").json()
+        data: list[dict[str, Any]] = self._get(
+            f"{self.api_prefix}/qualityprofile"
+        ).json()
         return data
 
     def _wanted_items(
@@ -402,10 +407,10 @@ class QualityProfileProvider(HttpProvider):
 
     def apply(self, action: Action) -> None:
         if action.op is Op.CREATE:
-            self._post("/api/v3/qualityprofile", json=action.payload)
+            self._post(f"{self.api_prefix}/qualityprofile", json=action.payload)
         elif action.op is Op.UPDATE:
             qp_id = action.payload["id"]
-            self._put(f"/api/v3/qualityprofile/{qp_id}", json=action.payload)
+            self._put(f"{self.api_prefix}/qualityprofile/{qp_id}", json=action.payload)
         else:
             raise NotImplementedError(f"apply: unsupported op {action.op!r}")
         self.invalidate_current()

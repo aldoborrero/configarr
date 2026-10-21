@@ -124,6 +124,23 @@ _TRANGA_INSTANCE: dict[str, Any] = {
     "notification_connectors": _OBJ,
 }
 
+# Bookshelf (Readarr revival): the arr shape minus what Readarr lacks or configarr
+# does not manage there (trash, release profiles, quality definitions,
+# notifications, import lists), plus metadata profiles.
+_BOOKSHELF_INSTANCE: dict[str, Any] = {
+    "base_url": _STR,
+    "api_key": _STR,
+    "include": _INCLUDE,
+    "custom_formats": {"definitions": _OBJ},
+    "settings": {"media_management": _OBJ, "root_folders": _ARR},
+    "profiles": {
+        "quality_profiles": _OBJ,
+        "metadata_profiles": {"definitions": _OBJ},
+        "delay_profiles": _ARR,
+    },
+    "download_clients": {"definitions": _OBJ},
+}
+
 SERVICES: dict[str, dict[str, Any]] = {
     "radarr": _ARR_INSTANCE,
     "sonarr": _ARR_INSTANCE,
@@ -135,6 +152,7 @@ SERVICES: dict[str, dict[str, Any]] = {
     "kavita": _KAVITA_INSTANCE,
     "kapowarr": _KAPOWARR_INSTANCE,
     "tranga": _TRANGA_INSTANCE,
+    "bookshelf": _BOOKSHELF_INSTANCE,
 }
 # The canonical service list. Everything that enumerates services — the config
 # parser, the CLI --service choices and scope validation — derives from this so a

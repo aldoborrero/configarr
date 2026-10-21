@@ -57,7 +57,7 @@ docker run --rm \
 
 ```
 --config PATH    Path to configarr.yml (default: ./configarr.yml)
---service NAME   Only process a specific service (radarr, sonarr, prowlarr, bazarr, sabnzbd, lingarr, cleanuparr, kavita, kapowarr, tranga)
+--service NAME   Only process a specific service (radarr, sonarr, prowlarr, bazarr, sabnzbd, lingarr, cleanuparr, kavita, kapowarr, tranga, bookshelf)
 --instance NAME  Only process a specific instance
 --plan           Preview the diff without writing (alias: --dry-run)
 --prune          Also delete unmanaged resources (sync is additive by default)
