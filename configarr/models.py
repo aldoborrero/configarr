@@ -224,6 +224,91 @@ class CleanuparrConfig(BaseModel):
         return v.rstrip("/")
 
 
+class KavitaConfig(BaseModel):
+    """Configuration for a Kavita instance."""
+
+    name: str
+    base_url: str
+    # A Kavita auth key, exchanged for a JWT via /api/plugin/authenticate.
+    api_key: str
+    settings: dict[str, Any] | None = None
+    libraries: list[dict[str, Any]] = []
+
+    @field_validator("base_url")
+    @classmethod
+    def strip_trailing_slash(cls, v: str) -> str:
+        """Remove trailing slash from base_url."""
+        return v.rstrip("/")
+
+
+class KapowarrConfig(BaseModel):
+    """Configuration for a Kapowarr instance."""
+
+    name: str
+    base_url: str
+    api_key: str
+    settings: dict[str, Any] | None = None
+    root_folders: list[dict[str, Any]] = []
+    # title -> client settings
+    download_clients: dict[str, dict[str, Any]] = {}
+    # source (mega, pixeldrain) -> credential fields
+    credentials: dict[str, dict[str, Any]] = {}
+
+    @field_validator("base_url")
+    @classmethod
+    def strip_trailing_slash(cls, v: str) -> str:
+        """Remove trailing slash from base_url."""
+        return v.rstrip("/")
+
+
+class TrangaConfig(BaseModel):
+    """Configuration for a Tranga (v2) instance."""
+
+    name: str
+    base_url: str
+    # Tranga's API has no authentication; sent as X-Api-Key only when set (for an
+    # auth proxy in front of it).
+    api_key: str = ""
+    settings: dict[str, Any] | None = None
+    # library name -> {base_path}
+    file_libraries: dict[str, dict[str, Any]] = {}
+    # [{type: kavita|komga, base_url, api_key}]
+    library_connectors: list[dict[str, Any]] = []
+    # connector name -> {url, http_method, body, headers} | {type: gotify, …}
+    notification_connectors: dict[str, dict[str, Any]] = {}
+
+    @field_validator("base_url")
+    @classmethod
+    def strip_trailing_slash(cls, v: str) -> str:
+        """Remove trailing slash from base_url."""
+        return v.rstrip("/")
+
+
+class BookshelfConfig(BaseModel):
+    """Configuration for a Bookshelf (Readarr revival) instance.
+
+    Reuses the Radarr/Sonarr resource shapes it shares with them (on ``/api/v1``)
+    plus the Readarr-only metadata profiles. No ``trash`` block: TRaSH-Guides
+    publishes nothing for Readarr."""
+
+    name: str
+    base_url: str
+    api_key: str
+    custom_formats: dict[str, dict[str, Any]] = {}
+    quality_profiles: list[dict[str, Any]] = []
+    metadata_profiles: dict[str, dict[str, Any]] = {}
+    naming_config: dict[str, Any] | None = None
+    delay_profiles: list[dict[str, Any]] | None = None
+    root_folders: list[dict[str, Any]] | None = None
+    download_clients: dict[str, dict[str, Any]] = {}
+
+    @field_validator("base_url")
+    @classmethod
+    def strip_trailing_slash(cls, v: str) -> str:
+        """Remove trailing slash from base_url."""
+        return v.rstrip("/")
+
+
 class ConfigarrConfig(BaseModel):
     """Root configuration containing all service instances."""
 
@@ -234,3 +319,7 @@ class ConfigarrConfig(BaseModel):
     sabnzbd: list[SabnzbdConfig] = []
     lingarr: list[LingarrConfig] = []
     cleanuparr: list[CleanuparrConfig] = []
+    kavita: list[KavitaConfig] = []
+    kapowarr: list[KapowarrConfig] = []
+    tranga: list[TrangaConfig] = []
+    bookshelf: list[BookshelfConfig] = []

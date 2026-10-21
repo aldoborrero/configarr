@@ -3,9 +3,12 @@ from configarr.models import (
     BazarrConfig,
     CleanuparrConfig,
     ConfigarrConfig,
+    KapowarrConfig,
+    KavitaConfig,
     LingarrConfig,
     ProwlarrConfig,
     SabnzbdConfig,
+    TrangaConfig,
 )
 from configarr.registry import providers_for
 
@@ -220,3 +223,52 @@ def test_cleanuparr_providers_are_cleanuparr_only_and_ordered():
         "cleanuparr.malware_blocker",
     ]
     assert _instances_for_kind(planned, "cleanuparr.queue_cleaner") == ["main"]
+
+
+def test_kavita_providers_are_kavita_only_and_libraries_first():
+    config = ConfigarrConfig(
+        radarr=[_radarr("hd")],
+        kavita=[KavitaConfig(name="main", base_url="http://kv.test", api_key="k")],
+    )
+
+    planned = list(providers_for(config))
+    kinds = [p.provider.kind for p in planned if p.service == "kavita"]
+
+    assert kinds == ["kavita.library", "kavita.settings"]
+    assert _instances_for_kind(planned, "kavita.settings") == ["main"]
+
+
+def test_kapowarr_providers_are_kapowarr_only_and_ordered():
+    config = ConfigarrConfig(
+        radarr=[_radarr("hd")],
+        kapowarr=[KapowarrConfig(name="main", base_url="http://k.test", api_key="k")],
+    )
+
+    planned = list(providers_for(config))
+    kinds = [p.provider.kind for p in planned if p.service == "kapowarr"]
+
+    assert kinds == [
+        "kapowarr.settings",
+        "kapowarr.root_folder",
+        "kapowarr.download_client",
+        "kapowarr.credential",
+    ]
+    assert _instances_for_kind(planned, "kapowarr.root_folder") == ["main"]
+
+
+def test_tranga_providers_are_tranga_only_and_ordered():
+    config = ConfigarrConfig(
+        radarr=[_radarr("hd")],
+        tranga=[TrangaConfig(name="main", base_url="http://t.test")],
+    )
+
+    planned = list(providers_for(config))
+    kinds = [p.provider.kind for p in planned if p.service == "tranga"]
+
+    assert kinds == [
+        "tranga.settings",
+        "tranga.file_library",
+        "tranga.library_connector",
+        "tranga.notification_connector",
+    ]
+    assert _instances_for_kind(planned, "tranga.settings") == ["main"]

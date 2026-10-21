@@ -1,6 +1,7 @@
 import pytest
 import responses
 
+from configarr.providers.arr.delay_profiles import DelayProfileProvider
 from configarr.providers.base import HttpProvider
 from configarr.providers.prowlarr.indexers import IndexerProvider
 
@@ -86,3 +87,14 @@ def test_bool_and_bad_type_rejected():
 def test_prowlarr_uses_v1_tag_path():
     assert IndexerProvider._tag_path == "/api/v1/tag"
     assert HttpProvider._tag_path == "/api/v3/tag"
+
+
+def test_api_prefix_rederives_tag_path():
+    # A provider built with a non-default API prefix (Bookshelf serves the arr
+    # resources on /api/v1) resolves tags under that prefix too; the default stays v3.
+    p = DelayProfileProvider(BASE, "k", [], "bookshelf.delay_profile", "/api/v1")
+    assert p.api_prefix == "/api/v1"
+    assert p._tag_path == "/api/v1/tag"
+    default = DelayProfileProvider(BASE, "k", [], "radarr.delay_profile")
+    assert default.api_prefix == "/api/v3"
+    assert default._tag_path == "/api/v3/tag"

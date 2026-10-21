@@ -20,8 +20,15 @@ class CustomFormatProvider(HttpProvider):
 
     prunable = True
 
-    def __init__(self, base_url: str, api_key: str, config: dict[str, Any], kind: str):
-        super().__init__(base_url, api_key)
+    def __init__(
+        self,
+        base_url: str,
+        api_key: str,
+        config: dict[str, Any],
+        kind: str,
+        api_prefix: str | None = None,
+    ):
+        super().__init__(base_url, api_key, api_prefix)
         self.kind = kind
         self.config = config or {}
         self._schema_cache: dict[str, dict[str, Any]] | None = None
@@ -30,7 +37,7 @@ class CustomFormatProvider(HttpProvider):
         if self._schema_cache is None:
             self._schema_cache = {
                 s["implementation"]: s
-                for s in self._get("/api/v3/customformat/schema").json()
+                for s in self._get(f"{self.api_prefix}/customformat/schema").json()
             }
         return self._schema_cache
 
@@ -39,7 +46,7 @@ class CustomFormatProvider(HttpProvider):
         return name
 
     def _load_current(self) -> list[dict[str, Any]]:
-        data: list[dict[str, Any]] = self._get("/api/v3/customformat").json()
+        data: list[dict[str, Any]] = self._get(f"{self.api_prefix}/customformat").json()
         return data
 
     def _build_spec(self, spec_cfg: dict[str, Any]) -> dict[str, Any]:
@@ -118,14 +125,18 @@ class CustomFormatProvider(HttpProvider):
     def apply(self, action: Action) -> int | None:
         service_id: int | None = None
         if action.op is Op.CREATE:
-            created = self._post("/api/v3/customformat", json=action.payload).json()
+            created = self._post(
+                f"{self.api_prefix}/customformat", json=action.payload
+            ).json()
             service_id = created.get("id") if isinstance(created, dict) else None
         elif action.op is Op.UPDATE:
             service_id = action.payload["id"]
-            self._put(f"/api/v3/customformat/{service_id}", json=action.payload)
+            self._put(
+                f"{self.api_prefix}/customformat/{service_id}", json=action.payload
+            )
         elif action.op is Op.DELETE:
             cf_id = action.payload["id"]
-            self._delete(f"/api/v3/customformat/{cf_id}")
+            self._delete(f"{self.api_prefix}/customformat/{cf_id}")
         else:
             raise NotImplementedError(f"apply: unsupported op {action.op!r}")
         self.invalidate_current()

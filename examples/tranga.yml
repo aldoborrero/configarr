@@ -1,0 +1,30 @@
+# Tranga example — settings, file libraries, Kavita/Komga library connectors and
+# notification connectors (Tranga v2 API).
+#
+# base_url is the Tranga API (tranga-api), not the web UI. Tranga's API has no
+# authentication, so api_key is omitted.
+
+tranga:
+  instances:
+    main:
+      base_url: http://tranga-api:6531
+
+      settings:
+        download_language: en
+        flaresolverr_url: http://flaresolverr:8191
+        library_refresh_setting: after_manga_finished
+
+      file_libraries:
+        Default FileLibrary:
+          base_path: /Manga
+
+      library_connectors:
+        - type: kavita
+          base_url: http://kavita:5000
+          api_key: ${TRANGA_KAVITA_API_KEY}
+
+      notification_connectors:
+        gotify:
+          type: gotify
+          url: http://gotify
+          app_token: ${GOTIFY_APP_TOKEN}

@@ -23,6 +23,8 @@ from configarr.models import TrashConfig
 _STR = "string"
 _OBJ = "object"  # a passthrough object (definitions maps, settings blocks, …)
 _ARR = "array"
+# A string key that may be omitted (e.g. Tranga's api_key: its API has no auth).
+_OPT_STR = "optional-string"
 _TRASH = "trash"
 _INCLUDE = "include"
 
@@ -94,6 +96,51 @@ _CLEANUPARR_INSTANCE: dict[str, Any] = {
     "arr": _OBJ,
 }
 
+_KAVITA_INSTANCE: dict[str, Any] = {
+    "base_url": _STR,
+    "api_key": _STR,
+    "include": _INCLUDE,
+    "settings": _OBJ,
+    "libraries": _ARR,
+}
+
+_KAPOWARR_INSTANCE: dict[str, Any] = {
+    "base_url": _STR,
+    "api_key": _STR,
+    "include": _INCLUDE,
+    "settings": _OBJ,
+    "root_folders": _ARR,
+    "download_clients": _OBJ,
+    "credentials": _OBJ,
+}
+
+_TRANGA_INSTANCE: dict[str, Any] = {
+    "base_url": _STR,
+    "api_key": _OPT_STR,
+    "include": _INCLUDE,
+    "settings": _OBJ,
+    "file_libraries": _OBJ,
+    "library_connectors": _ARR,
+    "notification_connectors": _OBJ,
+}
+
+# Bookshelf (Readarr revival): the arr shape minus what Readarr lacks or configarr
+# does not manage there (trash, release profiles, quality definitions,
+# notifications, import lists), plus metadata profiles.
+_BOOKSHELF_INSTANCE: dict[str, Any] = {
+    "base_url": _STR,
+    "api_key": _STR,
+    "include": _INCLUDE,
+    "custom_formats": {"definitions": _OBJ},
+    "settings": {"media_management": _OBJ, "root_folders": _ARR},
+    "profiles": {
+        "quality_profiles": _OBJ,
+        "metadata_profiles": {"definitions": _OBJ},
+        "delay_profiles": _ARR,
+    },
+    "download_clients": {"definitions": _OBJ},
+}
+
 SERVICES: dict[str, dict[str, Any]] = {
     "radarr": _ARR_INSTANCE,
     "sonarr": _ARR_INSTANCE,
@@ -102,6 +149,10 @@ SERVICES: dict[str, dict[str, Any]] = {
     "sabnzbd": _SABNZBD_INSTANCE,
     "lingarr": _LINGARR_INSTANCE,
     "cleanuparr": _CLEANUPARR_INSTANCE,
+    "kavita": _KAVITA_INSTANCE,
+    "kapowarr": _KAPOWARR_INSTANCE,
+    "tranga": _TRANGA_INSTANCE,
+    "bookshelf": _BOOKSHELF_INSTANCE,
 }
 # The canonical service list. Everything that enumerates services — the config
 # parser, the CLI --service choices and scope validation — derives from this so a
@@ -194,7 +245,7 @@ def _object_schema(spec: dict[str, Any]) -> dict[str, Any]:
         "properties": {key: _leaf_schema(sub) for key, sub in spec.items()},
         "additionalProperties": False,
     }
-    required = [k for k in _REQUIRED if k in spec]
+    required = [k for k in _REQUIRED if spec.get(k) == _STR]
     if required:
         node["required"] = required
     return node
@@ -203,7 +254,7 @@ def _object_schema(spec: dict[str, Any]) -> dict[str, Any]:
 def _leaf_schema(sub: Any) -> dict[str, Any]:
     if isinstance(sub, dict):
         return _object_schema(sub)
-    if sub == _STR:
+    if sub in (_STR, _OPT_STR):
         return {"type": "string"}
     if sub == _ARR:
         return {"type": "array"}

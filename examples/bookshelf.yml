@@ -1,0 +1,60 @@
+# Bookshelf example — the Readarr revival (https://github.com/pennydreadful/bookshelf).
+#
+# Same nesting as Radarr/Sonarr, plus metadata profiles. Root folders reference
+# quality and metadata profiles by name; configarr syncs both profile kinds first.
+# There is no TRaSH-Guides import for Bookshelf.
+
+bookshelf:
+  instances:
+    main:
+      base_url: http://localhost:8787
+      api_key: ${BOOKSHELF_API_KEY}
+
+      profiles:
+        quality_profiles:
+          definitions:
+            eBook:
+              upgrades_allowed: true
+              upgrade_until_quality: EPUB
+              qualities: [EPUB, AZW3, MOBI]
+            Audiobook:
+              upgrade_until_quality: M4B
+              qualities: [M4B, MP3]
+        metadata_profiles:
+          definitions:
+            Standard:
+              min_popularity: 0
+              allowed_languages: [spa, eng]
+              skip_missing_isbn: false
+              skip_parts_and_sets: true
+        delay_profiles:
+          - preferred_protocol: usenet
+            usenet_delay: 0
+            torrent_delay: 60
+
+      settings:
+        root_folders:
+          - name: Libros
+            path: /data/books
+            default_quality_profile: eBook
+            default_metadata_profile: Standard
+          - name: Audiolibros
+            path: /data/audiobooks
+            default_quality_profile: Audiobook
+            default_metadata_profile: Standard
+            default_new_item_monitor: new
+        media_management:
+          rename_books: true
+          colon_replacement: smart
+          standard_book_format: "{Book Title}/{Author Name} - {Book Title}{ (PartNumber)}"
+          author_folder_format: "{Author Name}"
+
+      download_clients:
+        definitions:
+          SABnzbd:
+            implementation: Sabnzbd
+            settings:
+              host: localhost
+              port: 8080
+              apiKey: ${SABNZBD_API_KEY}
+              musicCategory: books

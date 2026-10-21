@@ -10,11 +10,15 @@ sonarr/prowlarr/sabnzbd/bazarr providers."""
 from configarr.models import (
     ArrServiceConfig,
     BazarrConfig,
+    BookshelfConfig,
     CleanuparrConfig,
     ConfigarrConfig,
+    KapowarrConfig,
+    KavitaConfig,
     LingarrConfig,
     ProwlarrConfig,
     SabnzbdConfig,
+    TrangaConfig,
 )
 from configarr.providers.base import ResourceProvider
 from configarr.registry import REGISTRY, providers_for
@@ -69,6 +73,28 @@ def _full_config() -> ConfigarrConfig:
             CleanuparrConfig(
                 name="c",
                 base_url="http://c.test",
+                api_key="k",
+            )
+        ],
+        kavita=[
+            KavitaConfig(
+                name="kv",
+                base_url="http://kv.test",
+                api_key="k",
+            )
+        ],
+        kapowarr=[
+            KapowarrConfig(
+                name="k",
+                base_url="http://k.test",
+                api_key="k",
+            )
+        ],
+        tranga=[TrangaConfig(name="t", base_url="http://t.test")],
+        bookshelf=[
+            BookshelfConfig(
+                name="books",
+                base_url="http://books.test",
                 api_key="k",
             )
         ],

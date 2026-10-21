@@ -22,6 +22,10 @@
 - [SABnzbd](services/sabnzbd.md)
 - [Lingarr](services/lingarr.md)
 - [Cleanuparr](services/cleanuparr.md)
+- [Kavita](services/kavita.md)
+- [Kapowarr](services/kapowarr.md)
+- [Tranga](services/tranga.md)
+- [Bookshelf](services/bookshelf.md)
 
 # Reference
 

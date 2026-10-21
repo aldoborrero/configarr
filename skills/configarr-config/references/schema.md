@@ -35,16 +35,18 @@ Custom Formats, Quality Profiles, Quality Definitions, Naming, Root Folders, Del
 Profiles, Release Profiles (Sonarr-only), Download Clients, Notifications (arr);
 Indexers, Applications, Download Clients (prowlarr); Servers, Categories, Misc
 Settings (sabnzbd); General/Sonarr/Radarr Settings, Providers, Language Profiles
-(bazarr). `REGISTRY` order is fixed; the one real invariant is **custom formats
+(bazarr); Custom Formats, Quality Profiles, Metadata Profiles, Root Folders,
+Naming, Delay Profiles, Download Clients (bookshelf). `REGISTRY` order is fixed; the one real invariant is **custom formats
 before quality profiles** within an instance.
 
 ## Top-level conventions
 
 - Every service nests under `<service>.instances.<name>`, where `<service>` is one
   of `radarr`, `sonarr`, `prowlarr`, `bazarr`, `sabnzbd`, `lingarr`,
-  `cleanuparr`, and `<name>` is your
+  `cleanuparr`, `kavita`, `kapowarr`, `tranga`, `bookshelf`, and `<name>` is your
   chosen instance label.
-- **`base_url` and `api_key` are REQUIRED on every instance.** `config.py` reads
+- **`base_url` and `api_key` are REQUIRED on every instance** — except `tranga`,
+  whose API has no authentication, so its `api_key` is optional. `config.py` reads
   them with subscript access (`config["base_url"]`), so omitting either raises.
   `base_url` has a trailing slash stripped automatically.
 - **`${VAR}` substitution** is applied to all string values. Missing variables
@@ -785,6 +787,402 @@ A map keyed by arr type: `sonarr`, `radarr`, `lidarr`, `readarr`, `whisparr`,
 | `instances` | map | instances keyed by name (CRUD, prunable): `url`, `api_key` (secret), `version` (number, e.g. `4` for Sonarr v4), `enabled` (default `true`), `external_url`. A new instance needs `url`, `api_key` and `version` |
 
 Cleanuparr stores `url` with a trailing slash; URLs compare without one.
+
+---
+
+## Kavita
+
+Path prefix `kavita.instances.<name>`. Top-level keys (from
+`parse_kavita_instance` + `KavitaConfig`): `base_url`, `api_key` (a Kavita **auth
+key**, exchanged for a JWT with `POST /api/plugin/authenticate?apiKey=…&pluginName=configarr`
+and sent as `Authorization: Bearer …`; use an admin's), `settings`, `libraries`.
+
+Keys are written **snake_case** and mapped onto Kavita's camelCase fields by a loose
+match against what the server returns. Kavita serializes enums as integers;
+configarr takes them **by name** (case, `_`, `-` and spaces ignored) or as the raw
+integer, and plans show names.
+
+### Server settings — `settings`
+
+A free-form map over Kavita's `ServerSettingDto` (`GET /api/settings`,
+`POST /api/settings`). The POST takes the **whole** DTO, so configarr merges the
+configured keys over the current object and posts the result: unset settings keep
+their values. Plans list dotted paths (`oidcConfig.providerName`).
+
+| key | type | meaning |
+|---|---|---|
+| `host_name` | string | public URL (Kavita drops a trailing slash) |
+| `logging_level` | string | `Trace`, `Debug`, `Information`, `Warning`, `Critical` |
+| `enable_opds` / `enable_folder_watching` / `allow_stat_collection` | bool | |
+| `task_scan` / `task_backup` / `task_cleanup` / `task_cbl_sync` | string | `daily`, `weekly`, `disabled` or a cron expression |
+| `total_backups` / `total_logs` | int | 1–30 |
+| `on_deck_progress_days` / `on_deck_update_days` | int | |
+| `cache_size` | int | MB |
+| `encode_media_as` | enum | `png`, `webp`, `avif` |
+| `cover_image_size` | enum | `default`, `medium`, `large`, `xlarge` |
+| `pdf_render_resolution` | enum | `default`, `high`, `ultra` |
+| `base_url` / `bookmarks_directory` / `port` / `ip_addresses` | | passed through (Kavita ignores port/IPs in Docker) |
+| `smtp` (or `smtp_config`) | map | `sender_address`, `sender_display_name`, `user_name`, `password`, `host`, `port`, `enable_ssl`, `size_limit`, `customized_templates` |
+| `oidc` (or `oidc_config`) | map | see below |
+
+`oidc` keys: `authority`, `client_id`, `secret`, `provision_accounts`,
+`require_verified_email`, `sync_user_settings`, `roles_prefix`, `roles_claim`,
+`custom_scopes` (list), `default_roles` (list), `default_libraries` (list of library
+names or ids; names resolve against the instance's libraries),
+`default_age_restriction` (enum: `unknown`, `everyone`, `teen`, `mature`, …, or
+the int), `default_include_unknowns`, `auto_login`,
+`disable_password_authentication`, `provider_name`. `enabled` is **derived** by
+Kavita from `authority` and is ignored (with a warning if it contradicts it).
+
+Read-only keys (`cache_directory`, `install_version`, `install_id`,
+`first_install_*`, `stats_api_hits`) are ignored with a warning.
+
+Secrets: `oidc.secret` comes back as `"*" * len(secret)` and Kavita keeps the stored
+secret when it gets that mask back. configarr sends the configured secret, or the
+mask when none is configured, and compares **lengths only**. `smtp.password` comes
+back in clear text and is compared by fingerprint. Neither enters a plan. Changing
+the OIDC `authority`, `client_id`, `secret` or `custom_scopes` logs a warning that
+**Kavita must be restarted** (its OIDC handler is built at startup), and a new
+authority unlinks every user's OIDC login.
+
+### Libraries — `libraries`
+
+A list keyed by `name` (create/update, prunable under `--prune`; a delete drops the
+library's series from Kavita's DB, not the files). Create is `POST /api/library/create`,
+update is `POST /api/library/update` (both take the full `UpdateLibraryDto`) and
+delete is `DELETE /api/library/delete?libraryId=`.
+
+| key | type | meaning |
+|---|---|---|
+| `name` | string | identity |
+| `type` | enum | **required for a new library**: `manga`, `comic` (flexible), `comic_vine`, `book`, `image`, `light_novel` |
+| `folders` | list | **required for a new library**; compared as a set |
+| `file_group_types` | list | `archive`, `epub`, `pdf`, `images`; default by type (manga: archive+images, comic: archive, book: epub+pdf, light novel: epub, image: images) |
+| `exclude_patterns` | list | globs; compared as a set |
+| `folder_watching` / `include_in_dashboard` / `include_in_search` | bool | default `true` |
+| `manage_collections` / `manage_reading_lists` | bool | default `false` |
+| `allow_scrobbling` / `allow_metadata_matching` / `enable_metadata` | bool | default `true` (`allow_scrobbling` defaults `false` for `comic`) |
+| `remove_prefix_for_sort_name` / `inherit_web_links_from_first_chapter` | bool | default `false` |
+| `default_language` | string | |
+| `metadata_provider` | enum | `hardcover`, `mangabaka`, `comic_book_roundup`; must suit the type (an invalid one raises). It defaults to the first valid one, and is reset to that when a type change invalidates the current one |
+
+A create is followed by an update with the same body, because Kavita's create
+ignores some fields.
+
+---
+
+## Kapowarr
+
+Path prefix `kapowarr.instances.<name>`. Top-level keys (from
+`parse_kapowarr_instance` + `KapowarrConfig`): `base_url` (include any URL base),
+`api_key` (Settings → General; sent as the `api_key` **query parameter**, the only
+form Kapowarr accepts), `settings`, `root_folders`, `download_clients`,
+`credentials`. Source-verified against Kapowarr V1.3.2 (`frontend/api.py`).
+
+Secrets: values Kapowarr echoes in **clear text** (`comicvine_api_key`, client
+`password`/`api_token`, Pixeldrain `api_key`) are compared by fingerprint, so a
+change shows in a plan without the value. Values echoed **masked** (`********`:
+settings `auth_username`, `auth_password`, `proxy_password`; Mega `password`) are
+never diffed.
+
+### Settings — `settings`
+
+A flat map of Kapowarr's own setting names (the keys of `GET /api/settings`, e.g.
+`comicvine_api_key`, `flaresolverr_base_url`, `download_folder`,
+`rename_downloaded_files`, `volume_folder_naming`, `file_naming`, `convert`,
+`format_preference` (list), `seeding_handling` (`copy`/`complete`),
+`concurrent_direct_downloads`, `proxy_type`, …). `PUT /api/settings` is
+**partial**: only keys whose value differs are sent (plus any configured masked
+key). A key the server does not return is skipped with a warning; `api_key` raises
+(Kapowarr only regenerates it). Comparison follows Kapowarr's storage: folders with
+a trailing `/`, `flaresolverr_base_url` without one (and `http://` added),
+`url_base` `/`-prefixed. Kapowarr validates on save (folders must exist, ComicVine
+key and FlareSolverr are tested); `host`/`port`/`url_base` or proxy changes restart
+its server.
+
+### Root folders — `root_folders`
+
+A list of `{path: ...}` (`POST`/`DELETE /api/rootfolder`), matched by path ignoring
+a trailing slash; create/delete only, prunable. The folder must exist and may not
+overlap the download folder or another root folder.
+
+### Download clients — `download_clients`
+
+Kapowarr's external clients (`/api/externalclients`), a map keyed by **title**;
+prunable. `PUT` is full-replace, so an update carries current values for every key
+not set.
+
+| key | type | meaning |
+|---|---|---|
+| `client_type` | string | **required for a new client**: `Transmission` or `qBittorrent` (any case). Cannot change afterwards (raises) |
+| `base_url` | string | **required for a new client**; compared without trailing slash, `http://` added if missing |
+| `enabled` | bool | default `true` for a new client |
+| `username` / `password` | string | client login (`password` fingerprinted) |
+| `api_token` | string | fingerprinted; unused by the V1.3.2 clients |
+
+Kapowarr tests the connection on every create/update and refuses a client with
+queued downloads to be updated or deleted.
+
+### Credentials — `credentials`
+
+Download-service logins (`/api/credentials`), a map keyed by **source**; prunable.
+`mega`: `email` + `password` (both required); `pixeldrain`: `api_key` (required).
+Any other source raises. No update endpoint: a change POSTs the new credential,
+then DELETEs the old one. One credential per source is managed; two on the server
+for the same source is an identity clash error.
+
+```yaml
+kapowarr:
+  instances:
+    main:
+      base_url: http://kapowarr:5656
+      api_key: ${KAPOWARR_API_KEY}
+      settings:
+        comicvine_api_key: ${COMICVINE_API_KEY}
+        flaresolverr_base_url: http://flaresolverr:8191
+      root_folders:
+        - path: /comics
+      download_clients:
+        Transmission:
+          client_type: Transmission
+          base_url: http://transmission:9091
+          username: ${TRANSMISSION_USERNAME}
+          password: ${TRANSMISSION_PASSWORD}
+      credentials:
+        mega:
+          email: ${MEGA_EMAIL}
+          password: ${MEGA_PASSWORD}
+```
+
+---
+
+## Tranga
+
+Path prefix `tranga.instances.<name>` (Tranga v2, `/v2/...` API). Top-level keys
+(from `parse_tranga_instance` + `TrangaConfig`): `base_url` (the **API** URL, not
+the web UI), `api_key` (**optional** — Tranga's API has no authentication; when set
+it is sent as `X-Api-Key`, for an auth proxy in front of it), `settings`,
+`file_libraries`, `library_connectors`, `notification_connectors`. Manga
+subscriptions are data, not config, and are not managed.
+
+Tranga creates with `PUT`, which is not idempotent there, so creates are sent
+**once, without retries**.
+
+### Settings — `settings`
+
+Over-current singleton read from `GET /v2/Settings`. Tranga has no bulk write: each
+setting has its own endpoint, and apply makes one call per setting that changed.
+
+| key | API field | write |
+|---|---|---|
+| `user_agent` | `userAgent` | `PATCH /v2/Settings/UserAgent` (JSON string) |
+| `image_compression` | `imageCompression` | `PATCH /v2/Settings/ImageCompressionLevel/{1..100}`; outside 1..100 raises |
+| `black_white_images` | `blackWhiteImages` | `PATCH /v2/Settings/BWImages/{bool}` |
+| `flaresolverr_url` | `flareSolverrUrl` | `PATCH /v2/Settings/FlareSolverr/Url`; `""` clears it (`DELETE`) |
+| `chapter_naming_scheme` | `chapterNamingScheme` | `PATCH /v2/Settings/ChapterNamingScheme` (placeholders `%M %V %C %T %A %I %i %Y`, `?X(...)` conditionals) |
+| `download_language` | `downloadLanguage` | `PATCH /v2/Settings/DownloadLanguage/{lang}` (e.g. `en`, `es`) |
+| `library_refresh_setting` | `libraryRefreshSetting` | `AfterAllFinished`, `AfterMangaFinished`, `AfterEveryChapter`, `WhileDownloading` (any case, `_` ignored); `PATCH /v2/Settings/LibraryRefresh` |
+| `refresh_library_while_downloading_every_minutes` | `refreshLibraryWhileDownloadingEveryMinutes` | int; written together with `library_refresh_setting` |
+
+`max_concurrent_downloads`, `max_concurrent_workers` and `work_cycle_timeout_ms` are
+returned but have no write endpoint: configuring one **raises**. Other unknown keys
+are warned about and ignored.
+
+### File libraries — `file_libraries`
+
+A map keyed by library name (CRUD, prunable): `base_path` (directory inside the
+Tranga container; required for a new library). A path change is a `PATCH` in place.
+Tranga ships with one library named `Default FileLibrary` — key your entry by that
+name to manage it rather than creating a second one. **Deleting a library
+un-assigns its manga** (Tranga sets their library to null), so prune with care.
+
+### Library connectors — `library_connectors`
+
+A **list** of Kavita/Komga servers Tranga asks to rescan after downloads, keyed by
+`(type, base_url)` (create/delete only, prunable).
+
+| key | meaning |
+|---|---|
+| `type` | `kavita` or `komga` (any case) |
+| `base_url` | server URL as Tranga reaches it; trailing `/` ignored |
+| `api_key` | **required for a new connector**: the Kavita user's API key (Kavita: *User settings → API key*; Tranga authenticates via `/api/Plugin/authenticate`) or a Komga API key (`X-API-Key`). Not username/password |
+
+Tranga never returns the key and has no update endpoint, so an existing connector
+is always `UNCHANGED`; a changed key is not detected. To rotate it, remove the
+entry, apply with `--prune`, and add it back. Tranga tests the credentials on
+create and answers `401` when they are wrong.
+
+### Notification connectors — `notification_connectors`
+
+A map keyed by connector name (CRUD, prunable). Tranga stores every connector as a
+generic webhook; `%title` and `%text` in `url`, `body` and header values are
+replaced when a notification is sent.
+
+| key | meaning |
+|---|---|
+| `type` | `generic` (default) or `gotify` |
+| `url` | required |
+| `http_method` | generic; default `POST` |
+| `body` | generic; required |
+| `headers` | generic; map of header → value |
+| `app_token` / `priority` | gotify; `priority` default `5` |
+
+`type: gotify` is expanded the same way Tranga's own Gotify endpoint does
+(`<url>/message`, `X-Gotify-Key` header), so a connector created in the UI diffs
+clean against it. Header values are fingerprinted in plans (they usually carry the
+credential). There is no update endpoint: a changed connector is **deleted and
+recreated** under the same name.
+
+---
+
+## Bookshelf
+
+[Bookshelf](https://github.com/pennydreadful/bookshelf) is a maintained revival
+of Readarr. It serves the Readarr API on **`/api/v1`** (Radarr/Sonarr are on
+`/api/v3`); configarr drives it with the same arr providers plus a Readarr-only
+metadata-profile provider. Path prefix `bookshelf.instances.<name>`.
+
+Top-level sections (from `parse_bookshelf_instance` + `BookshelfConfig`):
+
+| YAML path | wraps | notes |
+|---|---|---|
+| `base_url` | — | required |
+| `api_key` | — | required |
+| `custom_formats.definitions` | map | as for Radarr/Sonarr |
+| `profiles.quality_profiles.definitions` | map | as for Radarr/Sonarr, with Readarr's qualities |
+| `profiles.metadata_profiles.definitions` | map | **Bookshelf-only**, keyed by profile name |
+| `profiles.delay_profiles` | list | as for Radarr/Sonarr |
+| `settings.root_folders` | list | richer than Radarr/Sonarr (below) |
+| `settings.media_management` | map | naming config (book keys below) |
+| `download_clients.definitions` | map | as for Radarr/Sonarr |
+
+Not available: `trash` (TRaSH-Guides publishes nothing for Readarr; a `trash:`
+block is a **parse error**), `profiles.release_profiles` (Readarr's have no name to
+match on), `profiles.quality_definitions`, `notifications`, `import_lists`
+(their Readarr field sets differ from what the shared providers compare).
+
+Sync order within an instance: custom formats, quality profiles, metadata
+profiles, root folders, naming, delay profiles, download clients. Both profile
+kinds come before root folders because a root folder references them by name.
+
+### Custom formats, quality profiles, delay profiles, download clients
+
+Same keys and behaviour as the Radarr/Sonarr sections above. Differences:
+
+- **Qualities** are book formats: `Unknown Text`, `PDF`, `MOBI`, `EPUB`, `AZW3`,
+  `Unknown Audio`, `MP3`, `M4B`, `FLAC`. Set `upgrade_until_quality` to one of
+  them (or a group you define); the `WEBDL-1080p` default does not exist here, so
+  it falls back to the server's default cutoff.
+- `language` on a quality profile is Radarr-only and ignored.
+- Download-client category fields are named `musicCategory` /
+  `musicImportedCategory` in Readarr's schema (a Lidarr inheritance), e.g.
+  `settings: {musicCategory: books}`.
+
+### Metadata profiles — `profiles.metadata_profiles.definitions`
+
+A map keyed by profile name (create, update, prunable under `--prune`). A new
+profile starts from `/metadataprofile/schema`; an existing one keeps its server
+values for keys you do not set.
+
+| key | type | server default | meaning |
+|---|---|---|---|
+| `min_popularity` | number | `0` | minimum popularity |
+| `min_pages` | int | `0` | minimum page count |
+| `allowed_languages` | list or comma string | `eng` | ISO 639 codes; compared as a set |
+| `skip_missing_date` | bool | `false` | skip books without a release date |
+| `skip_missing_isbn` | bool | `false` | skip books without an ISBN |
+| `skip_parts_and_sets` | bool | `false` | skip "Part 1 of …" and box sets |
+| `skip_series_secondary` | bool | `false` | skip secondary series entries |
+| `ignored` | list | `[]` | terms whose matching books are ignored |
+
+The built-in `None` profile is reserved: it is never planned or pruned, and naming
+a profile `None` is an error. Bookshelf refuses to delete a profile still used by
+an author, an import list or a root folder's default; a prune that hits one fails
+with that reason and the profile name.
+
+### Root folders — `settings.root_folders`
+
+A list matched by `path` (trailing slash ignored). Unlike Radarr/Sonarr, an
+existing folder is **updated in place** when its defaults change (Readarr has
+`PUT /rootfolder/{id}`). Not prunable.
+
+| key | type | default | meaning |
+|---|---|---|---|
+| `path` | string | — | **required**; the folder's identity, cannot change |
+| `name` | string | last path component | display name |
+| `default_quality_profile` | string or id | — | **required to create**; quality profile name |
+| `default_metadata_profile` | string or id | — | **required to create**; metadata profile name |
+| `default_monitor` | string | `all` | books monitored for a new author: `all`, `future`, `missing`, `existing`, `latest`, `first`, `none` |
+| `default_new_item_monitor` | string | `all` | books added later: `all`, `none`, `new` |
+| `default_tags` | list | `[]` | tag labels or ids |
+
+Profile names are resolved to ids on the instance. A name that does not exist yet
+(a profile the same config creates) is shown by name in a plan and must resolve
+on apply. Calibre-library settings are not managed; an existing folder keeps them.
+
+### Naming — `settings.media_management`
+
+| key | type | meaning |
+|---|---|---|
+| `rename_books` | bool | rename on import |
+| `replace_illegal_characters` | bool | replace illegal filename chars |
+| `colon_replacement` | string | `delete`, `dash`, `spaceDash`, `spaceDashSpace`, `smart` |
+| `standard_book_format` | string | book file format |
+| `author_folder_format` | string | author folder format |
+
+```yaml
+bookshelf:
+  instances:
+    main:
+      base_url: https://bookshelf.example.com
+      api_key: ${BOOKSHELF_API_KEY}
+      profiles:
+        quality_profiles:
+          definitions:
+            eBook:
+              upgrade_until_quality: EPUB
+              qualities: [EPUB, AZW3, MOBI]
+        metadata_profiles:
+          definitions:
+            Standard:
+              min_popularity: 0
+              allowed_languages: [spa, eng]
+              skip_missing_isbn: false
+      settings:
+        root_folders:
+          - name: Libros
+            path: /hdd/books
+            default_quality_profile: eBook
+            default_metadata_profile: Standard
+        media_management:
+          rename_books: true
+          standard_book_format: "{Book Title}"
+          author_folder_format: "{Author Name}"
+      download_clients:
+        definitions:
+          SABnzbd:
+            implementation: Sabnzbd
+            settings:
+              host: sabnzbd
+              apiKey: ${SABNZBD_API_KEY}
+              musicCategory: books
+```
+
+Prowlarr syncs indexers to Bookshelf through its **`Readarr`** application:
+
+```yaml
+prowlarr:
+  instances:
+    main:
+      applications:
+        definitions:
+          Bookshelf:
+            implementation: Readarr
+            settings:
+              prowlarrUrl: http://prowlarr:9696
+              baseUrl: http://bookshelf:8787
+              apiKey: ${BOOKSHELF_API_KEY}
+```
 
 ---
 

@@ -58,8 +58,15 @@ class DelayProfileProvider(HttpProvider):
 
     full_replace = True
 
-    def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
-        super().__init__(base_url, api_key)
+    def __init__(
+        self,
+        base_url: str,
+        api_key: str,
+        config: Any,
+        kind: str,
+        api_prefix: str | None = None,
+    ):
+        super().__init__(base_url, api_key, api_prefix)
         self.kind = kind
         self.config = config or []
 
@@ -70,7 +77,7 @@ class DelayProfileProvider(HttpProvider):
         return tuple(sorted(resource.get("tags") or [], key=str))
 
     def _load_current(self) -> list[dict[str, Any]]:
-        data: list[dict[str, Any]] = self._get("/api/v3/delayprofile").json()
+        data: list[dict[str, Any]] = self._get(f"{self.api_prefix}/delayprofile").json()
         return data
 
     @staticmethod
@@ -126,10 +133,10 @@ class DelayProfileProvider(HttpProvider):
 
     def apply(self, action: Action) -> None:
         if action.op is Op.CREATE:
-            self._post("/api/v3/delayprofile", json=action.payload)
+            self._post(f"{self.api_prefix}/delayprofile", json=action.payload)
         elif action.op is Op.UPDATE:
             dp_id = action.payload["id"]
-            self._put(f"/api/v3/delayprofile/{dp_id}", json=action.payload)
+            self._put(f"{self.api_prefix}/delayprofile/{dp_id}", json=action.payload)
         else:
             raise NotImplementedError(f"apply: unsupported op {action.op!r}")
         self.invalidate_current()

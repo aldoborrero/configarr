@@ -99,3 +99,104 @@ cleanuparr:
     assert inst.download_clients == {"SABnzbd": {"type": "sabnzbd"}}
     assert inst.arr == {"sonarr": {"failed_import_max_strikes": 3}}
     assert inst.general is None
+
+
+def test_parse_config_carries_kavita_settings_and_libraries(tmp_path):
+    _write(
+        tmp_path,
+        """
+kavita:
+  instances:
+    main:
+      base_url: https://kavita.test/
+      api_key: k
+      settings:
+        enable_opds: true
+        oidc:
+          provider_name: Zitadel
+      libraries:
+        - name: Libros
+          type: book
+          folders: [/data/books]
+""",
+    )
+
+    config = parse_config(tmp_path / "configarr.yml")
+
+    inst = config.kavita[0]
+    assert inst.base_url == "https://kavita.test"
+    assert inst.settings == {"enable_opds": True, "oidc": {"provider_name": "Zitadel"}}
+    assert inst.libraries == [
+        {"name": "Libros", "type": "book", "folders": ["/data/books"]}
+    ]
+
+
+def test_parse_config_carries_kapowarr_sections(tmp_path):
+    _write(
+        tmp_path,
+        """
+kapowarr:
+  instances:
+    main:
+      base_url: http://kapowarr.test:5656/
+      api_key: k
+      settings:
+        flaresolverr_base_url: http://flaresolverr:8191
+      root_folders:
+        - path: /comics
+      download_clients:
+        Transmission:
+          client_type: Transmission
+          base_url: http://transmission:9091
+      credentials:
+        pixeldrain:
+          api_key: pd
+""",
+    )
+
+    config = parse_config(tmp_path / "configarr.yml")
+
+    inst = config.kapowarr[0]
+    assert inst.base_url == "http://kapowarr.test:5656"
+    assert inst.settings == {"flaresolverr_base_url": "http://flaresolverr:8191"}
+    assert inst.root_folders == [{"path": "/comics"}]
+    assert inst.download_clients == {
+        "Transmission": {
+            "client_type": "Transmission",
+            "base_url": "http://transmission:9091",
+        }
+    }
+    assert inst.credentials == {"pixeldrain": {"api_key": "pd"}}
+
+
+def test_parse_config_carries_tranga_sections(tmp_path):
+    _write(
+        tmp_path,
+        """
+tranga:
+  instances:
+    main:
+      base_url: https://api.tranga.test/
+      settings:
+        download_language: es
+      file_libraries:
+        Manga:
+          base_path: /Manga
+      library_connectors:
+        - type: kavita
+          base_url: http://kavita:5000
+          api_key: k
+""",
+    )
+
+    config = parse_config(tmp_path / "configarr.yml")
+
+    inst = config.tranga[0]
+    assert inst.base_url == "https://api.tranga.test"
+    assert inst.api_key == ""  # optional — Tranga's API has no auth
+    assert inst.settings == {"download_language": "es"}
+    assert inst.file_libraries == {"Manga": {"base_path": "/Manga"}}
+    assert inst.library_connectors == [
+        {"type": "kavita", "base_url": "http://kavita:5000", "api_key": "k"}
+    ]
+    assert inst.notification_connectors == {}

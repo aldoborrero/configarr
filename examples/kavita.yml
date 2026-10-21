@@ -1,0 +1,39 @@
+# Kavita example — server settings (incl. OIDC) and libraries.
+#
+# Keys are snake_case (mapped onto Kavita's camelCase API). Settings are merged
+# over Kavita's current values, so set only what you want to pin. api_key is a
+# Kavita auth key (an admin's), exchanged for a session token on each run.
+
+kavita:
+  instances:
+    main:
+      base_url: https://kavita.example.com
+      api_key: ${KAVITA_API_KEY}
+
+      settings:
+        host_name: https://kavita.example.com
+        logging_level: Information
+        enable_opds: true
+        enable_folder_watching: true
+        encode_media_as: webp
+        oidc:
+          authority: https://auth.example.com
+          client_id: "kavita"
+          secret: ${KAVITA_OIDC_SECRET}
+          provision_accounts: true
+          default_roles: [Login, Bookmark, Download, Change Password]
+          default_libraries: [Libros]
+          provider_name: Zitadel
+
+      libraries:
+        - name: Libros
+          type: book
+          folders: [/books]
+          folder_watching: true
+        - name: Comics
+          type: comic_vine
+          folders: [/data/comics]
+        - name: Manga
+          type: manga
+          folders: [/data/manga]
+          exclude_patterns: ["**/@eaDir/**"]

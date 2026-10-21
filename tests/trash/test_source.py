@@ -74,6 +74,10 @@ def _commit(path, files, message):
             "user.email=t@t",
             "-c",
             "user.name=t",
+            # A developer's global commit.gpgsign would otherwise sign these
+            # throwaway commits (prompting for a hardware key on every run).
+            "-c",
+            "commit.gpgsign=false",
             "commit",
             "-m",
             message,

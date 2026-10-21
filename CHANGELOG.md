@@ -6,6 +6,38 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Kavita support: manage a Kavita instance under `kavita.instances.<name>` — its
+  server `settings` (including `oidc` and `smtp`) and its `libraries` (name-keyed,
+  prunable). `api_key` is a Kavita auth key, exchanged for a JWT via
+  `/api/plugin/authenticate`. Settings are merged over the current DTO because
+  Kavita's POST replaces it whole; enums are written by name. The OIDC secret is
+  compared by length only (Kavita masks it) and the SMTP password by fingerprint,
+  so neither appears in a plan; an OIDC authority/client/secret/scope change warns
+  that Kavita must be restarted.
+- Kapowarr support under `kapowarr.instances.<name>`: `settings` (partial PUT;
+  only changed keys are sent), `root_folders`, `download_clients` (external
+  Transmission/qBittorrent clients, keyed by title) and `credentials` (Mega,
+  Pixeldrain; keyed by source). The collections are prunable. Clear-text
+  secrets are compared by fingerprint, and masked ones are not diffed.
+- Tranga (v2) support: manage a Tranga instance under `tranga.instances.<name>` —
+  its `settings` (one API call per changed setting), `file_libraries` (name-keyed,
+  patched in place), `library_connectors` (Kavita/Komga, keyed by type and URL,
+  create/delete only) and `notification_connectors` (generic webhooks plus a
+  `type: gotify` shortcut; replaced on change). All collections are prunable.
+  Tranga's API has no authentication, so `api_key` is optional for this service.
+- Bookshelf (the Readarr revival) as a new `bookshelf:` service: custom formats,
+  quality profiles, metadata profiles (Readarr-only, prunable), root folders with
+  their default profiles referenced by name and updated in place, naming, delay
+  profiles and download clients, all on Readarr's `/api/v1`. A `trash:` block on a
+  Bookshelf instance is rejected (TRaSH publishes no Readarr guides).
+
+### Changed
+
+- The shared Radarr/Sonarr providers take an API path prefix (default `/api/v3`),
+  so Readarr-lineage services reuse them on `/api/v1`.
+
 ## [0.6.0] - 2026-10-16
 
 ### Fixed

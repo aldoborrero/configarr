@@ -30,8 +30,15 @@ def _norm_path(path: str | None) -> str | None:
 class RootFolderProvider(HttpProvider):
     """Diffs Radarr/Sonarr root folders by filesystem path; create-only (no update)."""
 
-    def __init__(self, base_url: str, api_key: str, config: Any, kind: str):
-        super().__init__(base_url, api_key)
+    def __init__(
+        self,
+        base_url: str,
+        api_key: str,
+        config: Any,
+        kind: str,
+        api_prefix: str | None = None,
+    ):
+        super().__init__(base_url, api_key, api_prefix)
         self.kind = kind
         self.config = config or []
 
@@ -39,7 +46,7 @@ class RootFolderProvider(HttpProvider):
         return _norm_path(resource.get("path"))
 
     def _load_current(self) -> list[dict[str, Any]]:
-        data: list[dict[str, Any]] = self._get("/api/v3/rootfolder").json()
+        data: list[dict[str, Any]] = self._get(f"{self.api_prefix}/rootfolder").json()
         return data
 
     def build_desired(self) -> list[dict[str, Any]]:
@@ -67,5 +74,5 @@ class RootFolderProvider(HttpProvider):
     def apply(self, action: Action) -> None:
         if action.op is not Op.CREATE:
             raise NotImplementedError(f"apply: unsupported op {action.op!r}")
-        self._post("/api/v3/rootfolder", json=action.payload)
+        self._post(f"{self.api_prefix}/rootfolder", json=action.payload)
         self.invalidate_current()
