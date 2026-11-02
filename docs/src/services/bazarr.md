@@ -99,6 +99,28 @@ Notes on the fields:
 - `must_contain` / `must_not_contain` / `original_format` map to Bazarr's
   `mustContain` / `mustNotContain` / `originalFormat`.
 
+## Default profile
+
+Bazarr only searches subtitles for series and movies that carry a language profile,
+and its own `serie_default_profile` / `movie_default_profile` settings apply only to
+items added **after** they are set. `default_profile` fills the gap: every series and
+movie **with no profile** gets the named one.
+
+```yaml
+default_profile:
+  series: Spanish + English
+  movies: Spanish + English
+```
+
+- The value is a profile **name**, resolved against the server's profiles (including
+  one created from `language_profiles` in the same run). An unknown name plans nothing.
+- Only items whose profile is unset are changed. A profile chosen by hand is never
+  overridden, and nothing is ever removed from Bazarr.
+- Either key may be omitted to leave that library alone.
+- To cover items Sonarr/Radarr add later, also set Bazarr's own defaults under
+  `general` (`serie_default_enabled`, `serie_default_profile` with the profile id, and the
+  `movie_` equivalents).
+
 ## Previewing changes
 
 > [!TIP]
