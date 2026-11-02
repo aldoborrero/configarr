@@ -185,6 +185,7 @@ def parse_bazarr_instance(name: str, config: dict[str, Any]) -> BazarrConfig:
         translator=config.get("translator"),
         providers=config.get("providers") or {},
         language_profiles=config.get("language_profiles") or [],
+        default_profile=config.get("default_profile") or {},
     )
 
 

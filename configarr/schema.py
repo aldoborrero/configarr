@@ -64,6 +64,7 @@ _BAZARR_INSTANCE: dict[str, Any] = {
     "translator": _OBJ,
     "providers": _OBJ,
     "language_profiles": _ARR,
+    "default_profile": _OBJ,
 }
 _SABNZBD_INSTANCE: dict[str, Any] = {
     "base_url": _STR,

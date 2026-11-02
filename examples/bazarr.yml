@@ -32,6 +32,12 @@ bazarr:
           username: ${OST_USER}
           password: ${OST_PASSWORD}
 
+      # Give every series/movie without a language profile this one (Bazarr's own
+      # serie_default_profile only applies to items added later).
+      default_profile:
+        series: English
+        movies: English
+
       language_profiles:
         - name: English
           cutoff: English

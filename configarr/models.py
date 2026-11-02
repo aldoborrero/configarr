@@ -157,6 +157,7 @@ class BazarrConfig(BaseModel):
     translator: dict[str, Any] | None = None
     providers: dict[str, dict[str, Any]] = {}
     language_profiles: list[dict[str, Any]] = []
+    default_profile: dict[str, Any] = {}
 
     @field_validator("base_url")
     @classmethod

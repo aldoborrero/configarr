@@ -20,6 +20,7 @@ from configarr.providers.arr.quality_profiles import QualityProfileProvider
 from configarr.providers.arr.release_profiles import ReleaseProfileProvider
 from configarr.providers.arr.root_folders import RootFolderProvider
 from configarr.providers.base import ResourceProvider
+from configarr.providers.bazarr.default_profiles import BazarrDefaultProfileProvider
 from configarr.providers.bazarr.language_profiles import (
     BazarrLanguageProfileProvider,
 )
@@ -386,6 +387,17 @@ REGISTRY: list[Registration] = [
             inst.api_key,
             inst.language_profiles,
             "bazarr.language_profile",
+        ),
+    ),
+    # Bazarr default profile: series/movies with no language profile get the named one
+    # (Bazarr's own default only covers items added later). Runs after the language
+    # profiles so a profile created in the same run already resolves by name.
+    Registration(
+        kind="bazarr.default_profile",
+        service="bazarr",
+        label="default profile",
+        factory=lambda inst: BazarrDefaultProfileProvider(
+            inst.base_url, inst.api_key, inst.default_profile, "bazarr.default_profile"
         ),
     ),
     # Lingarr's flat settings store, split into two logical groups. Both hit the same
